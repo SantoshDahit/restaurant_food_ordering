@@ -1,0 +1,1 @@
+import{o as n,c as s,p as a,q as _}from"./index-B8qoitBQ.js";const i=(t,o)=>{const e=t.__vccOpts||t;for(const[c,r]of o)e[c]=r;return e},f={},u={class:"min-h-screen bg-gray-50 flex items-center justify-center"};function l(t,o){const e=_("router-view");return n(),s("div",u,[a(e)])}const p=i(f,[["render",l]]);export{p as default};

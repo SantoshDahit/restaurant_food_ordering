@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(\"/Users/dalluoo/business/restaurnat food:*)",
+      "Bash(./gradlew compileJava:*)",
+      "Bash(./gradlew build:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run build:*)",
+      "Bash(mysql:*)",
+      "Bash(brew services:*)",
+      "Read(//usr/local/**)",
+      "Read(//opt/homebrew/var/mysql/**)",
+      "Bash(cat:*)",
+      "Bash(pkill:*)",
+      "Bash(grep:*)",
+      "Bash(printf:*)",
+      "Bash(/opt/homebrew/opt/mysql/bin/mysqld:*)",
+      "Read(//Users/dalluoo/business/**)"
+    ],
+    "additionalDirectories": [
+      "/Users/dalluoo/business/restaurnat food ordering system/frontend/src/{api,types,stores,router,layouts,components/shared,views/auth,views/dashboard,views/restaurant,views/tables,views/menu,views/orders,views/payments,views/employees,views/attendance,views",
+      "/tmp"
+    ]
+  }
+}

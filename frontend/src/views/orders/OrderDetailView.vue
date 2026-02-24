@@ -1,0 +1,250 @@
+<script setup lang="ts">
+import { ref, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { ordersApi } from '@/api/orders'
+import { orderItemApi } from '@/api/orderItem'
+import { menuItemApi } from '@/api/menuItem'
+import { useAuthStore } from '@/stores/auth'
+import StatusBadge from '@/components/shared/StatusBadge.vue'
+import PageHeader from '@/components/shared/PageHeader.vue'
+import ConfirmDialog from '@/components/shared/ConfirmDialog.vue'
+import { toast } from 'vue-sonner'
+import type { OrdersResponse, OrderItemResponse, MenuItemResponse, OrderStatus } from '@/types'
+
+const route = useRoute()
+const router = useRouter()
+const auth = useAuthStore()
+
+const order = ref<OrdersResponse | null>(null)
+const orderItems = ref<OrderItemResponse[]>([])
+const menuItems = ref<MenuItemResponse[]>([])
+const loading = ref(false)
+const removeTarget = ref<string | null>(null)
+const removing = ref(false)
+const showAddItem = ref(false)
+
+const orderStatuses: OrderStatus[] = ['PENDING', 'CONFIRMED', 'PREPARING', 'READY', 'COMPLETED', 'CANCELLED']
+
+const addForm = ref({
+  menuItemCode: '',
+  quantity: 1,
+  spiceLevel: '',
+  notes: '',
+})
+
+onMounted(async () => {
+  const code = route.params.code as string
+  loading.value = true
+  try {
+    const [orderData, itemsData, menuData] = await Promise.all([
+      ordersApi.get(code),
+      orderItemApi.getByOrder(code),
+      menuItemApi.search({ restaurantCode: auth.restaurantCode }),
+    ])
+    order.value = orderData
+    orderItems.value = itemsData
+    menuItems.value = menuData.content
+  } catch {
+    toast.error('Failed to load order')
+  } finally {
+    loading.value = false
+  }
+})
+
+async function updateStatus(status: OrderStatus) {
+  if (!order.value) return
+  try {
+    order.value = await ordersApi.updateStatus(order.value.code, { status })
+    toast.success('Status updated')
+  } catch {
+    toast.error('Failed to update status')
+  }
+}
+
+async function addItem() {
+  if (!order.value || !addForm.value.menuItemCode) { toast.error('Select a menu item'); return }
+  try {
+    const item = await orderItemApi.add(order.value.code, {
+      menuItemCode: addForm.value.menuItemCode,
+      quantity: addForm.value.quantity,
+      spiceLevel: addForm.value.spiceLevel || undefined,
+      notes: addForm.value.notes || undefined,
+    })
+    orderItems.value.push(item)
+    showAddItem.value = false
+    addForm.value = { menuItemCode: '', quantity: 1, spiceLevel: '', notes: '' }
+    toast.success('Item added')
+  } catch {
+    toast.error('Failed to add item')
+  }
+}
+
+async function removeItem() {
+  if (!order.value || !removeTarget.value) return
+  removing.value = true
+  try {
+    await orderItemApi.remove(order.value.code, removeTarget.value)
+    orderItems.value = orderItems.value.filter(i => i.code !== removeTarget.value)
+    removeTarget.value = null
+    toast.success('Item removed')
+  } catch {
+    toast.error('Failed to remove item')
+  } finally {
+    removing.value = false
+  }
+}
+
+function getMenuItemName(code: string) {
+  return menuItems.value.find(m => m.code === code)?.name || code
+}
+</script>
+
+<template>
+  <div>
+    <PageHeader :title="`Order ${order?.orderNumber || ''}`" description="Order details and items">
+      <template #actions>
+        <button @click="router.push('/orders')"
+          class="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">
+          ← Back
+        </button>
+      </template>
+    </PageHeader>
+
+    <div v-if="loading" class="text-center py-12 text-gray-400">Loading...</div>
+
+    <div v-else-if="order" class="space-y-6">
+      <!-- Order Info -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+          <div>
+            <p class="text-xs text-gray-500">Order Number</p>
+            <p class="font-semibold">{{ order.orderNumber }}</p>
+          </div>
+          <div>
+            <p class="text-xs text-gray-500">Type</p>
+            <p class="font-semibold">{{ order.orderType.replace(/_/g, ' ') }}</p>
+          </div>
+          <div>
+            <p class="text-xs text-gray-500">Status</p>
+            <StatusBadge :status="order.status" />
+          </div>
+          <div>
+            <p class="text-xs text-gray-500">Date</p>
+            <p class="font-semibold">{{ new Date(order.createAt).toLocaleString() }}</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 pt-4 border-t border-gray-100">
+          <div>
+            <p class="text-xs text-gray-500">Subtotal</p>
+            <p class="font-medium">{{ order.subtotal.toFixed(2) }}</p>
+          </div>
+          <div>
+            <p class="text-xs text-gray-500">Discount</p>
+            <p class="font-medium text-red-600">-{{ order.discountAmount.toFixed(2) }}</p>
+          </div>
+          <div>
+            <p class="text-xs text-gray-500">Tax</p>
+            <p class="font-medium">{{ order.taxAmount.toFixed(2) }}</p>
+          </div>
+          <div>
+            <p class="text-xs text-gray-500">Total</p>
+            <p class="text-lg font-bold text-gray-900">{{ order.totalAmount.toFixed(2) }}</p>
+          </div>
+        </div>
+
+        <!-- Update Status -->
+        <div class="mt-4 pt-4 border-t border-gray-100 flex items-center gap-3">
+          <span class="text-sm text-gray-600">Update Status:</span>
+          <select
+            :value="order.status"
+            @change="updateStatus(($event.target as HTMLSelectElement).value as OrderStatus)"
+            class="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <option v-for="s in orderStatuses" :key="s" :value="s">{{ s }}</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Order Items -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100">
+        <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+          <h3 class="font-semibold text-gray-800">Order Items</h3>
+          <button @click="showAddItem = !showAddItem"
+            class="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+            + Add Item
+          </button>
+        </div>
+
+        <!-- Add Item Form -->
+        <div v-if="showAddItem" class="px-5 py-4 bg-gray-50 border-b border-gray-100">
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div class="col-span-2">
+              <label class="block text-xs font-medium text-gray-600 mb-1">Menu Item</label>
+              <select v-model="addForm.menuItemCode"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="">Select item...</option>
+                <option v-for="m in menuItems" :key="m.code" :value="m.code">
+                  {{ m.name }} ({{ m.price.toFixed(2) }})
+                </option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1">Qty</label>
+              <input v-model.number="addForm.quantity" type="number" min="1"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1">Spice Level</label>
+              <input v-model="addForm.spiceLevel" placeholder="e.g. Mild"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+          </div>
+          <div class="flex gap-2 mt-3">
+            <button @click="addItem"
+              class="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700">Add</button>
+            <button @click="showAddItem = false"
+              class="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
+          </div>
+        </div>
+
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50 text-gray-500 uppercase text-xs">
+            <tr>
+              <th class="px-5 py-3 text-left">Item</th>
+              <th class="px-5 py-3 text-center">Qty</th>
+              <th class="px-5 py-3 text-right">Unit Price</th>
+              <th class="px-5 py-3 text-right">Total</th>
+              <th class="px-5 py-3 text-left">Notes</th>
+              <th class="px-5 py-3 text-center">Action</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            <tr v-for="item in orderItems" :key="item.code" class="hover:bg-gray-50">
+              <td class="px-5 py-3 font-medium">{{ getMenuItemName(item.menuItemCode) }}</td>
+              <td class="px-5 py-3 text-center">{{ item.quantity }}</td>
+              <td class="px-5 py-3 text-right">{{ item.unitPrice.toFixed(2) }}</td>
+              <td class="px-5 py-3 text-right font-semibold">{{ item.totalPrice.toFixed(2) }}</td>
+              <td class="px-5 py-3 text-gray-500 text-xs">{{ item.notes || '—' }}</td>
+              <td class="px-5 py-3 text-center">
+                <button @click="removeTarget = item.code"
+                  class="text-xs px-2 py-1 bg-red-100 text-red-600 rounded hover:bg-red-200">Remove</button>
+              </td>
+            </tr>
+            <tr v-if="!orderItems.length">
+              <td colspan="6" class="px-5 py-8 text-center text-gray-400">No items</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <ConfirmDialog
+      :open="!!removeTarget"
+      title="Remove Item"
+      message="Remove this item from the order?"
+      :loading="removing"
+      @confirm="removeItem"
+      @cancel="removeTarget = null"
+    />
+  </div>
+</template>

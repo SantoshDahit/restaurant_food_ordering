@@ -1,0 +1,1258 @@
+openapi: 3.0.3
+info:
+  title: Restaurant Food Ordering System API
+  description: REST API for the Restaurant Food Ordering System
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Local development
+
+security:
+  - bearerAuth: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    # ── Enums ────────────────────────────────────────────────
+    UserRole:
+      type: string
+      enum: [ADMIN, MANAGER]
+
+    TableStatus:
+      type: string
+      enum: [AVAILABLE, OCCUPIED, RESERVED, CLEANING]
+
+    MenuCategoryType:
+      type: string
+      enum: [VEG, NON_VEG, DRINKS, SPECIALS, DESSERTS, APPETIZERS, SIDES]
+
+    ItemAvailability:
+      type: string
+      enum: [AVAILABLE, OUT_OF_STOCK, HIDDEN]
+
+    OrderStatus:
+      type: string
+      enum: [PENDING, CONFIRMED, PREPARING, READY, COMPLETED, CANCELLED]
+
+    OrderType:
+      type: string
+      enum: [DINE_IN, TAKEAWAY, QR_ORDER, KIOSK]
+
+    PaymentMethod:
+      type: string
+      enum: [CASH, POS, ESEWA, KHALTI, PHONEPAY, IBANK]
+
+    PaymentStatus:
+      type: string
+      enum: [PENDING, COMPLETED, FAILED, REFUNDED]
+
+    AttendanceStatus:
+      type: string
+      enum: [PRESENT, ABSENT, HALF_DAY, LEAVE, HOLIDAY]
+
+    SalaryStatus:
+      type: string
+      enum: [PENDING, PAID, ON_HOLD]
+
+    FileType:
+      type: string
+      enum: [IMAGE, PDF, DOCUMENT]
+
+    # ── Responses ────────────────────────────────────────────
+    UserResponse:
+      type: object
+      properties:
+        code:        { type: string }
+        restaurantCode: { type: string }
+        fullName:    { type: string }
+        email:       { type: string }
+        phone:       { type: string, nullable: true }
+        role:        { $ref: '#/components/schemas/UserRole' }
+        fileCode:    { type: string, nullable: true }
+        isActive:    { type: boolean }
+        createAt:    { type: string, format: date-time }
+
+    LoginResponse:
+      type: object
+      properties:
+        accessToken:  { type: string }
+        refreshToken: { type: string }
+        user:         { $ref: '#/components/schemas/UserResponse' }
+
+    RestaurantResponse:
+      type: object
+      properties:
+        code:           { type: string }
+        userCode:       { type: string, nullable: true }
+        name:           { type: string }
+        address:        { type: string }
+        businessNumber: { type: string }
+        phone:          { type: string, nullable: true }
+        email:          { type: string, nullable: true }
+        currency:       { type: string, example: NPR }
+        fileCode:       { type: string, nullable: true }
+        isActive:       { type: boolean }
+        createAt:       { type: string, format: date-time }
+        updateAt:       { type: string, format: date-time, nullable: true }
+
+    TableResponse:
+      type: object
+      properties:
+        code:          { type: string }
+        restaurantCode: { type: string }
+        tableNumber:   { type: string }
+        capacity:      { type: integer }
+        status:        { $ref: '#/components/schemas/TableStatus' }
+        qrCodeUrl:     { type: string, nullable: true }
+        qrCodeToken:   { type: string, nullable: true }
+        isActive:      { type: boolean }
+        createAt:      { type: string, format: date-time }
+        updateAt:      { type: string, format: date-time, nullable: true }
+
+    MenuCategoryResponse:
+      type: object
+      properties:
+        code:          { type: string }
+        restaurantCode: { type: string }
+        name:          { type: string }
+        categoryType:  { $ref: '#/components/schemas/MenuCategoryType' }
+        fileCode:      { type: string, nullable: true }
+        sortOrder:     { type: integer }
+        isActive:      { type: boolean }
+        createAt:      { type: string, format: date-time }
+
+    MenuItemResponse:
+      type: object
+      properties:
+        code:            { type: string }
+        restaurantCode:  { type: string }
+        categoryCode:    { type: string, nullable: true }
+        name:            { type: string }
+        description:     { type: string, nullable: true }
+        price:           { type: number }
+        discountPercent: { type: number }
+        fileCode:        { type: string, nullable: true }
+        availability:    { $ref: '#/components/schemas/ItemAvailability' }
+        isFeatured:      { type: boolean }
+        isVeg:           { type: boolean }
+        prepTimeMinutes: { type: integer }
+        sortOrder:       { type: integer }
+        createAt:        { type: string, format: date-time }
+
+    OrderResponse:
+      type: object
+      properties:
+        code:           { type: string }
+        restaurantCode: { type: string }
+        tableCode:      { type: string, nullable: true }
+        waiterCode:     { type: string, nullable: true }
+        orderNumber:    { type: string }
+        orderType:      { $ref: '#/components/schemas/OrderType' }
+        status:         { $ref: '#/components/schemas/OrderStatus' }
+        subtotal:       { type: number }
+        discountAmount: { type: number }
+        taxAmount:      { type: number }
+        totalAmount:    { type: number }
+        specialNotes:   { type: string, nullable: true }
+        deviceType:     { type: string, nullable: true }
+        createAt:       { type: string, format: date-time }
+
+    OrderItemResponse:
+      type: object
+      properties:
+        code:           { type: string }
+        orderCode:      { type: string }
+        menuItemCode:   { type: string }
+        quantity:       { type: integer }
+        unitPrice:      { type: number }
+        discountAmount: { type: number }
+        totalPrice:     { type: number }
+        spiceLevel:     { type: string, nullable: true }
+        notes:          { type: string, nullable: true }
+        status:         { $ref: '#/components/schemas/OrderStatus' }
+        createAt:       { type: string, format: date-time }
+
+    PaymentResponse:
+      type: object
+      properties:
+        code:            { type: string }
+        restaurantCode:  { type: string }
+        orderCode:       { type: string }
+        processedBy:     { type: string, nullable: true }
+        paymentMethod:   { $ref: '#/components/schemas/PaymentMethod' }
+        amount:          { type: number }
+        status:          { $ref: '#/components/schemas/PaymentStatus' }
+        transactionRef:  { type: string, nullable: true }
+        receiptNumber:   { type: string, nullable: true }
+        refundedAmount:  { type: number }
+        processedAt:     { type: string, format: date-time, nullable: true }
+        createAt:        { type: string, format: date-time }
+
+    EmployeeResponse:
+      type: object
+      properties:
+        code:           { type: string }
+        restaurantCode: { type: string }
+        fileCode:       { type: string, nullable: true }
+        fullName:       { type: string }
+        phone:          { type: string, nullable: true }
+        joinDate:       { type: string, format: date }
+        baseSalary:     { type: number }
+        bankAccount:    { type: string, nullable: true }
+        bankName:       { type: string, nullable: true }
+        isActive:       { type: boolean }
+        createAt:       { type: string, format: date-time }
+
+    AttendanceResponse:
+      type: object
+      properties:
+        code:           { type: string }
+        employeeCode:   { type: string }
+        restaurantCode: { type: string }
+        attendanceDate: { type: string, format: date }
+        status:         { $ref: '#/components/schemas/AttendanceStatus' }
+        checkInTime:    { type: string, nullable: true }
+        checkOutTime:   { type: string, nullable: true }
+        workedHours:    { type: number, nullable: true }
+        overtimeHours:  { type: number }
+        notes:          { type: string, nullable: true }
+        createAt:       { type: string, format: date-time }
+
+    PayrollResponse:
+      type: object
+      properties:
+        code:           { type: string }
+        restaurantCode: { type: string }
+        employeeCode:   { type: string }
+        payPeriodStart: { type: string, format: date }
+        payPeriodEnd:   { type: string, format: date }
+        overtimePay:    { type: number }
+        bonus:          { type: number }
+        deductions:     { type: number }
+        netSalary:      { type: number }
+        status:         { $ref: '#/components/schemas/SalaryStatus' }
+        paidAt:         { type: string, format: date-time, nullable: true }
+        createAt:       { type: string, format: date-time }
+
+    FileResponse:
+      type: object
+      properties:
+        code:      { type: string }
+        type:      { $ref: '#/components/schemas/FileType' }
+        url:       { type: string }
+        isSuccess: { type: boolean }
+        createAt:  { type: string, format: date-time }
+
+    PageMeta:
+      type: object
+      properties:
+        totalElements: { type: integer }
+        totalPages:    { type: integer }
+        size:          { type: integer }
+        number:        { type: integer }
+
+  parameters:
+    PageParam:
+      name: page
+      in: query
+      schema: { type: integer, default: 0 }
+    SizeParam:
+      name: size
+      in: query
+      schema: { type: integer, default: 20 }
+
+# ═══════════════════════════════════════════════════════════════
+# PATHS
+# ═══════════════════════════════════════════════════════════════
+paths:
+
+  # ── AUTH ─────────────────────────────────────────────────────
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Login
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:    { type: string, format: email }
+                password: { type: string }
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/LoginResponse' }
+
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Register new user
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [restaurantCode, fullName, email, password, role]
+              properties:
+                restaurantCode: { type: string }
+                fullName:       { type: string }
+                email:          { type: string, format: email }
+                phone:          { type: string }
+                password:       { type: string }
+                role:           { $ref: '#/components/schemas/UserRole' }
+      responses:
+        '200':
+          description: Registration successful
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/LoginResponse' }
+
+  # ── RESTAURANTS ───────────────────────────────────────────────
+  /restaurants:
+    post:
+      tags: [Restaurants]
+      summary: Create restaurant
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, address, businessNumber]
+              properties:
+                code:           { type: string, description: Optional custom code }
+                name:           { type: string }
+                address:        { type: string }
+                businessNumber: { type: string }
+                phone:          { type: string }
+                email:          { type: string, format: email }
+                currency:       { type: string, default: NPR }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RestaurantResponse' }
+
+  /restaurants/search:
+    get:
+      tags: [Restaurants]
+      summary: Search restaurants
+      security: []
+      parameters:
+        - { name: name, in: query, schema: { type: string } }
+        - { $ref: '#/components/parameters/PageParam' }
+        - { $ref: '#/components/parameters/SizeParam' }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - { $ref: '#/components/schemas/PageMeta' }
+                  - type: object
+                    properties:
+                      content:
+                        type: array
+                        items: { $ref: '#/components/schemas/RestaurantResponse' }
+
+  /restaurants/by-owner/{userCode}:
+    get:
+      tags: [Restaurants]
+      summary: Get restaurant by owner user code
+      security: []
+      parameters:
+        - { name: userCode, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RestaurantResponse' }
+
+  /restaurants/{code}:
+    get:
+      tags: [Restaurants]
+      summary: Get restaurant by code
+      security: []
+      parameters:
+        - { name: code, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RestaurantResponse' }
+    patch:
+      tags: [Restaurants]
+      summary: Update restaurant
+      parameters:
+        - { name: code, in: path, required: true, schema: { type: string } }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:     { type: string }
+                address:  { type: string }
+                phone:    { type: string }
+                email:    { type: string }
+                currency: { type: string }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RestaurantResponse' }
+    delete:
+      tags: [Restaurants]
+      summary: Delete restaurant
+      parameters:
+        - { name: code, in: path, required: true, schema: { type: string } }
+      responses:
+        '204': { description: Deleted }
+
+  # ── TABLES ───────────────────────────────────────────────────
+  /tables:
+    post:
+      tags: [Tables]
+      summary: Create table
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [restaurantCode, tableNumber]
+              properties:
+                restaurantCode: { type: string }
+                tableNumber:    { type: string }
+                capacity:       { type: integer, default: 4 }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TableResponse' }
+
+  /tables/search:
+    get:
+      tags: [Tables]
+      summary: Search tables
+      parameters:
+        - { name: restaurantCode, in: query, required: true, schema: { type: string } }
+        - { name: status, in: query, schema: { $ref: '#/components/schemas/TableStatus' } }
+        - { $ref: '#/components/parameters/PageParam' }
+        - { $ref: '#/components/parameters/SizeParam' }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - { $ref: '#/components/schemas/PageMeta' }
+                  - type: object
+                    properties:
+                      content:
+                        type: array
+                        items: { $ref: '#/components/schemas/TableResponse' }
+
+  /tables/by-token/{token}:
+    get:
+      tags: [Tables]
+      summary: Get table by QR token (public)
+      security: []
+      parameters:
+        - { name: token, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TableResponse' }
+
+  /tables/{code}:
+    get:
+      tags: [Tables]
+      summary: Get table by code
+      parameters:
+        - { name: code, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TableResponse' }
+    patch:
+      tags: [Tables]
+      summary: Update table
+      parameters:
+        - { name: code, in: path, required: true, schema: { type: string } }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                tableNumber: { type: string }
+                capacity:    { type: integer }
+                status:      { $ref: '#/components/schemas/TableStatus' }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TableResponse' }
+    delete:
+      tags: [Tables]
+      summary: Delete table
+      parameters:
+        - { name: code, in: path, required: true, schema: { type: string } }
+      responses:
+        '204': { description: Deleted }
+
+  /tables/{code}/qr:
+    post:
+      tags: [Tables]
+      summary: Generate QR code for table
+      parameters:
+        - { name: code, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TableResponse' }
+
+  # ── MENU CATEGORIES ──────────────────────────────────────────
+  /menu-categories:
+    post:
+      tags: [Menu Categories]
+      summary: Create menu category
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [restaurantCode, name]
+              properties:
+                restaurantCode: { type: string }
+                name:           { type: string }
+                categoryType:   { $ref: '#/components/schemas/MenuCategoryType' }
+                sortOrder:      { type: integer }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MenuCategoryResponse' }
+
+  /menu-categories/search:
+    get:
+      tags: [Menu Categories]
+      summary: Search menu categories (public)
+      security: []
+      parameters:
+        - { name: restaurantCode, in: query, schema: { type: string } }
+        - { name: categoryType, in: query, schema: { $ref: '#/components/schemas/MenuCategoryType' } }
+        - { $ref: '#/components/parameters/PageParam' }
+        - { $ref: '#/components/parameters/SizeParam' }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - { $ref: '#/components/schemas/PageMeta' }
+                  - type: object
+                    properties:
+                      content:
+                        type: array
+                        items: { $ref: '#/components/schemas/MenuCategoryResponse' }
+
+  /menu-categories/{code}:
+    get:
+      tags: [Menu Categories]
+      summary: Get menu category
+      security: []
+      parameters:
+        - { name: code, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MenuCategoryResponse' }
+    patch:
+      tags: [Menu Categories]
+      summary: Update menu category
+      parameters:
+        - { name: code, in: path, required: true, schema: { type: string } }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:         { type: string }
+                categoryType: { $ref: '#/components/schemas/MenuCategoryType' }
+                sortOrder:    { type: integer }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MenuCategoryResponse' }
+    delete:
+      tags: [Menu Categories]
+      summary: Delete menu category
+      parameters:
+        - { name: code, in: path, required: true, schema: { type: string } }
+      responses:
+        '204': { description: Deleted }
+
+  # ── MENU ITEMS ───────────────────────────────────────────────
+  /menu-items:
+    post:
+      tags: [Menu Items]
+      summary: Create menu item
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [restaurantCode, name, price]
+              properties:
+                restaurantCode:  { type: string }
+                categoryCode:    { type: string }
+                name:            { type: string }
+                description:     { type: string }
+                price:           { type: number }
+                discountPercent: { type: number, default: 0 }
+                fileCode:        { type: string }
+                isVeg:           { type: boolean }
+                prepTimeMinutes: { type: integer }
+                sortOrder:       { type: integer }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MenuItemResponse' }
+
+  /menu-items/search:
+    get:
+      tags: [Menu Items]
+      summary: Search menu items (public)
+      security: []
+      parameters:
+        - { name: restaurantCode, in: query, schema: { type: string } }
+        - { name: categoryCode, in: query, schema: { type: string } }
+        - { name: availability, in: query, schema: { $ref: '#/components/schemas/ItemAvailability' } }
+        - { name: isFeatured, in: query, schema: { type: boolean } }
+        - { name: isVeg, in: query, schema: { type: boolean } }
+        - { $ref: '#/components/parameters/PageParam' }
+        - { $ref: '#/components/parameters/SizeParam' }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - { $ref: '#/components/schemas/PageMeta' }
+                  - type: object
+                    properties:
+                      content:
+                        type: array
+                        items: { $ref: '#/components/schemas/MenuItemResponse' }
+
+  /menu-items/{code}:
+    get:
+      tags: [Menu Items]
+      summary: Get menu item
+      security: []
+      parameters:
+        - { name: code, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MenuItemResponse' }
+    patch:
+      tags: [Menu Items]
+      summary: Update menu item
+      parameters:
+        - { name: code, in: path, required: true, schema: { type: string } }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                categoryCode:    { type: string }
+                name:            { type: string }
+                description:     { type: string }
+                price:           { type: number }
+                discountPercent: { type: number }
+                fileCode:        { type: string }
+                availability:    { $ref: '#/components/schemas/ItemAvailability' }
+                isFeatured:      { type: boolean }
+                isVeg:           { type: boolean }
+                prepTimeMinutes: { type: integer }
+                sortOrder:       { type: integer }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MenuItemResponse' }
+    delete:
+      tags: [Menu Items]
+      summary: Delete menu item
+      parameters:
+        - { name: code, in: path, required: true, schema: { type: string } }
+      responses:
+        '204': { description: Deleted }
+
+  # ── ORDERS ───────────────────────────────────────────────────
+  /orders:
+    post:
+      tags: [Orders]
+      summary: Create order (public)
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [restaurantCode, orderType]
+              properties:
+                restaurantCode: { type: string }
+                tableCode:      { type: string }
+                waiterCode:     { type: string }
+                orderType:      { $ref: '#/components/schemas/OrderType' }
+                specialNotes:   { type: string }
+                deviceType:     { type: string }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OrderResponse' }
+
+  /orders/search:
+    get:
+      tags: [Orders]
+      summary: Search orders
+      parameters:
+        - { name: restaurantCode, in: query, schema: { type: string } }
+        - { name: status, in: query, schema: { $ref: '#/components/schemas/OrderStatus' } }
+        - { name: orderType, in: query, schema: { $ref: '#/components/schemas/OrderType' } }
+        - { name: tableCode, in: query, schema: { type: string } }
+        - { $ref: '#/components/parameters/PageParam' }
+        - { $ref: '#/components/parameters/SizeParam' }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - { $ref: '#/components/schemas/PageMeta' }
+                  - type: object
+                    properties:
+                      content:
+                        type: array
+                        items: { $ref: '#/components/schemas/OrderResponse' }
+
+  /orders/{code}:
+    get:
+      tags: [Orders]
+      summary: Get order (public)
+      security: []
+      parameters:
+        - { name: code, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OrderResponse' }
+    delete:
+      tags: [Orders]
+      summary: Delete order
+      parameters:
+        - { name: code, in: path, required: true, schema: { type: string } }
+      responses:
+        '204': { description: Deleted }
+
+  /orders/{code}/status:
+    patch:
+      tags: [Orders]
+      summary: Update order status
+      parameters:
+        - { name: code, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status: { $ref: '#/components/schemas/OrderStatus' }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OrderResponse' }
+
+  # ── ORDER ITEMS ──────────────────────────────────────────────
+  /orders/{orderCode}/items:
+    get:
+      tags: [Order Items]
+      summary: Get items for an order (public)
+      security: []
+      parameters:
+        - { name: orderCode, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/OrderItemResponse' }
+    post:
+      tags: [Order Items]
+      summary: Add item to order (public)
+      security: []
+      parameters:
+        - { name: orderCode, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [menuItemCode, quantity]
+              properties:
+                menuItemCode: { type: string }
+                quantity:     { type: integer, minimum: 1 }
+                spiceLevel:   { type: string }
+                notes:        { type: string }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OrderItemResponse' }
+
+  /orders/{orderCode}/items/{code}:
+    patch:
+      tags: [Order Items]
+      summary: Update order item
+      parameters:
+        - { name: orderCode, in: path, required: true, schema: { type: string } }
+        - { name: code, in: path, required: true, schema: { type: string } }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                quantity:   { type: integer }
+                spiceLevel: { type: string }
+                notes:      { type: string }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OrderItemResponse' }
+    delete:
+      tags: [Order Items]
+      summary: Remove order item
+      parameters:
+        - { name: orderCode, in: path, required: true, schema: { type: string } }
+        - { name: code, in: path, required: true, schema: { type: string } }
+      responses:
+        '204': { description: Removed }
+
+  # ── PAYMENTS ─────────────────────────────────────────────────
+  /payments:
+    post:
+      tags: [Payments]
+      summary: Create payment (public)
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [restaurantCode, orderCode, paymentMethod, amount]
+              properties:
+                restaurantCode: { type: string }
+                orderCode:      { type: string }
+                paymentMethod:  { $ref: '#/components/schemas/PaymentMethod' }
+                amount:         { type: number }
+                transactionRef: { type: string }
+                receiptNumber:  { type: string }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PaymentResponse' }
+
+  /payments/search:
+    get:
+      tags: [Payments]
+      summary: Search payments
+      parameters:
+        - { name: restaurantCode, in: query, schema: { type: string } }
+        - { name: status, in: query, schema: { $ref: '#/components/schemas/PaymentStatus' } }
+        - { name: paymentMethod, in: query, schema: { $ref: '#/components/schemas/PaymentMethod' } }
+        - { $ref: '#/components/parameters/PageParam' }
+        - { $ref: '#/components/parameters/SizeParam' }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - { $ref: '#/components/schemas/PageMeta' }
+                  - type: object
+                    properties:
+                      content:
+                        type: array
+                        items: { $ref: '#/components/schemas/PaymentResponse' }
+
+  /payments/{code}:
+    get:
+      tags: [Payments]
+      summary: Get payment
+      parameters:
+        - { name: code, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PaymentResponse' }
+
+  /payments/{code}/status:
+    patch:
+      tags: [Payments]
+      summary: Update payment status
+      parameters:
+        - { name: code, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:         { $ref: '#/components/schemas/PaymentStatus' }
+                refundedAmount: { type: number }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PaymentResponse' }
+
+  # ── EMPLOYEES ────────────────────────────────────────────────
+  /employees:
+    post:
+      tags: [Employees]
+      summary: Create employee
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [restaurantCode, fullName, joinDate, baseSalary]
+              properties:
+                restaurantCode: { type: string }
+                fullName:       { type: string }
+                phone:          { type: string }
+                joinDate:       { type: string, format: date }
+                baseSalary:     { type: number }
+                bankAccount:    { type: string }
+                bankName:       { type: string }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/EmployeeResponse' }
+
+  /employees/search:
+    get:
+      tags: [Employees]
+      summary: Search employees
+      parameters:
+        - { name: restaurantCode, in: query, schema: { type: string } }
+        - { name: fullName, in: query, schema: { type: string } }
+        - { name: isActive, in: query, schema: { type: boolean } }
+        - { $ref: '#/components/parameters/PageParam' }
+        - { $ref: '#/components/parameters/SizeParam' }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - { $ref: '#/components/schemas/PageMeta' }
+                  - type: object
+                    properties:
+                      content:
+                        type: array
+                        items: { $ref: '#/components/schemas/EmployeeResponse' }
+
+  /employees/{code}:
+    get:
+      tags: [Employees]
+      summary: Get employee
+      parameters:
+        - { name: code, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/EmployeeResponse' }
+    patch:
+      tags: [Employees]
+      summary: Update employee
+      parameters:
+        - { name: code, in: path, required: true, schema: { type: string } }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                fullName:    { type: string }
+                phone:       { type: string }
+                baseSalary:  { type: number }
+                bankAccount: { type: string }
+                bankName:    { type: string }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/EmployeeResponse' }
+    delete:
+      tags: [Employees]
+      summary: Delete employee
+      parameters:
+        - { name: code, in: path, required: true, schema: { type: string } }
+      responses:
+        '204': { description: Deleted }
+
+  # ── ATTENDANCE ───────────────────────────────────────────────
+  /attendance:
+    post:
+      tags: [Attendance]
+      summary: Create attendance record
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [employeeCode, restaurantCode, attendanceDate]
+              properties:
+                employeeCode:   { type: string }
+                restaurantCode: { type: string }
+                attendanceDate: { type: string, format: date }
+                status:         { $ref: '#/components/schemas/AttendanceStatus' }
+                checkInTime:    { type: string }
+                checkOutTime:   { type: string }
+                notes:          { type: string }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AttendanceResponse' }
+
+  /attendance/search:
+    get:
+      tags: [Attendance]
+      summary: Search attendance records
+      parameters:
+        - { name: restaurantCode, in: query, schema: { type: string } }
+        - { name: employeeCode, in: query, schema: { type: string } }
+        - { name: dateFrom, in: query, schema: { type: string, format: date } }
+        - { name: dateTo, in: query, schema: { type: string, format: date } }
+        - { name: status, in: query, schema: { $ref: '#/components/schemas/AttendanceStatus' } }
+        - { $ref: '#/components/parameters/PageParam' }
+        - { $ref: '#/components/parameters/SizeParam' }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - { $ref: '#/components/schemas/PageMeta' }
+                  - type: object
+                    properties:
+                      content:
+                        type: array
+                        items: { $ref: '#/components/schemas/AttendanceResponse' }
+
+  /attendance/{code}:
+    patch:
+      tags: [Attendance]
+      summary: Update attendance record
+      parameters:
+        - { name: code, in: path, required: true, schema: { type: string } }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:        { $ref: '#/components/schemas/AttendanceStatus' }
+                checkInTime:   { type: string }
+                checkOutTime:  { type: string }
+                workedHours:   { type: number }
+                overtimeHours: { type: number }
+                notes:         { type: string }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AttendanceResponse' }
+
+  # ── PAYROLL ──────────────────────────────────────────────────
+  /payroll:
+    post:
+      tags: [Payroll]
+      summary: Create payroll record
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [restaurantCode, employeeCode, payPeriodStart, payPeriodEnd, netSalary]
+              properties:
+                restaurantCode: { type: string }
+                employeeCode:   { type: string }
+                payPeriodStart: { type: string, format: date }
+                payPeriodEnd:   { type: string, format: date }
+                overtimePay:    { type: number, default: 0 }
+                bonus:          { type: number, default: 0 }
+                deductions:     { type: number, default: 0 }
+                netSalary:      { type: number }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PayrollResponse' }
+
+  /payroll/search:
+    get:
+      tags: [Payroll]
+      summary: Search payroll records
+      parameters:
+        - { name: restaurantCode, in: query, schema: { type: string } }
+        - { name: employeeCode, in: query, schema: { type: string } }
+        - { name: status, in: query, schema: { $ref: '#/components/schemas/SalaryStatus' } }
+        - { $ref: '#/components/parameters/PageParam' }
+        - { $ref: '#/components/parameters/SizeParam' }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - { $ref: '#/components/schemas/PageMeta' }
+                  - type: object
+                    properties:
+                      content:
+                        type: array
+                        items: { $ref: '#/components/schemas/PayrollResponse' }
+
+  /payroll/{code}:
+    get:
+      tags: [Payroll]
+      summary: Get payroll record
+      parameters:
+        - { name: code, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PayrollResponse' }
+
+  /payroll/{code}/status:
+    patch:
+      tags: [Payroll]
+      summary: Update payroll status
+      parameters:
+        - { name: code, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status: { $ref: '#/components/schemas/SalaryStatus' }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PayrollResponse' }
+
+  # ── USERS ────────────────────────────────────────────────────
+  /users/{code}/restaurant:
+    patch:
+      tags: [Users]
+      summary: Update user's restaurant code
+      parameters:
+        - { name: code, in: path, required: true, schema: { type: string } }
+        - { name: restaurantCode, in: query, required: true, schema: { type: string } }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/UserResponse' }
+
+  # ── FILES ────────────────────────────────────────────────────
+  /files/upload:
+    post:
+      tags: [Files]
+      summary: Upload an image file
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Image file (jpg, png, gif, webp — max 10MB)
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/FileResponse' }
+
+  /files/{code}:
+    get:
+      tags: [Files]
+      summary: Get file info by code (public)
+      security: []
+      parameters:
+        - { name: code, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/FileResponse' }

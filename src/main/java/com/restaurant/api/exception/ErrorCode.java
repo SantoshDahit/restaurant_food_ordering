@@ -1,0 +1,69 @@
+package com.restaurant.api.exception;
+
+import lombok.Getter;
+import org.springframework.http.HttpStatus;
+
+@Getter
+public enum ErrorCode {
+
+    // Common
+    INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error"),
+    INVALID_REQUEST(HttpStatus.BAD_REQUEST, "Invalid request"),
+    ACCESS_DENIED(HttpStatus.FORBIDDEN, "Access denied"),
+    UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "Unauthorized"),
+
+    // Auth
+    INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "Invalid email or password"),
+    INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "Invalid or expired token"),
+    TOKEN_EXPIRED(HttpStatus.UNAUTHORIZED, "Token has expired"),
+
+    // User
+    USER_NOT_FOUND(HttpStatus.NOT_FOUND, "User not found"),
+    USER_ALREADY_EXISTS(HttpStatus.CONFLICT, "User with this email already exists"),
+
+    // Restaurant
+    RESTAURANT_NOT_FOUND(HttpStatus.NOT_FOUND, "Restaurant not found"),
+
+    // Table
+    TABLE_NOT_FOUND(HttpStatus.NOT_FOUND, "Table not found"),
+    TABLE_NUMBER_ALREADY_EXISTS(HttpStatus.CONFLICT, "Table number already exists in this restaurant"),
+
+    // Menu Category
+    MENU_CATEGORY_NOT_FOUND(HttpStatus.NOT_FOUND, "Menu category not found"),
+
+    // Menu Item
+    MENU_ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "Menu item not found"),
+
+    // Order
+    ORDER_NOT_FOUND(HttpStatus.NOT_FOUND, "Order not found"),
+    ORDER_CANNOT_BE_MODIFIED(HttpStatus.BAD_REQUEST, "Order cannot be modified in current status"),
+    INVALID_ORDER_STATUS_TRANSITION(HttpStatus.BAD_REQUEST, "Invalid order status transition"),
+
+    // Order Item
+    ORDER_ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "Order item not found"),
+
+    // Payment
+    PAYMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "Payment not found"),
+    ORDER_ALREADY_PAID(HttpStatus.CONFLICT, "Order has already been paid"),
+
+    // Employee
+    EMPLOYEE_NOT_FOUND(HttpStatus.NOT_FOUND, "Employee not found"),
+
+    // Attendance
+    ATTENDANCE_NOT_FOUND(HttpStatus.NOT_FOUND, "Attendance record not found"),
+    ATTENDANCE_ALREADY_EXISTS(HttpStatus.CONFLICT, "Attendance record already exists for this date"),
+
+    // Payroll
+    PAYROLL_NOT_FOUND(HttpStatus.NOT_FOUND, "Payroll record not found"),
+
+    // File
+    FILE_NOT_FOUND(HttpStatus.NOT_FOUND, "File not found");
+
+    private final HttpStatus httpStatus;
+    private final String message;
+
+    ErrorCode(HttpStatus httpStatus, String message) {
+        this.httpStatus = httpStatus;
+        this.message = message;
+    }
+}

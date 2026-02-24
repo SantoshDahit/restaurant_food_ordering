@@ -1,0 +1,9 @@
+spring:
+  application:
+    name: restaurant-food-ordering-system
+
+  profiles:
+    default: loc
+    group:
+      loc: 'common, loc, flyway'
+      dev: 'common, dev, flyway'
