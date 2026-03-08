@@ -107,7 +107,7 @@ jobs:
         with:
           host: ${{ secrets.DEV_PC_HOST }}
           username: ${{ secrets.DEV_PC_USERNAME }}
-          password: ${{ secrets.DEV_PC_PASSWORD }}
+          key: ${{ secrets.DEV_PC_SSH_KEY }}
           port: ${{ secrets.DEV_PC_SSH_PORT }}
           script: |
             echo "🚀 Deploying on Contabo VPS for ${{ env.PROFILE }}..."
