@@ -32,9 +32,9 @@ server:
 jwt:
   secret: dGhpcy1pcy1hLXZlcnktbG9uZy1zZWNyZXQta2V5LWZvci1qd3QtdG9rZW4taW4tcmVzdGF1cmFudC1zeXN0ZW0=
 
-file:
-  upload-dir: ./uploads
-  base-url: http://localhost:8080/api/uploads
+#file:
+#  upload-dir: ./uploads
+#  base-url: http://localhost:8080/api/uploads
 
 aws:
   s3:
