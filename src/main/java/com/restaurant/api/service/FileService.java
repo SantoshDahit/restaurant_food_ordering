@@ -3,7 +3,7 @@ package com.restaurant.api.service;
 import com.restaurant.api.common.UuidUtil;
 import com.restaurant.api.constant.FileType;
 import com.restaurant.api.dto.FileDto;
-import com.restaurant.api.entity.FileEntity;
+import com.restaurant.api.entity.File;
 import com.restaurant.api.exception.ApiException;
 import com.restaurant.api.exception.ErrorCode;
 import com.restaurant.api.repository.file.FileRepository;
@@ -35,19 +35,19 @@ public class FileService {
     );
 
     @Transactional(readOnly = true)
-    public FileEntity getByCode(String code) {
+    public File getByCode(String code) {
         return fileRepository.findByCode(code)
                 .orElseThrow(() -> new ApiException(ErrorCode.FILE_NOT_FOUND));
     }
 
     @Transactional
-    public FileEntity create(FileDto.CreateRequest request) {
-        FileEntity fileEntity = new FileEntity(UuidUtil.generate(), request.type(), request.url());
-        return fileRepository.save(fileEntity);
+    public File create(FileDto.CreateRequest request) {
+        File file = new File();
+        return fileRepository.save(file);
     }
 
     @Transactional
-    public FileEntity upload(MultipartFile file) {
+    public File upload(MultipartFile file) {
         if (file.isEmpty()) {
             throw new ApiException(ErrorCode.FILE_NOT_FOUND);
         }
@@ -68,7 +68,7 @@ public class FileService {
             Files.copy(file.getInputStream(), uploadPath.resolve(filename));
 
             String url = baseUrl + "/" + filename;
-            FileEntity entity = new FileEntity(UuidUtil.generate(), FileType.IMAGE, url);
+            File entity = new File();
             return fileRepository.save(entity);
         } catch (IOException e) {
             throw new RuntimeException("Failed to store file", e);

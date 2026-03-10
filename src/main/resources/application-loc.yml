@@ -38,7 +38,7 @@ file:
 
 aws:
   s3:
-    bucket-name: restaurantFoodOrderingSystemImagesStores
+    bucket-name: bookingsystemstorage
     region: ap-northeast-2
     folder-paths:
       menu-items: menu-items/

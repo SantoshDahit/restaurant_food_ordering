@@ -1,12 +1,16 @@
 package com.restaurant.api.controller;
 
 import com.restaurant.api.dto.FileDto;
-import com.restaurant.api.entity.FileEntity;
+import com.restaurant.api.dto.PreSignedUrlDto;
+import com.restaurant.api.entity.File;
 import com.restaurant.api.mapper.FileMapper;
+import com.restaurant.api.service.FilePresignedUrlService;
 import com.restaurant.api.service.FileService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/v1/files")
@@ -14,16 +18,22 @@ import org.springframework.web.multipart.MultipartFile;
 public class FileController {
     private final FileService fileService;
     private final FileMapper fileMapper;
+    private final FilePresignedUrlService filePresignedUrlService;
 
     @PostMapping("/upload")
     public FileDto.Response upload(@RequestParam("file") MultipartFile file) {
-        FileEntity entity = fileService.upload(file);
+        File entity = fileService.upload(file);
         return fileMapper.toResponse(entity);
     }
 
     @GetMapping("/{code}")
     public FileDto.Response getByCode(@PathVariable String code) {
-        FileEntity entity = fileService.getByCode(code);
+        File entity = fileService.getByCode(code);
         return fileMapper.toResponse(entity);
+    }
+
+    @PostMapping("/pre-signed-url")
+    public List<PreSignedUrlDto.Response> generatePreSignedUrl(@RequestBody List<PreSignedUrlDto.Request> requests) {
+        return filePresignedUrlService.generatePreSignedUrls(requests, 15);
     }
 }

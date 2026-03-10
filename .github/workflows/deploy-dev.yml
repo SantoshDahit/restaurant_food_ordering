@@ -169,6 +169,8 @@ jobs:
               -e SPRING_DATASOURCE_URL=jdbc:mysql://${{ env.MYSQL_CONTAINER_NAME }}:3306/${{ secrets.MYSQL_DATABASE }}?useSSL=false\&allowPublicKeyRetrieval=true\&serverTimezone=Asia/Seoul \
               -e SPRING_DATASOURCE_USERNAME=${{ secrets.MYSQL_USER }} \
               -e SPRING_DATASOURCE_PASSWORD=${{ secrets.MYSQL_PASSWORD }} \
+              -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} \
+              -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
               --restart always \
               $IMAGE_TAG
 

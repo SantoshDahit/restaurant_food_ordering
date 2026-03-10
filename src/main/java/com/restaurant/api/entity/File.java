@@ -6,12 +6,13 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Getter
 @NoArgsConstructor
 @Entity
 @Table(name = "file")
-public class FileEntity {
+public class File {
 
     @Id
     @Column(name = "code")
@@ -33,8 +34,8 @@ public class FileEntity {
     @Column(name = "update_at")
     private LocalDateTime updateAt;
 
-    public FileEntity(String code, FileType type, String url) {
-        this.code = code;
+    public File(String url, FileType type) {
+        this.code = UUID.randomUUID().toString();
         this.type = type;
         this.url = url;
         this.isSuccess = true;
