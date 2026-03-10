@@ -27,3 +27,5 @@ app:
   cors:
     allowed-origins:
       - "*"
+
+## allow test
