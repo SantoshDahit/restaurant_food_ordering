@@ -1,9 +1,14 @@
 src/main/resources/local.env
-src/main/resources/local.env
 src/main/resources/.env
 local.env
 .env
 *.env
 
-# Project exclude paths
+# Build artifacts
 /build/
+.gradle/
+
+# IDE
+.vscode/
+.idea/
+*.iml
