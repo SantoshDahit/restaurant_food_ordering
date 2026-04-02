@@ -30,7 +30,7 @@ public class MenuItemQueryRepository {
                         eqAvailability(searchRequest.availability()),
                         eqIsFeatured(searchRequest.isFeatured()),
                         eqIsVeg(searchRequest.isVeg()),
-                        menuItem.deleteAt.isNull()
+                        menuItem.deletedAt.isNull()
                 )
                 .orderBy(menuItem.sortOrder.asc())
                 .limit(pageable.getPageSize())
@@ -45,7 +45,7 @@ public class MenuItemQueryRepository {
                         eqAvailability(searchRequest.availability()),
                         eqIsFeatured(searchRequest.isFeatured()),
                         eqIsVeg(searchRequest.isVeg()),
-                        menuItem.deleteAt.isNull()
+                        menuItem.deletedAt.isNull()
                 )
                 .fetchOne();
 

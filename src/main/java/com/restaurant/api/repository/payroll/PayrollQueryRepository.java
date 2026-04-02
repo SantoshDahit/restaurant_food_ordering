@@ -29,7 +29,7 @@ public class PayrollQueryRepository {
                         eqEmployeeCode(searchRequest.employeeCode()),
                         eqStatus(searchRequest.status())
                 )
-                .orderBy(payroll.createAt.desc())
+                .orderBy(payroll.createdAt.desc())
                 .limit(pageable.getPageSize())
                 .offset(pageable.getOffset())
                 .fetch();

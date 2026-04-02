@@ -36,7 +36,7 @@ public class RestaurantTableDto {
         private String qrCodeUrl;
         private String qrCodeToken;
         private Boolean isActive;
-        private LocalDateTime createAt;
-        private LocalDateTime updateAt;
+        private LocalDateTime createdAt;
+        private LocalDateTime updatedAt;
     }
 }

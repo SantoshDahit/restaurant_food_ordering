@@ -42,7 +42,6 @@ public class RestaurantTableService {
             throw new ApiException(ErrorCode.TABLE_NUMBER_ALREADY_EXISTS);
         });
         RestaurantTable table = new RestaurantTable(
-                UuidUtil.generate(),
                 request.restaurantCode(),
                 request.tableNumber(),
                 request.capacity()

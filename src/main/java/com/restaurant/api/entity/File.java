@@ -1,18 +1,21 @@
 package com.restaurant.api.entity;
 
 import com.restaurant.api.constant.FileType;
+import com.restaurant.api.entity.base.BaseTimeEntity;
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Getter
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "file")
-public class File {
+@EntityListeners(AuditingEntityListener.class)
+public class File extends BaseTimeEntity {
 
     @Id
     @Column(name = "code")
@@ -28,12 +31,6 @@ public class File {
     @Column(name = "is_success", nullable = false)
     private Boolean isSuccess = false;
 
-    @Column(name = "create_at", nullable = false)
-    private LocalDateTime createAt = LocalDateTime.now();
-
-    @Column(name = "update_at")
-    private LocalDateTime updateAt;
-
     public File(String url, FileType type) {
         this.code = UUID.randomUUID().toString();
         this.type = type;
@@ -44,6 +41,5 @@ public class File {
     public void markSuccess(String url) {
         this.url = url;
         this.isSuccess = true;
-        this.updateAt = LocalDateTime.now();
     }
 }

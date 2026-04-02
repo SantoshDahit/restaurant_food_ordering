@@ -60,7 +60,7 @@ public class MenuItemDto {
         private Boolean isVeg;
         private Integer prepTimeMinutes;
         private Integer sortOrder;
-        private LocalDateTime createAt;
-        private LocalDateTime updateAt;
+        private LocalDateTime createdAt;
+        private LocalDateTime updatedAt;
     }
 }

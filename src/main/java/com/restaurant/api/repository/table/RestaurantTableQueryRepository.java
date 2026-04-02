@@ -27,7 +27,7 @@ public class RestaurantTableQueryRepository {
                 .where(
                         eqRestaurantCode(searchRequest.restaurantCode()),
                         eqStatus(searchRequest.status()),
-                        restaurantTable.deleteAt.isNull()
+                        restaurantTable.deletedAt.isNull()
                 )
                 .orderBy(restaurantTable.tableNumber.asc())
                 .limit(pageable.getPageSize())
@@ -39,7 +39,7 @@ public class RestaurantTableQueryRepository {
                 .where(
                         eqRestaurantCode(searchRequest.restaurantCode()),
                         eqStatus(searchRequest.status()),
-                        restaurantTable.deleteAt.isNull()
+                        restaurantTable.deletedAt.isNull()
                 )
                 .fetchOne();
 

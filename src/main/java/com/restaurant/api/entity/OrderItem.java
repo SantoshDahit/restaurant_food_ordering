@@ -2,16 +2,21 @@ package com.restaurant.api.entity;
 
 import com.restaurant.api.constant.OrderStatus;
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Getter
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "order_item")
+@EntityListeners(AuditingEntityListener.class)
 public class OrderItem {
 
     @Id
@@ -46,13 +51,14 @@ public class OrderItem {
     @Column(name = "status", nullable = false)
     private OrderStatus status = OrderStatus.PENDING;
 
-    @Column(name = "create_at", nullable = false)
-    private LocalDateTime createAt = LocalDateTime.now();
+    @CreatedDate
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
 
-    public OrderItem(String code, String orderCode, String menuItemCode,
+    public OrderItem( String orderCode, String menuItemCode,
                      Integer quantity, BigDecimal unitPrice, BigDecimal discountAmount,
                      String spiceLevel, String notes) {
-        this.code = code;
+        this.code = UUID.randomUUID().toString();
         this.orderCode = orderCode;
         this.menuItemCode = menuItemCode;
         this.quantity = quantity != null ? quantity : 1;

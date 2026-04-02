@@ -4,7 +4,6 @@ import com.restaurant.api.annotation.Facade;
 import com.restaurant.api.dto.RestaurantDto;
 import com.restaurant.api.entity.Restaurant;
 import com.restaurant.api.mapper.RestaurantMapper;
-import com.restaurant.api.security.AuthenticationUtil;
 import com.restaurant.api.service.RestaurantService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -19,8 +18,7 @@ public class RestaurantFacade {
 
     @Transactional
     public RestaurantDto.Response create(RestaurantDto.CreateRequest request) {
-        String userCode = AuthenticationUtil.getCurrentUserCode();
-        Restaurant restaurant = restaurantService.create(request, userCode);
+        Restaurant restaurant = restaurantService.create(request);
         return restaurantMapper.toResponse(restaurant);
     }
 

@@ -17,7 +17,7 @@ public class EmployeeRepositoryImpl implements EmployeeRepository {
 
     @Override
     public Optional<Employee> findByCode(String code) {
-        return employeeJpaRepository.findByCodeAndDeleteAtIsNull(code);
+        return employeeJpaRepository.findByCodeAndDeletedAtIsNull(code);
     }
 
     @Override

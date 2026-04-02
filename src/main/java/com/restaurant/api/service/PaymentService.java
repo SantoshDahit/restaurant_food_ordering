@@ -31,7 +31,6 @@ public class PaymentService {
     @Transactional
     public Payment create(PaymentDto.CreateRequest request) {
         Payment payment = new Payment(
-                UuidUtil.generate(),
                 request.restaurantCode(),
                 request.orderCode(),
                 request.processedBy(),

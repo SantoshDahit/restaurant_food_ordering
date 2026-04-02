@@ -45,7 +45,7 @@ public class PayrollDto {
         private BigDecimal netSalary;
         private SalaryStatus status;
         private LocalDateTime paidAt;
-        private LocalDateTime createAt;
-        private LocalDateTime updateAt;
+        private LocalDateTime createdAt;
+        private LocalDateTime updatedAt;
     }
 }

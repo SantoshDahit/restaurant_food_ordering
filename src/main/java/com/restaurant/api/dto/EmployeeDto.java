@@ -48,7 +48,7 @@ public class EmployeeDto {
         private String bankAccount;
         private String bankName;
         private Boolean isActive;
-        private LocalDateTime createAt;
-        private LocalDateTime updateAt;
+        private LocalDateTime createdAt;
+        private LocalDateTime updatedAt;
     }
 }

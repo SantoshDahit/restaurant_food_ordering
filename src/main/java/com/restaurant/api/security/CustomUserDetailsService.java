@@ -18,7 +18,7 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String userCode) throws UsernameNotFoundException {
-        User user = userJpaRepository.findByCodeAndDeleteAtIsNull(userCode)
+        User user = userJpaRepository.findByCodeAndDeletedAtIsNull(userCode)
                 .orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND));
         return new CustomUserDetails(user);
     }

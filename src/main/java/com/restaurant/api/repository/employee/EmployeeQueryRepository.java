@@ -27,7 +27,7 @@ public class EmployeeQueryRepository {
                         eqRestaurantCode(searchRequest.restaurantCode()),
                         containsFullName(searchRequest.fullName()),
                         eqIsActive(searchRequest.isActive()),
-                        employee.deleteAt.isNull()
+                        employee.deletedAt.isNull()
                 )
                 .orderBy(employee.fullName.asc())
                 .limit(pageable.getPageSize())
@@ -40,7 +40,7 @@ public class EmployeeQueryRepository {
                         eqRestaurantCode(searchRequest.restaurantCode()),
                         containsFullName(searchRequest.fullName()),
                         eqIsActive(searchRequest.isActive()),
-                        employee.deleteAt.isNull()
+                        employee.deletedAt.isNull()
                 )
                 .fetchOne();
 

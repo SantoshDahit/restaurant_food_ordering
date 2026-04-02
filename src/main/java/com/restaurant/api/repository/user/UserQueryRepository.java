@@ -25,12 +25,11 @@ public class UserQueryRepository {
         List<User> result = queryFactory
                 .selectFrom(user)
                 .where(
-                        eqRestaurantCode(searchRequest.restaurantCode()),
                         eqRole(searchRequest.role()),
                         containsFullName(searchRequest.fullName()),
-                        user.deleteAt.isNull()
+                        user.deletedAt.isNull()
                 )
-                .orderBy(user.createAt.desc())
+                .orderBy(user.createdAt.desc())
                 .limit(pageable.getPageSize())
                 .offset(pageable.getOffset())
                 .fetch();
@@ -38,19 +37,13 @@ public class UserQueryRepository {
         Long count = queryFactory.select(com.querydsl.core.types.dsl.Wildcard.count)
                 .from(user)
                 .where(
-                        eqRestaurantCode(searchRequest.restaurantCode()),
                         eqRole(searchRequest.role()),
                         containsFullName(searchRequest.fullName()),
-                        user.deleteAt.isNull()
+                        user.deletedAt.isNull()
                 )
                 .fetchOne();
 
         return new PageImpl<>(result, pageable, count != null ? count : 0L);
-    }
-
-    private BooleanExpression eqRestaurantCode(String restaurantCode) {
-        if (!StringUtils.hasText(restaurantCode)) return null;
-        return user.restaurantCode.eq(restaurantCode);
     }
 
     private BooleanExpression eqRole(UserRole role) {

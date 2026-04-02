@@ -17,12 +17,12 @@ public class UserRepositoryImpl implements UserRepository {
 
     @Override
     public Optional<User> findByCode(String code) {
-        return userJpaRepository.findByCodeAndDeleteAtIsNull(code);
+        return userJpaRepository.findByCodeAndDeletedAtIsNull(code);
     }
 
     @Override
     public Optional<User> findByEmail(String email) {
-        return userJpaRepository.findByEmailAndDeleteAtIsNull(email);
+        return userJpaRepository.findByEmailAndDeletedAtIsNull(email);
     }
 
     @Override

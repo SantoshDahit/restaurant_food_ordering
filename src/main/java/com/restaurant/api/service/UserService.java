@@ -43,8 +43,6 @@ public class UserService {
         });
         String hashedPassword = passwordEncoder.encode(request.password());
         User user = new User(
-                UuidUtil.generate(),
-                request.restaurantCode(),
                 request.fullName(),
                 request.email(),
                 request.phone(),
@@ -58,13 +56,6 @@ public class UserService {
     public User update(String code, UserDto.PatchRequest request) {
         User user = getByCode(code);
         user.update(request.fullName(), request.phone(), request.fileCode());
-        return userRepository.save(user);
-    }
-
-    @Transactional
-    public User updateRestaurantCode(String code, String restaurantCode) {
-        User user = getByCode(code);
-        user.updateRestaurantCode(restaurantCode);
         return userRepository.save(user);
     }
 

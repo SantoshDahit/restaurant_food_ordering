@@ -6,6 +6,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 
 public interface MenuCategoryJpaRepository extends JpaRepository<MenuCategory, String> {
-    Optional<MenuCategory> findByCodeAndDeleteAtIsNull(String code);
-    boolean existsByRestaurantCodeAndNameAndDeleteAtIsNull(String restaurantCode, String name);
+    Optional<MenuCategory> findByCodeAndDeletedAtIsNull(String code);
+    boolean existsByRestaurantCodeAndNameAndDeletedAtIsNull(String restaurantCode, String name);
 }

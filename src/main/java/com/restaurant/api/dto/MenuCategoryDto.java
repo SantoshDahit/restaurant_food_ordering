@@ -37,7 +37,7 @@ public class MenuCategoryDto {
         private String fileCode;
         private Integer sortOrder;
         private Boolean isActive;
-        private LocalDateTime createAt;
-        private LocalDateTime updateAt;
+        private LocalDateTime createdAt;
+        private LocalDateTime updatedAt;
     }
 }

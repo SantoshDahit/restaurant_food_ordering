@@ -1,19 +1,23 @@
 package com.restaurant.api.entity;
 
-import com.restaurant.api.common.BaseFullEntity;
+import com.restaurant.api.entity.base.BaseFullTimeEntity;
 import com.restaurant.api.constant.OrderStatus;
 import com.restaurant.api.constant.OrderType;
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 @Getter
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
+@EntityListeners(AuditingEntityListener.class)
 @Table(name = "orders")
-public class Orders extends BaseFullEntity {
+public class Orders extends BaseFullTimeEntity {
 
     @Id
     @Column(name = "code")
@@ -57,9 +61,9 @@ public class Orders extends BaseFullEntity {
     @Column(name = "device_type", length = 30)
     private String deviceType;
 
-    public Orders(String code, String restaurantCode, String tableCode, String waiterCode,
+    public Orders(String restaurantCode, String tableCode, String waiterCode,
                   String orderNumber, OrderType orderType, String specialNotes, String deviceType) {
-        this.code = code;
+        this.code = UUID.randomUUID().toString();
         this.restaurantCode = restaurantCode;
         this.tableCode = tableCode;
         this.waiterCode = waiterCode;

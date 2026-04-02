@@ -1,5 +1,6 @@
 package com.restaurant.api.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 
@@ -8,14 +9,14 @@ import java.time.LocalDateTime;
 public class RestaurantDto {
 
     public record CreateRequest(
-            String code,
-            @NotBlank String name,
-            @NotBlank String address,
-            @NotBlank String businessNumber,
-            String phone,
-            String email,
-            String currency,
-            String fileCode
+            @Schema(description = "Restaurant name") @NotBlank String name,
+            @Schema(description = "Address") @NotBlank String address,
+            @Schema(description = "Business registration number") @NotBlank String businessNumber,
+            @Schema(description = "Owner user code") @NotBlank String userCode,
+            @Schema(description = "Phone number") String phone,
+            @Schema(description = "Email address") String email,
+            @Schema(description = "Currency code e.g. KRW, USD") String currency,
+            @Schema(description = "File code for logo image") String fileCode
     ) {}
 
     public record PatchRequest(
@@ -43,7 +44,7 @@ public class RestaurantDto {
         private String currency;
         private String fileCode;
         private Boolean isActive;
-        private LocalDateTime createAt;
-        private LocalDateTime updateAt;
+        private LocalDateTime createdAt;
+        private LocalDateTime updatedAt;
     }
 }

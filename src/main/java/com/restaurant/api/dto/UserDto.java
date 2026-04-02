@@ -5,13 +5,13 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
 import java.time.LocalDateTime;
 
 public class UserDto {
 
     public record RegisterRequest(
-            @NotBlank String restaurantCode,
             @NotBlank String fullName,
             @Email @NotBlank String email,
             String phone,
@@ -31,7 +31,6 @@ public class UserDto {
     ) {}
 
     public record SearchRequest(
-            String restaurantCode,
             UserRole role,
             String fullName
     ) {}
@@ -39,18 +38,18 @@ public class UserDto {
     @Getter
     public static class Response {
         private String code;
-        private String restaurantCode;
         private String fullName;
         private String email;
         private String phone;
         private UserRole role;
         private String fileCode;
         private Boolean isActive;
-        private LocalDateTime createAt;
-        private LocalDateTime updateAt;
+        private LocalDateTime createdAt;
+        private LocalDateTime updatedAt;
     }
 
     @Getter
+    @RequiredArgsConstructor
     public static class LoginResponse {
         private String accessToken;
         private String refreshToken;

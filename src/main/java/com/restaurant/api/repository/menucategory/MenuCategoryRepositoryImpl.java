@@ -17,7 +17,7 @@ public class MenuCategoryRepositoryImpl implements MenuCategoryRepository {
 
     @Override
     public Optional<MenuCategory> findByCode(String code) {
-        return menuCategoryJpaRepository.findByCodeAndDeleteAtIsNull(code);
+        return menuCategoryJpaRepository.findByCodeAndDeletedAtIsNull(code);
     }
 
     @Override

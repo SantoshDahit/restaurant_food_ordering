@@ -1,69 +1,98 @@
 package com.restaurant.api.exception;
 
+import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
+import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.core.AuthenticationException;
-import org.springframework.validation.FieldError;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
-import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Objects;
 
-@Slf4j
 @RestControllerAdvice
+@RequiredArgsConstructor
+@Slf4j
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(ApiException.class)
-    public ResponseEntity<ErrorResponse> handleApiException(ApiException ex) {
-        log.warn("ApiException: {}", ex.getMessage());
-        ErrorCode errorCode = ex.getErrorCode();
-        return ResponseEntity
-                .status(errorCode.getHttpStatus())
-                .body(new ErrorResponse(errorCode.name(), ex.getMessage()));
+    @ExceptionHandler(value = ApiException.class)
+    public ResponseEntity<?> handleApiException(ApiException e) {
+        ErrorResponse errorResponse = new ErrorResponse(e.getErrorCode());
+        return new ResponseEntity<>(errorResponse, e.getErrorCode().getHttpStatus());
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<?> handleMissingParams(MissingServletRequestParameterException ex) {
+        log.error(ex.getMessage(), ex);
+        ErrorResponse errorResponse = new ErrorResponse(
+                "Required request parameter '" + ex.getParameterName() + "' is missing."
+        );
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<?> handleBadCredentialsException(BadCredentialsException ex) {
+        ErrorResponse errorResponse = new ErrorResponse(ex.getMessage());
+        return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<?> handleHttpMessageNotReadableException(HttpMessageNotReadableException ex) {
+        log.error(ex.getMessage(), ex);
+
+        Throwable cause = ex.getCause();
+        if (cause instanceof UnrecognizedPropertyException unrecognizedPropertyException) {
+            String fieldName = unrecognizedPropertyException.getPropertyName();
+            ErrorResponse errorResponse = new ErrorResponse(
+                    "Unsupported field: " + fieldName
+            );
+            return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+        }
+
+        ErrorResponse errorResponse = new ErrorResponse("JSON parsing error");
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponse> handleValidationException(MethodArgumentNotValidException ex) {
-        Map<String, String> errors = new HashMap<>();
-        ex.getBindingResult().getAllErrors().forEach(error -> {
-            String fieldName = ((FieldError) error).getField();
-            String message = error.getDefaultMessage();
-            errors.put(fieldName, message);
-        });
-        return ResponseEntity
-                .badRequest()
-                .body(new ErrorResponse(ErrorCode.INVALID_REQUEST.name(), errors.toString()));
+    public ResponseEntity<?> handleValidationErrors(MethodArgumentNotValidException ex) {
+        log.error(ex.getMessage(), ex);
+
+        String errorMessage = ex.getBindingResult().getFieldErrors().stream()
+                .map(error -> error.getField() + ": " + error.getDefaultMessage())
+                .findFirst()
+                .orElse("Validation failed");
+
+        ErrorResponse errorResponse = new ErrorResponse(errorMessage);
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
-    @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<ErrorResponse> handleAccessDeniedException(AccessDeniedException ex) {
-        return ResponseEntity
-                .status(ErrorCode.ACCESS_DENIED.getHttpStatus())
-                .body(new ErrorResponse(ErrorCode.ACCESS_DENIED.name(), ErrorCode.ACCESS_DENIED.getMessage()));
-    }
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<?> handleNoResourceFound(NoResourceFoundException ex, HttpServletRequest request) {
+        String requestUri = request.getRequestURI();
 
-    @ExceptionHandler(AuthenticationException.class)
-    public ResponseEntity<ErrorResponse> handleAuthenticationException(AuthenticationException ex) {
-        return ResponseEntity
-                .status(ErrorCode.UNAUTHORIZED.getHttpStatus())
-                .body(new ErrorResponse(ErrorCode.UNAUTHORIZED.name(), ex.getMessage()));
-    }
-
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
-        log.error("Unexpected error: ", ex);
-        return ResponseEntity
-                .status(ErrorCode.INTERNAL_SERVER_ERROR.getHttpStatus())
-                .body(new ErrorResponse(ErrorCode.INTERNAL_SERVER_ERROR.name(), ErrorCode.INTERNAL_SERVER_ERROR.getMessage()));
-    }
-
-    public record ErrorResponse(String code, String message, LocalDateTime timestamp) {
-        public ErrorResponse(String code, String message) {
-            this(code, message, LocalDateTime.now());
+        if (Objects.nonNull(requestUri) && !requestUri.endsWith("/favicon.ico")) {
+            log.error(ex.getMessage(), ex);
         }
+
+        ErrorResponse errorResponse = new ErrorResponse(
+                "Resource " + ex.getResourcePath() + " not found."
+        );
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    @ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR)
+    @ExceptionHandler(value = Exception.class)
+    public ResponseEntity<?> internalServerError(Exception e, HttpServletRequest request) {
+        log.error(e.getMessage(), e);
+
+        ErrorResponse errorResponse = new ErrorResponse(ErrorCode.INTERNAL_SERVER_ERROR);
+        return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }

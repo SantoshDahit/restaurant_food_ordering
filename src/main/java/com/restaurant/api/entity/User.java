@@ -1,23 +1,25 @@
 package com.restaurant.api.entity;
 
-import com.restaurant.api.common.BaseFullEntity;
 import com.restaurant.api.constant.UserRole;
+import com.restaurant.api.entity.base.BaseFullTimeEntity;
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
+import java.util.UUID;
 
 @Getter
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
+@EntityListeners(AuditingEntityListener.class)
 @Table(name = "user")
-public class User extends BaseFullEntity {
+public class User extends BaseFullTimeEntity {
 
     @Id
     @Column(name = "code")
     private String code;
-
-    @Column(name = "restaurant_code")
-    private String restaurantCode;
 
     @Column(name = "full_name", nullable = false, length = 200)
     private String fullName;
@@ -41,10 +43,8 @@ public class User extends BaseFullEntity {
     @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;
 
-    public User(String code, String restaurantCode, String fullName, String email,
-                String phone, String passwordHash, UserRole role) {
-        this.code = code;
-        this.restaurantCode = restaurantCode;
+    public User(String fullName, String email, String phone, String passwordHash, UserRole role) {
+        this.code = UUID.randomUUID().toString();
         this.fullName = fullName;
         this.email = email;
         this.phone = phone;
@@ -56,12 +56,6 @@ public class User extends BaseFullEntity {
         if (fullName != null) this.fullName = fullName;
         if (phone != null) this.phone = phone;
         if (fileCode != null) this.fileCode = fileCode;
-    }
-
-    public void updateRestaurantCode(String restaurantCode) {
-        if (restaurantCode != null && !restaurantCode.isBlank()) {
-            this.restaurantCode = restaurantCode;
-        }
     }
 
     public void updatePassword(String passwordHash) {

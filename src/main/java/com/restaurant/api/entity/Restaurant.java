@@ -1,22 +1,28 @@
 package com.restaurant.api.entity;
 
-import com.restaurant.api.common.BaseFullEntity;
+import com.restaurant.api.entity.base.BaseFullTimeEntity;
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
+import java.util.UUID;
 
 @Getter
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
+@EntityListeners(AuditingEntityListener.class)
 @Table(name = "restaurant")
-public class Restaurant extends BaseFullEntity {
+public class Restaurant extends BaseFullTimeEntity {
 
     @Id
     @Column(name = "code")
     private String code;
 
-    @Column(name = "user_code")
-    private String userCode;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_code")
+    private User user;
 
     @Column(name = "name", nullable = false, length = 255)
     private String name;
@@ -42,10 +48,10 @@ public class Restaurant extends BaseFullEntity {
     @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;
 
-    public Restaurant(String code, String userCode, String name, String address, String businessNumber,
+    public Restaurant(User user, String name, String address, String businessNumber,
                       String phone, String email, String currency) {
-        this.code = code;
-        this.userCode = userCode;
+        this.code = UUID.randomUUID().toString();
+        this.user = user;
         this.name = name;
         this.address = address;
         this.businessNumber = businessNumber;

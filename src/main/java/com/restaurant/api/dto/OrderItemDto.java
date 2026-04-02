@@ -37,6 +37,6 @@ public class OrderItemDto {
         private String spiceLevel;
         private String notes;
         private OrderStatus status;
-        private LocalDateTime createAt;
+        private LocalDateTime createdAt;
     }
 }

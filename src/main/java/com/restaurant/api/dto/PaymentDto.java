@@ -45,7 +45,7 @@ public class PaymentDto {
         private String receiptNumber;
         private BigDecimal refundedAmount;
         private LocalDateTime processedAt;
-        private LocalDateTime createAt;
-        private LocalDateTime updateAt;
+        private LocalDateTime createdAt;
+        private LocalDateTime updatedAt;
     }
 }

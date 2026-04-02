@@ -2,18 +2,23 @@ package com.restaurant.api.entity;
 
 import com.restaurant.api.constant.PaymentMethod;
 import com.restaurant.api.constant.PaymentStatus;
+import com.restaurant.api.entity.base.BaseTimeEntity;
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Getter
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "payment")
-public class Payment {
+@EntityListeners(AuditingEntityListener.class)
+public class Payment extends BaseTimeEntity {
 
     @Id
     @Column(name = "code")
@@ -51,15 +56,9 @@ public class Payment {
     @Column(name = "processed_at")
     private LocalDateTime processedAt;
 
-    @Column(name = "create_at", nullable = false)
-    private LocalDateTime createAt = LocalDateTime.now();
-
-    @Column(name = "update_at")
-    private LocalDateTime updateAt;
-
-    public Payment(String code, String restaurantCode, String orderCode, String processedBy,
+    public Payment(String restaurantCode, String orderCode, String processedBy,
                    PaymentMethod paymentMethod, BigDecimal amount, String transactionRef, String receiptNumber) {
-        this.code = code;
+        this.code = UUID.randomUUID().toString();
         this.restaurantCode = restaurantCode;
         this.orderCode = orderCode;
         this.processedBy = processedBy;
@@ -72,23 +71,19 @@ public class Payment {
     public void complete() {
         this.status = PaymentStatus.COMPLETED;
         this.processedAt = LocalDateTime.now();
-        this.updateAt = LocalDateTime.now();
     }
 
     public void fail() {
         this.status = PaymentStatus.FAILED;
-        this.updateAt = LocalDateTime.now();
     }
 
     public void refund(BigDecimal refundedAmount) {
         this.status = PaymentStatus.REFUNDED;
         this.refundedAmount = refundedAmount;
-        this.updateAt = LocalDateTime.now();
     }
 
     public void updateStatus(PaymentStatus status) {
         this.status = status;
-        this.updateAt = LocalDateTime.now();
         if (status == PaymentStatus.COMPLETED) {
             this.processedAt = LocalDateTime.now();
         }

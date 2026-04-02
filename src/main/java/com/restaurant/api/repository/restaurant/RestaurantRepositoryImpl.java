@@ -17,17 +17,17 @@ public class RestaurantRepositoryImpl implements RestaurantRepository {
 
     @Override
     public Optional<Restaurant> findByCode(String code) {
-        return restaurantJpaRepository.findByCodeAndDeleteAtIsNull(code);
+        return restaurantJpaRepository.findByCodeAndDeletedAtIsNull(code);
     }
 
     @Override
     public Optional<Restaurant> findByBusinessNumber(String businessNumber) {
-        return restaurantJpaRepository.findByBusinessNumberAndDeleteAtIsNull(businessNumber);
+        return restaurantJpaRepository.findByBusinessNumberAndDeletedAtIsNull(businessNumber);
     }
 
     @Override
     public Optional<Restaurant> findByUserCode(String userCode) {
-        return restaurantJpaRepository.findByUserCodeAndDeleteAtIsNull(userCode);
+        return restaurantJpaRepository.findByUserCodeAndDeletedAtIsNull(userCode);
     }
 
     @Override

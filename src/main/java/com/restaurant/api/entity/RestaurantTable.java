@@ -1,16 +1,21 @@
 package com.restaurant.api.entity;
 
-import com.restaurant.api.common.BaseFullEntity;
+import com.restaurant.api.entity.base.BaseFullTimeEntity;
 import com.restaurant.api.constant.TableStatus;
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
+import java.util.UUID;
 
 @Getter
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
+@EntityListeners(AuditingEntityListener.class)
 @Table(name = "restaurant_table")
-public class RestaurantTable extends BaseFullEntity {
+public class RestaurantTable extends BaseFullTimeEntity {
 
     @Id
     @Column(name = "code")
@@ -38,8 +43,8 @@ public class RestaurantTable extends BaseFullEntity {
     @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;
 
-    public RestaurantTable(String code, String restaurantCode, String tableNumber, Integer capacity) {
-        this.code = code;
+    public RestaurantTable(String restaurantCode, String tableNumber, Integer capacity) {
+        this.code = UUID.randomUUID().toString();
         this.restaurantCode = restaurantCode;
         this.tableNumber = tableNumber;
         this.capacity = capacity != null ? capacity : 4;

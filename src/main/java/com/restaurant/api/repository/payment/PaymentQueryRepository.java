@@ -30,7 +30,7 @@ public class PaymentQueryRepository {
                         eqStatus(searchRequest.status()),
                         eqPaymentMethod(searchRequest.paymentMethod())
                 )
-                .orderBy(payment.createAt.desc())
+                .orderBy(payment.createdAt.desc())
                 .limit(pageable.getPageSize())
                 .offset(pageable.getOffset())
                 .fetch();

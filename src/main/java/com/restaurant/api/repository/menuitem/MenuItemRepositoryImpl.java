@@ -17,7 +17,7 @@ public class MenuItemRepositoryImpl implements MenuItemRepository {
 
     @Override
     public Optional<MenuItem> findByCode(String code) {
-        return menuItemJpaRepository.findByCodeAndDeleteAtIsNull(code);
+        return menuItemJpaRepository.findByCodeAndDeletedAtIsNull(code);
     }
 
     @Override

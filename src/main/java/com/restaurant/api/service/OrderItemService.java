@@ -38,7 +38,6 @@ public class OrderItemService {
         MenuItem menuItem = menuItemRepository.findByCode(request.menuItemCode())
                 .orElseThrow(() -> new ApiException(ErrorCode.MENU_ITEM_NOT_FOUND));
         OrderItem orderItem = new OrderItem(
-                UuidUtil.generate(),
                 orderCode,
                 request.menuItemCode(),
                 request.quantity(),

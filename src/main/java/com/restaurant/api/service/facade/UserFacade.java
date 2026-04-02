@@ -6,6 +6,8 @@ import com.restaurant.api.entity.User;
 import com.restaurant.api.mapper.UserMapper;
 import com.restaurant.api.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.transaction.annotation.Transactional;
 
 @Facade
@@ -19,10 +21,9 @@ public class UserFacade {
         User user = userService.getByCode(code);
         return userMapper.toResponse(user);
     }
-
-    @Transactional
-    public UserDto.Response updateRestaurantCode(String code, String restaurantCode) {
-        User user = userService.updateRestaurantCode(code, restaurantCode);
-        return userMapper.toResponse(user);
+    @Transactional(readOnly = true)
+    public Page<UserDto.Response> search(UserDto.SearchRequest searchRequest, Pageable pageable) {
+        return userService.search(searchRequest, pageable).map(userMapper::toResponse);
     }
+
 }

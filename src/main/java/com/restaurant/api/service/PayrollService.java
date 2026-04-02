@@ -31,7 +31,6 @@ public class PayrollService {
     @Transactional
     public Payroll create(PayrollDto.CreateRequest request) {
         Payroll payroll = new Payroll(
-                UuidUtil.generate(),
                 request.restaurantCode(),
                 request.employeeCode(),
                 request.payPeriodStart(),

@@ -50,6 +50,6 @@ public class AttendanceDto {
         private BigDecimal workedHours;
         private BigDecimal overtimeHours;
         private String notes;
-        private LocalDateTime createAt;
+        private LocalDateTime createdAt;
     }
 }

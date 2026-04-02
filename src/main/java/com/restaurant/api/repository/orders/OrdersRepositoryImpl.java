@@ -17,12 +17,12 @@ public class OrdersRepositoryImpl implements OrdersRepository {
 
     @Override
     public Optional<Orders> findByCode(String code) {
-        return ordersJpaRepository.findByCodeAndDeleteAtIsNull(code);
+        return ordersJpaRepository.findByCodeAndDeletedAtIsNull(code);
     }
 
     @Override
     public Optional<Orders> findByOrderNumber(String orderNumber) {
-        return ordersJpaRepository.findByOrderNumberAndDeleteAtIsNull(orderNumber);
+        return ordersJpaRepository.findByOrderNumberAndDeletedAtIsNull(orderNumber);
     }
 
     @Override

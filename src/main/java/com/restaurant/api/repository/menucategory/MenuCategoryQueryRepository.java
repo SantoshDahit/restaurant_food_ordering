@@ -28,7 +28,7 @@ public class MenuCategoryQueryRepository {
                 .where(
                         eqRestaurantCode(searchRequest.restaurantCode()),
                         eqCategoryType(searchRequest.categoryType()),
-                        menuCategory.deleteAt.isNull()
+                        menuCategory.deletedAt.isNull()
                 )
                 .orderBy(menuCategory.sortOrder.asc())
                 .limit(pageable.getPageSize())
@@ -40,7 +40,7 @@ public class MenuCategoryQueryRepository {
                 .where(
                         eqRestaurantCode(searchRequest.restaurantCode()),
                         eqCategoryType(searchRequest.categoryType()),
-                        menuCategory.deleteAt.isNull()
+                        menuCategory.deletedAt.isNull()
                 )
                 .fetchOne();
 

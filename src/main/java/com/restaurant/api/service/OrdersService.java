@@ -38,7 +38,6 @@ public class OrdersService {
     public Orders create(OrdersDto.CreateRequest request) {
         String orderNumber = "ORD-" + System.currentTimeMillis();
         Orders orders = new Orders(
-                UuidUtil.generate(),
                 request.restaurantCode(),
                 request.tableCode(),
                 request.waiterCode(),

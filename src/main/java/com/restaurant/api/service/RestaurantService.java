@@ -3,6 +3,7 @@ package com.restaurant.api.service;
 import com.restaurant.api.common.UuidUtil;
 import com.restaurant.api.dto.RestaurantDto;
 import com.restaurant.api.entity.Restaurant;
+import com.restaurant.api.entity.User;
 import com.restaurant.api.exception.ApiException;
 import com.restaurant.api.exception.ErrorCode;
 import com.restaurant.api.repository.restaurant.RestaurantRepository;
@@ -16,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class RestaurantService {
     private final RestaurantRepository restaurantRepository;
+    private final UserService userService;
 
     @Transactional(readOnly = true)
     public Restaurant getByCode(String code) {
@@ -35,13 +37,12 @@ public class RestaurantService {
     }
 
     @Transactional
-    public Restaurant create(RestaurantDto.CreateRequest request, String userCode) {
-        String code = (request.code() != null && !request.code().isBlank())
-                ? request.code()
-                : UuidUtil.generate();
+    public Restaurant create(RestaurantDto.CreateRequest request) {
+
+        User user = userService.getByCode(request.userCode());
+
         Restaurant restaurant = new Restaurant(
-                code,
-                userCode,
+                user,
                 request.name(),
                 request.address(),
                 request.businessNumber(),

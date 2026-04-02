@@ -46,7 +46,7 @@ public class OrdersDto {
         private BigDecimal totalAmount;
         private String specialNotes;
         private String deviceType;
-        private LocalDateTime createAt;
-        private LocalDateTime updateAt;
+        private LocalDateTime createdAt;
+        private LocalDateTime updatedAt;
     }
 }

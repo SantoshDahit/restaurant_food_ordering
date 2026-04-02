@@ -19,6 +19,6 @@ public class FileDto {
         private FileType type;
         private String url;
         private Boolean isSuccess;
-        private LocalDateTime createAt;
+        private LocalDateTime createdAt;
     }
 }

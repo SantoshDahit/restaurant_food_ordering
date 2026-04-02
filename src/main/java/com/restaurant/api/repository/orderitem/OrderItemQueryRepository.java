@@ -20,7 +20,7 @@ public class OrderItemQueryRepository {
         return queryFactory
                 .selectFrom(orderItem)
                 .where(eqOrderCode(orderCode))
-                .orderBy(orderItem.createAt.asc())
+                .orderBy(orderItem.createdAt.asc())
                 .fetch();
     }
 

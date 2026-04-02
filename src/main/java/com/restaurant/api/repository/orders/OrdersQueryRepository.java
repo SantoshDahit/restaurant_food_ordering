@@ -30,9 +30,9 @@ public class OrdersQueryRepository {
                         eqStatus(searchRequest.status()),
                         eqOrderType(searchRequest.orderType()),
                         eqTableCode(searchRequest.tableCode()),
-                        orders.deleteAt.isNull()
+                        orders.deletedAt.isNull()
                 )
-                .orderBy(orders.createAt.desc())
+                .orderBy(orders.createdAt.desc())
                 .limit(pageable.getPageSize())
                 .offset(pageable.getOffset())
                 .fetch();
@@ -44,7 +44,7 @@ public class OrdersQueryRepository {
                         eqStatus(searchRequest.status()),
                         eqOrderType(searchRequest.orderType()),
                         eqTableCode(searchRequest.tableCode()),
-                        orders.deleteAt.isNull()
+                        orders.deletedAt.isNull()
                 )
                 .fetchOne();
 

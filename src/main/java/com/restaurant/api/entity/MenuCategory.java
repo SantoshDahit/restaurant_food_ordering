@@ -1,16 +1,19 @@
 package com.restaurant.api.entity;
 
-import com.restaurant.api.common.BaseFullEntity;
 import com.restaurant.api.constant.MenuCategoryType;
+import com.restaurant.api.entity.base.BaseFullTimeEntity;
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Getter
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
+@EntityListeners(AuditingEntityListener.class)
 @Table(name = "menu_category")
-public class MenuCategory extends BaseFullEntity {
+public class MenuCategory extends BaseFullTimeEntity {
 
     @Id
     @Column(name = "code")

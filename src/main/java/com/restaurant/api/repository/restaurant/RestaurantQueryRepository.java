@@ -25,7 +25,7 @@ public class RestaurantQueryRepository {
                 .selectFrom(restaurant)
                 .where(
                         containsName(searchRequest.name()),
-                        restaurant.deleteAt.isNull()
+                        restaurant.deletedAt.isNull()
                 )
                 .orderBy(restaurant.name.asc())
                 .limit(pageable.getPageSize())
@@ -36,7 +36,7 @@ public class RestaurantQueryRepository {
                 .from(restaurant)
                 .where(
                         containsName(searchRequest.name()),
-                        restaurant.deleteAt.isNull()
+                        restaurant.deletedAt.isNull()
                 )
                 .fetchOne();
 

@@ -6,8 +6,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 
 public interface RestaurantTableJpaRepository extends JpaRepository<RestaurantTable, String> {
-    Optional<RestaurantTable> findByCodeAndDeleteAtIsNull(String code);
-    Optional<RestaurantTable> findByRestaurantCodeAndTableNumberAndDeleteAtIsNull(String restaurantCode, String tableNumber);
-    boolean existsByRestaurantCodeAndTableNumberAndDeleteAtIsNull(String restaurantCode, String tableNumber);
-    Optional<RestaurantTable> findByQrCodeTokenAndDeleteAtIsNull(String qrCodeToken);
+    Optional<RestaurantTable> findByCodeAndDeletedAtIsNull(String code);
+    Optional<RestaurantTable> findByRestaurantCodeAndTableNumberAndDeletedAtIsNull(String restaurantCode, String tableNumber);
+    boolean existsByRestaurantCodeAndTableNumberAndDeletedAtIsNull(String restaurantCode, String tableNumber);
+    Optional<RestaurantTable> findByQrCodeTokenAndDeletedAtIsNull(String qrCodeToken);
 }

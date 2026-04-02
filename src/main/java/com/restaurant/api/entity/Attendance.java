@@ -2,17 +2,21 @@ package com.restaurant.api.entity;
 
 import com.restaurant.api.constant.AttendanceStatus;
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Getter
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "attendance")
+@EntityListeners(AuditingEntityListener.class)
 public class Attendance {
 
     @Id
@@ -47,8 +51,9 @@ public class Attendance {
     @Column(name = "notes", columnDefinition = "TEXT")
     private String notes;
 
-    @Column(name = "create_at", nullable = false)
-    private LocalDateTime createAt = LocalDateTime.now();
+    @CreatedDate
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
 
     public Attendance(String code, String employeeCode, String restaurantCode,
                       LocalDate attendanceDate, AttendanceStatus status,

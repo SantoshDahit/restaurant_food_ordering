@@ -1,19 +1,24 @@
 package com.restaurant.api.entity;
 
 import com.restaurant.api.constant.SalaryStatus;
+import com.restaurant.api.entity.base.BaseTimeEntity;
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Getter
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "payroll")
-public class Payroll {
+@EntityListeners(AuditingEntityListener.class)
+public class Payroll extends BaseTimeEntity {
 
     @Id
     @Column(name = "code")
@@ -50,16 +55,10 @@ public class Payroll {
     @Column(name = "paid_at")
     private LocalDateTime paidAt;
 
-    @Column(name = "create_at", nullable = false)
-    private LocalDateTime createAt = LocalDateTime.now();
-
-    @Column(name = "update_at")
-    private LocalDateTime updateAt;
-
-    public Payroll(String code, String restaurantCode, String employeeCode,
+    public Payroll(String restaurantCode, String employeeCode,
                    LocalDate payPeriodStart, LocalDate payPeriodEnd,
                    BigDecimal overtimePay, BigDecimal bonus, BigDecimal deductions, BigDecimal netSalary) {
-        this.code = code;
+        this.code = UUID.randomUUID().toString();
         this.restaurantCode = restaurantCode;
         this.employeeCode = employeeCode;
         this.payPeriodStart = payPeriodStart;
@@ -73,12 +72,10 @@ public class Payroll {
     public void markPaid() {
         this.status = SalaryStatus.PAID;
         this.paidAt = LocalDateTime.now();
-        this.updateAt = LocalDateTime.now();
     }
 
     public void updateStatus(SalaryStatus status) {
         this.status = status;
-        this.updateAt = LocalDateTime.now();
         if (status == SalaryStatus.PAID) {
             this.paidAt = LocalDateTime.now();
         }
