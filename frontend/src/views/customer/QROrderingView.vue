@@ -6,6 +6,7 @@ import { ordersApi } from '@/api/orders'
 import { orderItemApi } from '@/api/orderItem'
 import { toast } from 'vue-sonner'
 import api from '@/api/axios'
+import { fileApi } from '@/api/file'
 import type { RestaurantTableResponse, MenuItemResponse, MenuCategoryResponse, PageResponse } from '@/types'
 
 const route = useRoute()
@@ -20,6 +21,7 @@ const search = ref('')
 const loading = ref(true)
 const ordering = ref(false)
 const showCart = ref(false)
+const fileUrlCache = ref<Record<string, string>>({})
 
 const filteredItems = computed(() => {
   let result = items.value
@@ -58,6 +60,14 @@ async function load() {
     ])
     categories.value = cats.content
     items.value = its.content
+    // Preload images
+    const codes = its.content.filter(i => i.fileCode).map(i => i.fileCode!)
+    await Promise.all(codes.map(async (code) => {
+      try {
+        const f = await fileApi.get(code)
+        fileUrlCache.value[code] = f.url
+      } catch { /* silent */ }
+    }))
   } catch {
     toast.error('Invalid QR code or table not found')
   } finally {
@@ -164,8 +174,11 @@ onMounted(load)
         <div v-else class="grid grid-cols-2 gap-3">
           <div v-for="item in filteredItems" :key="item.code"
             class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-            <div class="bg-orange-50 h-24 flex items-center justify-center">
-              <span class="text-4xl">🍽️</span>
+            <div class="bg-orange-50 h-24 flex items-center justify-center overflow-hidden">
+              <img v-if="item.fileCode && fileUrlCache[item.fileCode]"
+                :src="fileUrlCache[item.fileCode]" :alt="item.name"
+                class="w-full h-full object-cover" />
+              <span v-else class="text-4xl">🍽️</span>
             </div>
             <div class="p-3">
               <h3 class="font-semibold text-gray-900 text-sm leading-tight mb-1 line-clamp-2">{{ item.name }}</h3>

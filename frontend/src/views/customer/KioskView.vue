@@ -6,6 +6,7 @@ import { orderItemApi } from '@/api/orderItem'
 import { restaurantApi } from '@/api/restaurant'
 import { toast } from 'vue-sonner'
 import api from '@/api/axios'
+import { fileApi } from '@/api/file'
 import type { MenuItemResponse, MenuCategoryResponse, PageResponse, RestaurantResponse } from '@/types'
 
 const route = useRoute()
@@ -19,6 +20,7 @@ const cart = ref<Record<string, number>>({})
 const activeCategory = ref('All')
 const loading = ref(true)
 const ordering = ref(false)
+const fileUrlCache = ref<Record<string, string>>({})
 
 const filteredItems = computed(() => {
   if (activeCategory.value === 'All') return items.value
@@ -51,6 +53,14 @@ async function load() {
     restaurant.value = rest
     categories.value = cats.content
     items.value = its.content
+    // Preload images
+    const codes = its.content.filter(i => i.fileCode).map(i => i.fileCode!)
+    await Promise.all(codes.map(async (code) => {
+      try {
+        const f = await fileApi.get(code)
+        fileUrlCache.value[code] = f.url
+      } catch { /* silent */ }
+    }))
   } catch {
     toast.error('Failed to load menu')
   } finally {
@@ -150,8 +160,11 @@ onMounted(load)
                 class="absolute -top-2 -right-2 bg-orange-500 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold text-sm">
                 {{ cart[item.code] }}
               </div>
-              <div class="bg-orange-50 rounded-xl h-28 flex items-center justify-center mb-3">
-                <span class="text-5xl">🍽️</span>
+              <div class="bg-orange-50 rounded-xl h-28 flex items-center justify-center mb-3 overflow-hidden">
+                <img v-if="item.fileCode && fileUrlCache[item.fileCode]"
+                  :src="fileUrlCache[item.fileCode]" :alt="item.name"
+                  class="w-full h-full object-cover rounded-xl" />
+                <span v-else class="text-5xl">🍽️</span>
               </div>
               <h3 class="font-semibold text-gray-900 text-sm leading-tight mb-1">{{ item.name }}</h3>
               <p v-if="item.description" class="text-xs text-gray-400 mb-2 line-clamp-2">{{ item.description }}</p>

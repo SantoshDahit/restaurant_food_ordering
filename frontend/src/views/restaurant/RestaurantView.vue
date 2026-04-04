@@ -19,7 +19,10 @@ const creating = ref(false)
 onMounted(loadRestaurant)
 
 async function loadRestaurant() {
-  if (!auth.restaurantCode) return
+  if (!auth.restaurantCode) {
+    notFound.value = true
+    return
+  }
   loading.value = true
   notFound.value = false
   try {
@@ -49,12 +52,14 @@ async function create() {
   }
   creating.value = true
   try {
-    restaurant.value = await restaurantApi.create(createForm.value)
+    restaurant.value = await restaurantApi.create({
+      ...createForm.value,
+      userCode: auth.user!.code,
+    })
     notFound.value = false
     // Update local restaurantCode so all subsequent API calls use the correct code
-    if (auth.user && restaurant.value) {
-      auth.user = { ...auth.user, restaurantCode: restaurant.value.code }
-      localStorage.setItem('user', JSON.stringify(auth.user))
+    if (restaurant.value) {
+      auth.setRestaurantCode(restaurant.value.code)
     }
     toast.success('Restaurant created!')
   } catch (e: any) {
@@ -108,7 +113,7 @@ async function save() {
     <!-- Restaurant not found → Create form -->
     <div v-else-if="notFound" class="bg-white rounded-xl shadow-sm border border-orange-200 p-6 max-w-2xl">
       <div class="mb-5 p-4 bg-orange-50 rounded-lg border border-orange-100">
-        <p class="text-sm font-medium text-orange-800">No restaurant found for code <span class="font-mono font-bold">{{ auth.restaurantCode }}</span></p>
+        <p class="text-sm font-medium text-orange-800">No restaurant found</p>
         <p class="text-xs text-orange-600 mt-1">Create your restaurant profile below to get started.</p>
       </div>
 

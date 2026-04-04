@@ -45,7 +45,6 @@ export interface LoginResponse {
 }
 
 export interface RegisterRequest {
-  restaurantCode: string
   fullName: string
   email: string
   phone?: string
@@ -55,14 +54,14 @@ export interface RegisterRequest {
 
 export interface UserResponse {
   code: string
-  restaurantCode: string
   fullName: string
   email: string
   phone?: string
   role: UserRole
   fileCode?: string
   isActive: boolean
-  createAt: string
+  createdAt: string
+  updatedAt?: string
 }
 
 // ─── Restaurant ───────────────────────────────────────────────────────────────
@@ -83,10 +82,10 @@ export interface RestaurantResponse {
 }
 
 export interface RestaurantCreateRequest {
-  code?: string
   name: string
   address: string
   businessNumber: string
+  userCode: string
   phone?: string
   email?: string
   currency?: string

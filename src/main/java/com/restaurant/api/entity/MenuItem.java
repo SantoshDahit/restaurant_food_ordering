@@ -60,7 +60,7 @@ public class MenuItem extends BaseFullTimeEntity {
 
     public MenuItem(String code, String restaurantCode, String categoryCode, String name,
                     String description, BigDecimal price, BigDecimal discountPercent,
-                    Boolean isVeg, Integer prepTimeMinutes, Integer sortOrder) {
+                    String fileCode, Boolean isVeg, Integer prepTimeMinutes, Integer sortOrder) {
         this.code = code;
         this.restaurantCode = restaurantCode;
         this.categoryCode = categoryCode;
@@ -68,6 +68,7 @@ public class MenuItem extends BaseFullTimeEntity {
         this.description = description;
         this.price = price;
         this.discountPercent = discountPercent != null ? discountPercent : BigDecimal.ZERO;
+        this.fileCode = fileCode;
         this.isVeg = isVeg != null ? isVeg : false;
         this.prepTimeMinutes = prepTimeMinutes != null ? prepTimeMinutes : 15;
         this.sortOrder = sortOrder != null ? sortOrder : 0;

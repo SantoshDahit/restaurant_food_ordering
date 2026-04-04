@@ -9,9 +9,9 @@ export const useAuthStore = defineStore('auth', () => {
     JSON.parse(localStorage.getItem('user') || 'null')
   )
   const token = ref<string | null>(localStorage.getItem('access_token'))
+  const restaurantCode = ref<string>(localStorage.getItem('restaurant_code') || '')
 
   const isLoggedIn = computed(() => !!token.value && !!user.value)
-  const restaurantCode = computed(() => user.value?.restaurantCode ?? '')
 
   function _persist(accessToken: string, userData: UserResponse) {
     token.value = accessToken
@@ -24,13 +24,18 @@ export const useAuthStore = defineStore('auth', () => {
   async function _syncRestaurantCode(userData: UserResponse) {
     try {
       const restaurant = await restaurantApi.getByOwner(userData.code)
-      if (restaurant && user.value) {
-        user.value = { ...user.value, restaurantCode: restaurant.code }
-        localStorage.setItem('user', JSON.stringify(user.value))
+      if (restaurant) {
+        restaurantCode.value = restaurant.code
+        localStorage.setItem('restaurant_code', restaurant.code)
       }
     } catch {
       // Restaurant not created yet — that's fine, RestaurantView will handle it
     }
+  }
+
+  function setRestaurantCode(code: string) {
+    restaurantCode.value = code
+    localStorage.setItem('restaurant_code', code)
   }
 
   async function login(credentials: LoginRequest) {
@@ -47,9 +52,11 @@ export const useAuthStore = defineStore('auth', () => {
   function logout() {
     token.value = null
     user.value = null
+    restaurantCode.value = ''
     localStorage.removeItem('access_token')
     localStorage.removeItem('user')
+    localStorage.removeItem('restaurant_code')
   }
 
-  return { user, token, isLoggedIn, restaurantCode, login, register, logout }
+  return { user, token, isLoggedIn, restaurantCode, setRestaurantCode, login, register, logout }
 })

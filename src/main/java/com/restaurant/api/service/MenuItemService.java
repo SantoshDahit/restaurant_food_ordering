@@ -38,6 +38,7 @@ public class MenuItemService {
                 request.description(),
                 request.price(),
                 request.discountPercent(),
+                request.fileCode(),
                 request.isVeg(),
                 request.prepTimeMinutes(),
                 request.sortOrder()
