@@ -1,0 +1,18 @@
+spring:
+  config:
+    activate:
+      on-profile: security
+
+security:
+  whitelist:
+    - /v1/auth/**
+    - /v1/menu-items/**
+    - /v1/menu-categories/**
+    - /v1/restaurants/**
+    - /v1/tables/by-token/**
+    - /v1/orders/**
+    - /v1/payments
+    - /v1/files/**
+    - /swagger-ui/**
+    - /v3/api-docs/**
+    - /swagger-ui.html

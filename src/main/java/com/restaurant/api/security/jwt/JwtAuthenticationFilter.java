@@ -32,7 +32,7 @@ public class JwtAuthenticationFilter extends GenericFilterBean {
     @Override
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
         HttpServletRequest request = (HttpServletRequest) servletRequest;
-        String requestURI = request.getRequestURI();
+        String requestURI = request.getServletPath();
 
         String token = jwtTokenProvider.resolveToken(request);
 

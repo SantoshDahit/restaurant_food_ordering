@@ -5,5 +5,5 @@ spring:
   profiles:
     default: loc
     group:
-      loc: 'common, loc, flyway'
-      dev: 'common, dev, flyway'
+      loc: 'common, security, loc, flyway'
+      dev: 'common, security, dev, flyway'

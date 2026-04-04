@@ -8,7 +8,7 @@ import java.util.Optional;
 
 public interface PayrollJpaRepository extends JpaRepository<Payroll, String> {
     Optional<Payroll> findByCode(String code);
-    Optional<Payroll> findByCodeAndCreateAtIsNotNull(String code);
+    Optional<Payroll> findByCodeAndCreatedAtIsNotNull(String code);
     boolean existsByEmployeeCodeAndPayPeriodStartAndPayPeriodEnd(
             String employeeCode, LocalDate payPeriodStart, LocalDate payPeriodEnd);
 }

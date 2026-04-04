@@ -11,6 +11,10 @@ public enum ErrorCode {
     INVALID_REQUEST(HttpStatus.BAD_REQUEST, "Invalid request"),
     ACCESS_DENIED(HttpStatus.FORBIDDEN, "Access denied"),
     UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "Unauthorized"),
+    DUPLICATE_ENTRY(HttpStatus.CONFLICT, "Duplicate entry"),
+    DATA_INTEGRITY_VIOLATION(HttpStatus.CONFLICT, "Data integrity violation"),
+    METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "HTTP method not allowed"),
+    MISSING_REQUEST_BODY(HttpStatus.BAD_REQUEST, "Request body is missing"),
 
     // Auth
     INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "Invalid email or password"),

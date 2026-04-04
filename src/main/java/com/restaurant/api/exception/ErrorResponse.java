@@ -23,4 +23,10 @@ public class ErrorResponse {
         this.errorCode = "";
         this.timestamp = LocalDateTime.now();
     }
+
+    public ErrorResponse(ErrorCode errorCode, String message) {
+        this.message = message;
+        this.errorCode = errorCode.name();
+        this.timestamp = LocalDateTime.now();
+    }
 }

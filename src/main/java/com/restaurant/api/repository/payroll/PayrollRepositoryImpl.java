@@ -17,7 +17,7 @@ public class PayrollRepositoryImpl implements PayrollRepository {
 
     @Override
     public Optional<Payroll> findByCode(String code) {
-        return payrollJpaRepository.findByCodeAndCreateAtIsNotNull(code);
+        return payrollJpaRepository.findByCodeAndCreatedAtIsNotNull(code);
     }
 
     @Override

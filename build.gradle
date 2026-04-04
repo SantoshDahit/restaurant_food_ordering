@@ -58,6 +58,10 @@ dependencies {
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
 
+    //swagger
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0'
+    implementation 'com.fasterxml.jackson.module:jackson-module-parameter-names'
+
     // Flyway
     implementation("org.flywaydb:flyway-core")
     implementation("org.flywaydb:flyway-mysql")

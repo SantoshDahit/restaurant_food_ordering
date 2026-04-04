@@ -226,19 +226,21 @@ components:
 
     PayrollResponse:
       type: object
+      description: Payroll response
       properties:
-        code:           { type: string }
-        restaurantCode: { type: string }
-        employeeCode:   { type: string }
-        payPeriodStart: { type: string, format: date }
-        payPeriodEnd:   { type: string, format: date }
-        overtimePay:    { type: number }
-        bonus:          { type: number }
-        deductions:     { type: number }
-        netSalary:      { type: number }
-        status:         { $ref: '#/components/schemas/SalaryStatus' }
-        paidAt:         { type: string, format: date-time, nullable: true }
-        createAt:       { type: string, format: date-time }
+        code:           { type: string, description: "Payroll code (UUID)", example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890" }
+        restaurantCode: { type: string, description: "Restaurant code", example: "rest-001" }
+        employeeCode:   { type: string, description: "Employee code", example: "emp-001" }
+        payPeriodStart: { type: string, format: date, description: "Pay period start date", example: "2026-03-01" }
+        payPeriodEnd:   { type: string, format: date, description: "Pay period end date", example: "2026-03-31" }
+        overtimePay:    { type: number, description: "Overtime pay amount", example: 150.00 }
+        bonus:          { type: number, description: "Bonus amount", example: 200.00 }
+        deductions:     { type: number, description: "Deductions amount", example: 50.00 }
+        netSalary:      { type: number, description: "Net salary amount", example: 3000.00 }
+        status:         { $ref: '#/components/schemas/SalaryStatus', description: "Salary status" }
+        paidAt:         { type: string, format: date-time, nullable: true, description: "Date and time when salary was paid" }
+        createdAt:      { type: string, format: date-time, description: "Record creation timestamp" }
+        updatedAt:      { type: string, format: date-time, description: "Record last update timestamp" }
 
     FileResponse:
       type: object
@@ -1128,25 +1130,28 @@ paths:
   /payroll:
     post:
       tags: [Payroll]
-      summary: Create payroll record
+      summary: Create payroll
+      description: Create a new payroll record for an employee
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
+              description: Request to create a payroll record
               required: [restaurantCode, employeeCode, payPeriodStart, payPeriodEnd, netSalary]
               properties:
-                restaurantCode: { type: string }
-                employeeCode:   { type: string }
-                payPeriodStart: { type: string, format: date }
-                payPeriodEnd:   { type: string, format: date }
-                overtimePay:    { type: number, default: 0 }
-                bonus:          { type: number, default: 0 }
-                deductions:     { type: number, default: 0 }
-                netSalary:      { type: number }
+                restaurantCode: { type: string, description: "Restaurant code", example: "rest-001" }
+                employeeCode:   { type: string, description: "Employee code", example: "emp-001" }
+                payPeriodStart: { type: string, format: date, description: "Pay period start date", example: "2026-03-01" }
+                payPeriodEnd:   { type: string, format: date, description: "Pay period end date", example: "2026-03-31" }
+                overtimePay:    { type: number, default: 0, description: "Overtime pay amount", example: 150.00 }
+                bonus:          { type: number, default: 0, description: "Bonus amount", example: 200.00 }
+                deductions:     { type: number, default: 0, description: "Deductions amount", example: 50.00 }
+                netSalary:      { type: number, description: "Net salary amount", example: 3000.00 }
       responses:
         '200':
+          description: Payroll created successfully
           content:
             application/json:
               schema: { $ref: '#/components/schemas/PayrollResponse' }
@@ -1154,15 +1159,17 @@ paths:
   /payroll/search:
     get:
       tags: [Payroll]
-      summary: Search payroll records
+      summary: Search payroll
+      description: Search payroll records with filters and pagination
       parameters:
-        - { name: restaurantCode, in: query, schema: { type: string } }
-        - { name: employeeCode, in: query, schema: { type: string } }
-        - { name: status, in: query, schema: { $ref: '#/components/schemas/SalaryStatus' } }
+        - { name: restaurantCode, in: query, description: "Filter by restaurant code", schema: { type: string, example: "rest-001" } }
+        - { name: employeeCode, in: query, description: "Filter by employee code", schema: { type: string, example: "emp-001" } }
+        - { name: status, in: query, description: "Filter by salary status", schema: { $ref: '#/components/schemas/SalaryStatus' } }
         - { $ref: '#/components/parameters/PageParam' }
         - { $ref: '#/components/parameters/SizeParam' }
       responses:
         '200':
+          description: Paginated payroll results
           content:
             application/json:
               schema:
@@ -1177,11 +1184,13 @@ paths:
   /payroll/{code}:
     get:
       tags: [Payroll]
-      summary: Get payroll record
+      summary: Get payroll by code
+      description: Retrieve a payroll record by its unique code
       parameters:
-        - { name: code, in: path, required: true, schema: { type: string } }
+        - { name: code, in: path, required: true, description: "Payroll code (UUID)", schema: { type: string } }
       responses:
         '200':
+          description: Payroll record found
           content:
             application/json:
               schema: { $ref: '#/components/schemas/PayrollResponse' }
@@ -1190,19 +1199,24 @@ paths:
     patch:
       tags: [Payroll]
       summary: Update payroll status
+      description: Update the status of a payroll record
       parameters:
-        - { name: code, in: path, required: true, schema: { type: string } }
+        - { name: code, in: path, required: true, description: "Payroll code (UUID)", schema: { type: string } }
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
+              description: Request to update payroll status
               required: [status]
               properties:
-                status: { $ref: '#/components/schemas/SalaryStatus' }
+                status:
+                  $ref: '#/components/schemas/SalaryStatus'
+                  description: "New salary status"
       responses:
         '200':
+          description: Payroll status updated successfully
           content:
             application/json:
               schema: { $ref: '#/components/schemas/PayrollResponse' }
