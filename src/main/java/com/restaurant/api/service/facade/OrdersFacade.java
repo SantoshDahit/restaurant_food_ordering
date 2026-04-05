@@ -4,6 +4,7 @@ import com.restaurant.api.annotation.Facade;
 import com.restaurant.api.dto.OrdersDto;
 import com.restaurant.api.entity.Orders;
 import com.restaurant.api.mapper.OrdersMapper;
+import com.restaurant.api.service.OrderItemService;
 import com.restaurant.api.service.OrdersService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -14,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class OrdersFacade {
     private final OrdersService ordersService;
+    private final OrderItemService orderItemService;
     private final OrdersMapper ordersMapper;
 
     @Transactional
@@ -37,6 +39,7 @@ public class OrdersFacade {
     @Transactional
     public OrdersDto.Response updateStatus(String code, OrdersDto.StatusUpdateRequest request) {
         Orders orders = ordersService.updateStatus(code, request);
+        orderItemService.updateStatusByOrderCode(code, request.status());
         return ordersMapper.toResponse(orders);
     }
 

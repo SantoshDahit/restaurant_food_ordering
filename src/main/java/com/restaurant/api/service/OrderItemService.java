@@ -1,6 +1,7 @@
 package com.restaurant.api.service;
 
 import com.restaurant.api.common.UuidUtil;
+import com.restaurant.api.constant.OrderStatus;
 import com.restaurant.api.dto.OrderItemDto;
 import com.restaurant.api.entity.MenuItem;
 import com.restaurant.api.entity.OrderItem;
@@ -59,5 +60,14 @@ public class OrderItemService {
     @Transactional
     public void delete(String code) {
         orderItemRepository.delete(code);
+    }
+
+    @Transactional
+    public void updateStatusByOrderCode(String orderCode, OrderStatus status) {
+        List<OrderItem> items = findAllByOrderCode(orderCode);
+        items.forEach(item -> {
+            item.updateStatus(status);
+            orderItemRepository.save(item);
+        });
     }
 }
