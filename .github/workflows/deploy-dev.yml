@@ -164,13 +164,19 @@ jobs:
             docker run -d \
               --name ${{ env.PROJECT_NAME }}-${{ env.APPLICATION_NAME }}-${{ env.PROFILE }} \
               --network ${{ env.DOCKER_NETWORK }} \
-              -p ${{ env.HOST_PORT }}:${{ env.CONTAINER_PORT }} \
               -e SPRING_PROFILES_ACTIVE=${{ env.PROFILE }} \
               -e SPRING_DATASOURCE_URL=jdbc:mysql://${{ env.MYSQL_CONTAINER_NAME }}:3306/${{ secrets.MYSQL_DATABASE }}?useSSL=false\&allowPublicKeyRetrieval=true\&serverTimezone=Asia/Seoul \
               -e SPRING_DATASOURCE_USERNAME=${{ secrets.MYSQL_USER }} \
               -e SPRING_DATASOURCE_PASSWORD=${{ secrets.MYSQL_PASSWORD }} \
+              -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} \
+              -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
+              -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
               --restart always \
               $IMAGE_TAG
+
+            # ─── STEP 6: Attach app to Caddy reverse-proxy network ───
+            docker network inspect web >/dev/null 2>&1 || docker network create web
+            docker network connect web ${{ env.PROJECT_NAME }}-${{ env.APPLICATION_NAME }}-${{ env.PROFILE }} 2>/dev/null || true
 
             echo "📊 Running containers:"
             docker ps | grep -E "${{ env.PROJECT_NAME }}|${{ env.MYSQL_CONTAINER_NAME }}"
