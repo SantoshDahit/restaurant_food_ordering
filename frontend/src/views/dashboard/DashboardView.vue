@@ -64,7 +64,7 @@ onMounted(async () => {
               <td class="px-5 py-3 text-gray-500">{{ order.orderType.replace(/_/g, ' ') }}</td>
               <td class="px-5 py-3"><StatusBadge :status="order.status" /></td>
               <td class="px-5 py-3 text-right font-medium">{{ order.totalAmount.toFixed(2) }}</td>
-              <td class="px-5 py-3 text-gray-400">{{ new Date(order.createAt).toLocaleDateString() }}</td>
+              <td class="px-5 py-3 text-gray-400">{{ new Date(order.createdAt).toLocaleDateString() }}</td>
             </tr>
             <tr v-if="!recentOrders.length">
               <td colspan="5" class="px-5 py-8 text-center text-gray-400">No orders yet</td>

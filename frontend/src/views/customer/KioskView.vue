@@ -12,7 +12,7 @@ import type { MenuItemResponse, MenuCategoryResponse, PageResponse, RestaurantRe
 const route = useRoute()
 const router = useRouter()
 
-const restaurantCode = computed(() => route.params.restaurantCode as string)
+const kioskCode = computed(() => route.params.kioskCode as string)
 const restaurant = ref<RestaurantResponse | null>(null)
 const categories = ref<MenuCategoryResponse[]>([])
 const items = ref<MenuItemResponse[]>([])
@@ -44,9 +44,9 @@ const cartCount = computed(() =>
 async function load() {
   try {
     loading.value = true
-    const rCode = restaurantCode.value
-    const [rest, cats, its] = await Promise.all([
-      restaurantApi.get(rCode),
+    const rest = await restaurantApi.getByKioskCode(kioskCode.value)
+    const rCode = rest.code
+    const [cats, its] = await Promise.all([
       api.get<PageResponse<MenuCategoryResponse>>('/menu-categories/search', { params: { restaurantCode: rCode, size: 50 } }).then(r => r.data),
       api.get<PageResponse<MenuItemResponse>>('/menu-items/search', { params: { restaurantCode: rCode, availability: 'AVAILABLE', size: 200 } }).then(r => r.data),
     ])
@@ -88,17 +88,21 @@ async function checkout() {
     toast.error('Please add items to your order')
     return
   }
+  if (!restaurant.value) {
+    toast.error('Restaurant not loaded')
+    return
+  }
   ordering.value = true
   try {
     const order = await ordersApi.create({
-      restaurantCode: restaurantCode.value,
+      restaurantCode: restaurant.value.code,
       orderType: 'KIOSK',
       deviceType: 'KIOSK',
     })
     for (const item of cartItems.value) {
       await orderItemApi.add(order.code, { menuItemCode: item.code, quantity: item.quantity })
     }
-    router.push({ path: '/payment', query: { orderCode: order.code, restaurantCode: restaurantCode.value } })
+    router.push({ path: '/payment', query: { orderCode: order.code, restaurantCode: restaurant.value.code } })
   } catch {
     toast.error('Checkout failed. Please try again.')
     ordering.value = false

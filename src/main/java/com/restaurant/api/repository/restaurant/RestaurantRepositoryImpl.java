@@ -21,6 +21,11 @@ public class RestaurantRepositoryImpl implements RestaurantRepository {
     }
 
     @Override
+    public Optional<Restaurant> findByKioskCode(String kioskCode) {
+        return restaurantJpaRepository.findByKioskCodeAndDeletedAtIsNull(kioskCode);
+    }
+
+    @Override
     public Optional<Restaurant> findByBusinessNumber(String businessNumber) {
         return restaurantJpaRepository.findByBusinessNumberAndDeletedAtIsNull(businessNumber);
     }

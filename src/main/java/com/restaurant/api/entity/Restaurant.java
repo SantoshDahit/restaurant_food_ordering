@@ -20,6 +20,9 @@ public class Restaurant extends BaseFullTimeEntity {
     @Column(name = "code")
     private String code;
 
+    @Column(name = "kiosk_code", nullable = false, unique = true, length = 20)
+    private String kioskCode;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_code")
     private User user;
@@ -49,8 +52,9 @@ public class Restaurant extends BaseFullTimeEntity {
     private Boolean isActive = true;
 
     public Restaurant(User user, String name, String address, String businessNumber,
-                      String phone, String email, String currency) {
+                      String phone, String email, String currency, String kioskCode) {
         this.code = UUID.randomUUID().toString();
+        this.kioskCode = kioskCode;
         this.user = user;
         this.name = name;
         this.address = address;

@@ -25,6 +25,11 @@ public class OrdersController {
         return ordersFacade.getByCode(code);
     }
 
+    @GetMapping("/{code}/detail")
+    public OrdersDto.DetailResponse getDetail(@PathVariable String code) {
+        return ordersFacade.getDetail(code);
+    }
+
     @GetMapping("/search")
     public Page<OrdersDto.Response> search(@ModelAttribute OrdersDto.SearchRequest request,
                                            Pageable pageable) {

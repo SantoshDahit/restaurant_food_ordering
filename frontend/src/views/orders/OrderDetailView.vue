@@ -9,14 +9,14 @@ import StatusBadge from '@/components/shared/StatusBadge.vue'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import ConfirmDialog from '@/components/shared/ConfirmDialog.vue'
 import { toast } from 'vue-sonner'
-import type { OrdersResponse, OrderItemResponse, MenuItemResponse, OrderStatus } from '@/types'
+import type { OrderDetailResponse, OrderItemDetail, MenuItemResponse, OrderStatus } from '@/types'
 
 const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
 
-const order = ref<OrdersResponse | null>(null)
-const orderItems = ref<OrderItemResponse[]>([])
+const order = ref<OrderDetailResponse | null>(null)
+const orderItems = ref<OrderItemDetail[]>([])
 const menuItems = ref<MenuItemResponse[]>([])
 const loading = ref(false)
 const removeTarget = ref<string | null>(null)
@@ -32,17 +32,20 @@ const addForm = ref({
   notes: '',
 })
 
+async function loadDetail(code: string) {
+  const data = await ordersApi.getDetail(code)
+  order.value = data
+  orderItems.value = data.items
+}
+
 onMounted(async () => {
   const code = route.params.code as string
   loading.value = true
   try {
-    const [orderData, itemsData, menuData] = await Promise.all([
-      ordersApi.get(code),
-      orderItemApi.getByOrder(code),
+    const [, menuData] = await Promise.all([
+      loadDetail(code),
       menuItemApi.search({ restaurantCode: auth.restaurantCode }),
     ])
-    order.value = orderData
-    orderItems.value = itemsData
     menuItems.value = menuData.content
   } catch {
     toast.error('Failed to load order')
@@ -54,7 +57,8 @@ onMounted(async () => {
 async function updateStatus(status: OrderStatus) {
   if (!order.value) return
   try {
-    order.value = await ordersApi.updateStatus(order.value.code, { status })
+    await ordersApi.updateStatus(order.value.code, { status })
+    await loadDetail(order.value.code)
     toast.success('Status updated')
   } catch {
     toast.error('Failed to update status')
@@ -64,13 +68,13 @@ async function updateStatus(status: OrderStatus) {
 async function addItem() {
   if (!order.value || !addForm.value.menuItemCode) { toast.error('Select a menu item'); return }
   try {
-    const item = await orderItemApi.add(order.value.code, {
+    await orderItemApi.add(order.value.code, {
       menuItemCode: addForm.value.menuItemCode,
       quantity: addForm.value.quantity,
       spiceLevel: addForm.value.spiceLevel || undefined,
       notes: addForm.value.notes || undefined,
     })
-    orderItems.value.push(item)
+    await loadDetail(order.value.code)
     showAddItem.value = false
     addForm.value = { menuItemCode: '', quantity: 1, spiceLevel: '', notes: '' }
     toast.success('Item added')
@@ -84,7 +88,7 @@ async function removeItem() {
   removing.value = true
   try {
     await orderItemApi.remove(order.value.code, removeTarget.value)
-    orderItems.value = orderItems.value.filter(i => i.code !== removeTarget.value)
+    await loadDetail(order.value.code)
     removeTarget.value = null
     toast.success('Item removed')
   } catch {
@@ -94,8 +98,8 @@ async function removeItem() {
   }
 }
 
-function getMenuItemName(code: string) {
-  return menuItems.value.find(m => m.code === code)?.name || code
+function getMenuItemName(item: OrderItemDetail) {
+  return item.menuItemName || item.menuItemCode
 }
 </script>
 
@@ -103,7 +107,7 @@ function getMenuItemName(code: string) {
   <div>
     <PageHeader :title="`Order ${order?.orderNumber || ''}`" description="Order details and items">
       <template #actions>
-        <button @click="router.push('/orders')"
+        <button @click="router.push({ name: 'orders' })"
           class="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">
           ← Back
         </button>
@@ -130,7 +134,23 @@ function getMenuItemName(code: string) {
           </div>
           <div>
             <p class="text-xs text-gray-500">Date</p>
-            <p class="font-semibold">{{ new Date(order.createAt).toLocaleString() }}</p>
+            <p class="font-semibold">{{ new Date(order.createdAt).toLocaleString() }}</p>
+          </div>
+        </div>
+
+        <div v-if="order.tableNumber || order.waiterName || order.restaurantName"
+          class="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4 pt-4 border-t border-gray-100">
+          <div v-if="order.restaurantName">
+            <p class="text-xs text-gray-500">Restaurant</p>
+            <p class="font-medium">{{ order.restaurantName }}</p>
+          </div>
+          <div v-if="order.tableNumber">
+            <p class="text-xs text-gray-500">Table</p>
+            <p class="font-medium">{{ order.tableNumber }}</p>
+          </div>
+          <div v-if="order.waiterName">
+            <p class="text-xs text-gray-500">Waiter</p>
+            <p class="font-medium">{{ order.waiterName }}</p>
           </div>
         </div>
 
@@ -220,7 +240,7 @@ function getMenuItemName(code: string) {
           </thead>
           <tbody class="divide-y divide-gray-100">
             <tr v-for="item in orderItems" :key="item.code" class="hover:bg-gray-50">
-              <td class="px-5 py-3 font-medium">{{ getMenuItemName(item.menuItemCode) }}</td>
+              <td class="px-5 py-3 font-medium">{{ getMenuItemName(item) }}</td>
               <td class="px-5 py-3 text-center">{{ item.quantity }}</td>
               <td class="px-5 py-3 text-right">{{ item.unitPrice.toFixed(2) }}</td>
               <td class="px-5 py-3 text-right font-semibold">{{ item.totalPrice.toFixed(2) }}</td>

@@ -1,16 +1,20 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import QRCode from 'qrcode'
 import { useAuthStore } from '@/stores/auth'
 import { tableApi } from '@/api/table'
+import { ordersApi } from '@/api/orders'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import StatusBadge from '@/components/shared/StatusBadge.vue'
 import ConfirmDialog from '@/components/shared/ConfirmDialog.vue'
 import { toast } from 'vue-sonner'
-import type { RestaurantTableResponse, TableStatus } from '@/types'
+import type { RestaurantTableResponse, TableStatus, OrdersResponse, OrderStatus } from '@/types'
 
 const auth = useAuthStore()
+const router = useRouter()
 const tables = ref<RestaurantTableResponse[]>([])
+const activeOrderByTable = ref<Record<string, OrdersResponse>>({})
 const loading = ref(false)
 const showFormDialog = ref(false)
 const deleteTarget = ref<string | null>(null)
@@ -28,7 +32,11 @@ const statusBorder: Record<TableStatus, string> = {
   CLEANING: 'border-gray-400',
 }
 
-onMounted(loadTables)
+const ACTIVE_STATUSES: ReadonlySet<OrderStatus> = new Set(['PENDING', 'CONFIRMED', 'PREPARING', 'READY'])
+
+onMounted(async () => {
+  await Promise.all([loadTables(), loadActiveOrders()])
+})
 
 async function loadTables() {
   loading.value = true
@@ -40,6 +48,26 @@ async function loadTables() {
   } finally {
     loading.value = false
   }
+}
+
+async function loadActiveOrders() {
+  try {
+    const data = await ordersApi.search({ restaurantCode: auth.restaurantCode, size: 200 })
+    const map: Record<string, OrdersResponse> = {}
+    for (const order of data.content) {
+      if (!order.tableCode) continue
+      if (!ACTIVE_STATUSES.has(order.status)) continue
+      // Search returns createdAt desc, so first hit per table is the most recent.
+      if (!map[order.tableCode]) map[order.tableCode] = order
+    }
+    activeOrderByTable.value = map
+  } catch {
+    // Non-fatal: tables still render without the active-order panel.
+  }
+}
+
+function openOrder(code: string) {
+  router.push({ name: 'order-detail', params: { code } })
 }
 
 function openAdd() {
@@ -152,6 +180,20 @@ async function confirmDelete() {
           </div>
           <StatusBadge :status="table.status" />
         </div>
+
+        <!-- Active order panel -->
+        <button
+          v-if="activeOrderByTable[table.code]"
+          @click="openOrder(activeOrderByTable[table.code].code)"
+          class="w-full mb-3 text-left bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg p-2 transition-colors">
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-xs font-semibold text-blue-700">{{ activeOrderByTable[table.code].orderNumber }}</span>
+            <StatusBadge :status="activeOrderByTable[table.code].status" />
+          </div>
+          <div class="text-xs text-gray-600">
+            Total <span class="font-semibold text-gray-900">{{ activeOrderByTable[table.code].totalAmount.toFixed(2) }}</span>
+          </div>
+        </button>
 
         <!-- QR preview thumbnail if token exists -->
         <div v-if="table.qrCodeToken" class="mb-3">

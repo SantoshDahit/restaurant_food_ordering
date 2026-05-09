@@ -35,6 +35,7 @@ public class RestaurantDto {
     @Getter
     public static class Response {
         private String code;
+        private String kioskCode;
         private String userCode;
         private String name;
         private String address;

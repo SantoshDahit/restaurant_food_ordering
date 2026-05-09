@@ -1,6 +1,6 @@
 package com.restaurant.api.service;
 
-import com.restaurant.api.common.UuidUtil;
+import com.restaurant.api.common.RestaurantCodeGenerator;
 import com.restaurant.api.dto.RestaurantDto;
 import com.restaurant.api.entity.Restaurant;
 import com.restaurant.api.entity.User;
@@ -48,9 +48,26 @@ public class RestaurantService {
                 request.businessNumber(),
                 request.phone(),
                 request.email(),
-                request.currency()
+                request.currency(),
+                generateUniqueKioskCode()
         );
         return restaurantRepository.save(restaurant);
+    }
+
+    private String generateUniqueKioskCode() {
+        for (int attempt = 0; attempt < 10; attempt++) {
+            String code = RestaurantCodeGenerator.generate();
+            if (restaurantRepository.findByKioskCode(code).isEmpty()) {
+                return code;
+            }
+        }
+        throw new ApiException(ErrorCode.INTERNAL_SERVER_ERROR);
+    }
+
+    @Transactional(readOnly = true)
+    public Restaurant getByKioskCode(String kioskCode) {
+        return restaurantRepository.findByKioskCode(kioskCode)
+                .orElseThrow(() -> new ApiException(ErrorCode.RESTAURANT_NOT_FOUND));
     }
 
     @Transactional

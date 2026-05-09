@@ -9,7 +9,7 @@ const router = createRouter({
 
     // ─── Customer-facing routes (no auth required) ────────────────────────
     { path: '/qr/:token', name: 'qr-ordering', component: () => import('@/views/customer/QROrderingView.vue') },
-    { path: '/kiosk/:restaurantCode', name: 'kiosk', component: () => import('@/views/customer/KioskView.vue') },
+    { path: '/kiosk/:kioskCode', name: 'kiosk', component: () => import('@/views/customer/KioskView.vue') },
     { path: '/payment', name: 'payment', component: () => import('@/views/customer/PaymentView.vue') },
 
     // ─── Auth ──────────────────────────────────────────────────────────────

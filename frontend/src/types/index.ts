@@ -68,6 +68,7 @@ export interface UserResponse {
 
 export interface RestaurantResponse {
   code: string
+  kioskCode: string
   userCode?: string
   name: string
   address: string
@@ -218,7 +219,45 @@ export interface OrdersResponse {
   totalAmount: number
   specialNotes?: string
   deviceType?: string
-  createAt: string
+  createdAt: string
+  updatedAt?: string
+}
+
+export interface OrderItemDetail {
+  code: string
+  orderCode: string
+  menuItemCode: string
+  menuItemName?: string
+  quantity: number
+  unitPrice: number
+  discountAmount: number
+  totalPrice: number
+  spiceLevel?: string
+  notes?: string
+  status: OrderStatus
+  createdAt: string
+}
+
+export interface OrderDetailResponse {
+  code: string
+  restaurantCode: string
+  restaurantName?: string
+  tableCode?: string
+  tableNumber?: string
+  waiterCode?: string
+  waiterName?: string
+  orderNumber: string
+  orderType: OrderType
+  status: OrderStatus
+  subtotal: number
+  discountAmount: number
+  taxAmount: number
+  totalAmount: number
+  specialNotes?: string
+  deviceType?: string
+  createdAt: string
+  updatedAt: string
+  items: OrderItemDetail[]
 }
 
 export interface OrderCreateRequest {

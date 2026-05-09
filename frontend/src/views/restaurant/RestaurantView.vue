@@ -161,6 +161,10 @@ async function save() {
     <div v-else-if="restaurant" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 max-w-2xl">
       <div v-if="!editing" class="space-y-4">
         <div class="flex gap-4">
+          <span class="w-36 text-sm text-gray-500 flex-shrink-0">Kiosk Code</span>
+          <span class="text-sm font-mono font-semibold tracking-wider px-2 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200">{{ restaurant.kioskCode }}</span>
+        </div>
+        <div class="flex gap-4">
           <span class="w-36 text-sm text-gray-500 flex-shrink-0">Name</span>
           <span class="text-sm font-medium text-gray-900">{{ restaurant.name }}</span>
         </div>

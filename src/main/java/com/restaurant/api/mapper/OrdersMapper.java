@@ -5,6 +5,8 @@ import com.restaurant.api.entity.Orders;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Component
 public class OrdersMapper extends BaseMapper<Orders, OrdersDto> {
     public OrdersMapper(ModelMapper modelMapper) {
@@ -13,5 +15,33 @@ public class OrdersMapper extends BaseMapper<Orders, OrdersDto> {
 
     public OrdersDto.Response toResponse(Orders entity) {
         return super.toDto(entity, OrdersDto.Response.class);
+    }
+
+    public OrdersDto.DetailResponse toDetailResponse(Orders entity,
+                                                     String restaurantName,
+                                                     String tableNumber,
+                                                     String waiterName,
+                                                     List<OrdersDto.OrderItemDetail> items) {
+        return new OrdersDto.DetailResponse(
+                entity.getCode(),
+                entity.getRestaurantCode(),
+                restaurantName,
+                entity.getTableCode(),
+                tableNumber,
+                entity.getWaiterCode(),
+                waiterName,
+                entity.getOrderNumber(),
+                entity.getOrderType(),
+                entity.getStatus(),
+                entity.getSubtotal(),
+                entity.getDiscountAmount(),
+                entity.getTaxAmount(),
+                entity.getTotalAmount(),
+                entity.getSpecialNotes(),
+                entity.getDeviceType(),
+                entity.getCreatedAt(),
+                entity.getUpdatedAt(),
+                items
+        );
     }
 }

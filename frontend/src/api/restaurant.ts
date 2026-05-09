@@ -17,6 +17,9 @@ export const restaurantApi = {
   getByOwner: (userCode: string) =>
     api.get<RestaurantResponse>(`/restaurants/by-owner/${userCode}`).then(r => r.data),
 
+  getByKioskCode: (kioskCode: string) =>
+    api.get<RestaurantResponse>(`/restaurants/by-kiosk-code/${kioskCode}`).then(r => r.data),
+
   delete: (code: string) =>
     api.delete(`/restaurants/${code}`),
 }

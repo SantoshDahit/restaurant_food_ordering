@@ -30,6 +30,11 @@ public class RestaurantController {
         return restaurantFacade.getByUserCode(userCode);
     }
 
+    @GetMapping("/by-kiosk-code/{kioskCode}")
+    public RestaurantDto.Response getByKioskCode(@PathVariable String kioskCode) {
+        return restaurantFacade.getByKioskCode(kioskCode);
+    }
+
     @GetMapping("/search")
     public Page<RestaurantDto.Response> search(@ModelAttribute RestaurantDto.SearchRequest request,
                                                Pageable pageable) {

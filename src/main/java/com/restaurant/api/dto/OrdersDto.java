@@ -8,6 +8,7 @@ import lombok.Getter;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class OrdersDto {
 
@@ -49,4 +50,41 @@ public class OrdersDto {
         private LocalDateTime createdAt;
         private LocalDateTime updatedAt;
     }
+
+    public record DetailResponse(
+            String code,
+            String restaurantCode,
+            String restaurantName,
+            String tableCode,
+            String tableNumber,
+            String waiterCode,
+            String waiterName,
+            String orderNumber,
+            OrderType orderType,
+            OrderStatus status,
+            BigDecimal subtotal,
+            BigDecimal discountAmount,
+            BigDecimal taxAmount,
+            BigDecimal totalAmount,
+            String specialNotes,
+            String deviceType,
+            LocalDateTime createdAt,
+            LocalDateTime updatedAt,
+            List<OrderItemDetail> items
+    ) {}
+
+    public record OrderItemDetail(
+            String code,
+            String orderCode,
+            String menuItemCode,
+            String menuItemName,
+            Integer quantity,
+            BigDecimal unitPrice,
+            BigDecimal discountAmount,
+            BigDecimal totalPrice,
+            String spiceLevel,
+            String notes,
+            OrderStatus status,
+            LocalDateTime createdAt
+    ) {}
 }

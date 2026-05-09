@@ -9,6 +9,7 @@ import java.util.Optional;
 
 public interface RestaurantRepository {
     Optional<Restaurant> findByCode(String code);
+    Optional<Restaurant> findByKioskCode(String kioskCode);
     Optional<Restaurant> findByBusinessNumber(String businessNumber);
     Optional<Restaurant> findByUserCode(String userCode);
     Restaurant save(Restaurant restaurant);

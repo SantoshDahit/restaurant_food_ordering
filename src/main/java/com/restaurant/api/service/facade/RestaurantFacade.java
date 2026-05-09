@@ -35,6 +35,12 @@ public class RestaurantFacade {
     }
 
     @Transactional(readOnly = true)
+    public RestaurantDto.Response getByKioskCode(String kioskCode) {
+        Restaurant restaurant = restaurantService.getByKioskCode(kioskCode);
+        return restaurantMapper.toResponse(restaurant);
+    }
+
+    @Transactional(readOnly = true)
     public Page<RestaurantDto.Response> search(RestaurantDto.SearchRequest request, Pageable pageable) {
         return restaurantService.search(request, pageable)
                 .map(restaurantMapper::toResponse);

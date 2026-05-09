@@ -84,12 +84,12 @@ async function updateStatus(code: string, status: OrderStatus) {
         <tbody class="divide-y divide-gray-100">
           <tr v-for="order in orders" :key="order.code"
             class="hover:bg-gray-50 cursor-pointer"
-            @click="router.push(`/orders/${order.code}`)">
+            @click="router.push({ name: 'order-detail', params: { code: order.code } })">
             <td class="px-5 py-3 font-medium text-blue-600">{{ order.orderNumber }}</td>
             <td class="px-5 py-3 text-gray-500">{{ order.orderType.replace(/_/g, ' ') }}</td>
             <td class="px-5 py-3"><StatusBadge :status="order.status" /></td>
             <td class="px-5 py-3 text-right font-medium">{{ order.totalAmount.toFixed(2) }}</td>
-            <td class="px-5 py-3 text-gray-400">{{ new Date(order.createAt).toLocaleDateString() }}</td>
+            <td class="px-5 py-3 text-gray-400">{{ new Date(order.createdAt).toLocaleDateString() }}</td>
             <td class="px-5 py-3 text-center" @click.stop>
               <select
                 :value="order.status"
