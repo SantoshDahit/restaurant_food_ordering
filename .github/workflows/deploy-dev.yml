@@ -142,6 +142,16 @@ jobs:
               echo "✅ MySQL started"
             fi
 
+            # ─── STEP 2.5: Ensure target database exists (idempotent guardrail) ───
+            echo "🔧 Ensuring database '${{ secrets.MYSQL_DATABASE }}' exists..."
+            docker exec ${{ env.MYSQL_CONTAINER_NAME }} mysql \
+              -uroot -p"${{ secrets.MYSQL_ROOT_PASSWORD }}" \
+              -e "CREATE DATABASE IF NOT EXISTS \`${{ secrets.MYSQL_DATABASE }}\` DEFAULT CHARSET utf8mb4 COLLATE utf8mb4_unicode_ci; \
+                  GRANT ALL PRIVILEGES ON \`${{ secrets.MYSQL_DATABASE }}\`.* TO '${{ secrets.MYSQL_USER }}'@'%'; \
+                  GRANT ALL PRIVILEGES ON \`${{ secrets.MYSQL_DATABASE }}\`.* TO 'root'@'%'; \
+                  FLUSH PRIVILEGES;"
+            echo "✅ Database ensured"
+
             # ─── STEP 3: Pull Spring Boot image ───
             IMAGE_TAG="${{ needs.build.outputs.image_tag }}"
             if [[ -z "$IMAGE_TAG" ]]; then
