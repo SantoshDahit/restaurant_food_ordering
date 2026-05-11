@@ -15,6 +15,7 @@ env:
   HOST_PORT: 8080
   DOMAIN: 217.15.165.238
   MYSQL_CONTAINER_NAME: shared-mysql
+  MYSQL_IMAGE: mysql:8.0
   DOCKER_NETWORK: restaurant-network
 
 jobs:
@@ -104,12 +105,19 @@ jobs:
     steps:
       - name: Deploy to Contabo VPS
         uses: appleboy/ssh-action@master
+        env:
+          MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
+          MYSQL_DATABASE: ${{ secrets.MYSQL_DATABASE }}
+          MYSQL_USER: ${{ secrets.MYSQL_USER }}
+          MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
         with:
           host: ${{ secrets.DEV_PC_HOST }}
           username: ${{ secrets.DEV_PC_USERNAME }}
           key: ${{ secrets.DEV_PC_SSH_KEY }}
           port: ${{ secrets.DEV_PC_SSH_PORT }}
+          envs: MYSQL_ROOT_PASSWORD,MYSQL_DATABASE,MYSQL_USER,MYSQL_PASSWORD
           script: |
+            set -e
             echo "🚀 Deploying on Contabo VPS for ${{ env.PROFILE }}..."
 
             # Docker Hub login
@@ -120,37 +128,76 @@ jobs:
               docker network create ${{ env.DOCKER_NETWORK }}
             echo "✅ Network ready: ${{ env.DOCKER_NETWORK }}"
 
-            # ─── STEP 2: Ensure MySQL container is running ───
-            if [ "$(docker ps -q -f name=${{ env.MYSQL_CONTAINER_NAME }})" ]; then
-              echo "✅ MySQL already running"
+            # ─── STEP 2: Ensure MySQL container exists and is running ───
+            # CRITICAL: -aq detects stopped containers too, so we never accidentally
+            # recreate (which would risk data loss if volume name ever changed).
+            MYSQL_EXISTS=$(docker ps -aq -f "name=^${{ env.MYSQL_CONTAINER_NAME }}$")
+
+            if [ -n "$MYSQL_EXISTS" ]; then
+              MYSQL_RUNNING=$(docker ps -q -f "name=^${{ env.MYSQL_CONTAINER_NAME }}$")
+              if [ -n "$MYSQL_RUNNING" ]; then
+                echo "✅ MySQL already running"
+              else
+                echo "▶️ MySQL container exists but stopped — starting it..."
+                docker start ${{ env.MYSQL_CONTAINER_NAME }}
+                echo "✅ MySQL restarted (data preserved)"
+              fi
             else
-              docker rm -f ${{ env.MYSQL_CONTAINER_NAME }} 2>/dev/null || true
-              echo "▶️ Starting MySQL container..."
+              echo "▶️ No MySQL container found — creating for the first time..."
+              docker volume inspect mysql-data >/dev/null 2>&1 || docker volume create mysql-data
+
+              # SECURITY: NO `-p 3306:3306` here.
+              # MySQL is reachable ONLY via the internal Docker network at
+              # `shared-mysql:3306`. This prevents the ransomware attack that
+              # previously wiped this database (port 3306 was publicly exposed).
+              # If you need to connect from your laptop, use SSH tunneling:
+              #   ssh -L 3306:127.0.0.1:3306 deploy@host
+              # AND temporarily add `-p 127.0.0.1:3306:3306` (loopback only,
+              # NEVER the wildcard 0.0.0.0).
               docker run -d \
                 --name ${{ env.MYSQL_CONTAINER_NAME }} \
                 --network ${{ env.DOCKER_NETWORK }} \
-                --restart always \
-                -e MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }} \
-                -e MYSQL_DATABASE=${{ secrets.MYSQL_DATABASE }} \
-                -e MYSQL_USER=${{ secrets.MYSQL_USER }} \
-                -e MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }} \
-                -p 3306:3306 \
+                --restart unless-stopped \
+                -e MYSQL_ROOT_PASSWORD="$MYSQL_ROOT_PASSWORD" \
+                -e MYSQL_DATABASE="$MYSQL_DATABASE" \
+                -e MYSQL_USER="$MYSQL_USER" \
+                -e MYSQL_PASSWORD="$MYSQL_PASSWORD" \
                 -v mysql-data:/var/lib/mysql \
-                mysql:latest
-              echo "⏳ Waiting for MySQL to be ready..."
-              sleep 20
-              echo "✅ MySQL started"
+                --health-cmd="mysqladmin ping -h localhost -uroot -p$MYSQL_ROOT_PASSWORD" \
+                --health-interval=5s \
+                --health-timeout=5s \
+                --health-retries=20 \
+                ${{ env.MYSQL_IMAGE }}
+              echo "⏳ Waiting for MySQL to become healthy..."
             fi
 
-            # ─── STEP 2.5: Ensure target database exists (idempotent guardrail) ───
-            echo "🔧 Ensuring database '${{ secrets.MYSQL_DATABASE }}' exists..."
-            docker exec ${{ env.MYSQL_CONTAINER_NAME }} mysql \
-              -uroot -p"${{ secrets.MYSQL_ROOT_PASSWORD }}" \
-              -e "CREATE DATABASE IF NOT EXISTS \`${{ secrets.MYSQL_DATABASE }}\` DEFAULT CHARSET utf8mb4 COLLATE utf8mb4_unicode_ci; \
-                  GRANT ALL PRIVILEGES ON \`${{ secrets.MYSQL_DATABASE }}\`.* TO '${{ secrets.MYSQL_USER }}'@'%'; \
-                  GRANT ALL PRIVILEGES ON \`${{ secrets.MYSQL_DATABASE }}\`.* TO 'root'@'%'; \
-                  FLUSH PRIVILEGES;"
-            echo "✅ Database ensured"
+            # Wait until MySQL responds to ping
+            for i in $(seq 1 30); do
+              if docker exec ${{ env.MYSQL_CONTAINER_NAME }} mysqladmin ping -h localhost --silent 2>/dev/null; then
+                echo "✅ MySQL is ready"
+                break
+              fi
+              echo "  ...waiting for MySQL ($i/30)"
+              sleep 2
+              if [ "$i" = "30" ]; then
+                echo "❌ MySQL did not become ready in time"
+                docker logs --tail 50 ${{ env.MYSQL_CONTAINER_NAME }}
+                exit 1
+              fi
+            done
+
+            # ─── STEP 2.5: Ensure target database & user grants exist ───
+            echo "🔧 Ensuring database '$MYSQL_DATABASE' and user grants exist..."
+            docker exec -i ${{ env.MYSQL_CONTAINER_NAME }} \
+              mysql -uroot -p"$MYSQL_ROOT_PASSWORD" <<SQL
+            CREATE DATABASE IF NOT EXISTS \`$MYSQL_DATABASE\`
+              DEFAULT CHARSET utf8mb4 COLLATE utf8mb4_unicode_ci;
+            CREATE USER IF NOT EXISTS '$MYSQL_USER'@'%' IDENTIFIED BY '$MYSQL_PASSWORD';
+            GRANT ALL PRIVILEGES ON \`$MYSQL_DATABASE\`.* TO '$MYSQL_USER'@'%';
+            GRANT ALL PRIVILEGES ON \`$MYSQL_DATABASE\`.* TO 'root'@'%';
+            FLUSH PRIVILEGES;
+            SQL
+            echo "✅ Database & grants ensured"
 
             # ─── STEP 3: Pull Spring Boot image ───
             IMAGE_TAG="${{ needs.build.outputs.image_tag }}"
@@ -163,32 +210,33 @@ jobs:
             docker pull $IMAGE_TAG || { echo "❌ Pull failed!"; exit 1; }
 
             # ─── STEP 4: Stop old app container ───
-            docker stop ${{ env.PROJECT_NAME }}-${{ env.APPLICATION_NAME }}-${{ env.PROFILE }} 2>/dev/null || true
-            docker rm ${{ env.PROJECT_NAME }}-${{ env.APPLICATION_NAME }}-${{ env.PROFILE }} 2>/dev/null || true
+            APP_CONTAINER=${{ env.PROJECT_NAME }}-${{ env.APPLICATION_NAME }}-${{ env.PROFILE }}
+            docker stop $APP_CONTAINER 2>/dev/null || true
+            docker rm $APP_CONTAINER 2>/dev/null || true
 
-            # Clean up old images
+            # Clean up dangling images only (never volumes!)
             docker images -f "dangling=true" -q | xargs -r docker rmi -f || true
 
             # ─── STEP 5: Run Spring Boot container ───
             echo "🚀 Starting app container..."
             docker run -d \
-              --name ${{ env.PROJECT_NAME }}-${{ env.APPLICATION_NAME }}-${{ env.PROFILE }} \
+              --name $APP_CONTAINER \
               --network ${{ env.DOCKER_NETWORK }} \
               -e SPRING_PROFILES_ACTIVE=${{ env.PROFILE }} \
-              -e SPRING_DATASOURCE_URL=jdbc:mysql://${{ env.MYSQL_CONTAINER_NAME }}:3306/${{ secrets.MYSQL_DATABASE }}?useSSL=false\&allowPublicKeyRetrieval=true\&serverTimezone=Asia/Seoul \
-              -e SPRING_DATASOURCE_USERNAME=${{ secrets.MYSQL_USER }} \
-              -e SPRING_DATASOURCE_PASSWORD=${{ secrets.MYSQL_PASSWORD }} \
+              -e SPRING_DATASOURCE_URL="jdbc:mysql://${{ env.MYSQL_CONTAINER_NAME }}:3306/$MYSQL_DATABASE?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul" \
+              -e SPRING_DATASOURCE_USERNAME="$MYSQL_USER" \
+              -e SPRING_DATASOURCE_PASSWORD="$MYSQL_PASSWORD" \
               -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} \
               -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
               -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
-              --restart always \
+              --restart unless-stopped \
               $IMAGE_TAG
 
             # ─── STEP 6: Attach app to Caddy reverse-proxy network ───
             docker network inspect web >/dev/null 2>&1 || docker network create web
-            docker network connect web ${{ env.PROJECT_NAME }}-${{ env.APPLICATION_NAME }}-${{ env.PROFILE }} 2>/dev/null || true
+            docker network connect web $APP_CONTAINER 2>/dev/null || true
 
             echo "📊 Running containers:"
-            docker ps | grep -E "${{ env.PROJECT_NAME }}|${{ env.MYSQL_CONTAINER_NAME }}"
+            docker ps | grep -E "${{ env.PROJECT_NAME }}|${{ env.MYSQL_CONTAINER_NAME }}" || true
 
             echo "🎉 Deployment successful!"
