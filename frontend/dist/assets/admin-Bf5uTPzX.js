@@ -1,0 +1,1 @@
+import{p as e}from"./index-BQWnLqYh.js";const n={stats:()=>e.get("/admin/stats").then(a=>a.data),restaurantOverview:a=>e.get(`/admin/restaurants/${a}/overview`).then(t=>t.data),changeUserRole:(a,t)=>e.patch(`/admin/users/${a}/role`,{role:t}).then(s=>s.data),setUserActive:(a,t)=>e.patch(`/admin/users/${a}/active`,{active:t}).then(s=>s.data)};export{n as a};

@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class PaymentService {
     private final PaymentRepository paymentRepository;
+    private final OrdersService ordersService;
 
     @Transactional(readOnly = true)
     public Payment getByCode(String code) {
@@ -30,6 +31,10 @@ public class PaymentService {
 
     @Transactional
     public Payment create(PaymentDto.CreateRequest request) {
+        // Verify the order exists before insert so we return a clean 404
+        // instead of a DB FK violation 500.
+        ordersService.getByCode(request.orderCode());
+
         Payment payment = new Payment(
                 request.restaurantCode(),
                 request.orderCode(),

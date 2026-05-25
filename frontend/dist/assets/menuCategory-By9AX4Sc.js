@@ -1,0 +1,1 @@
+import{p as a}from"./index-BQWnLqYh.js";const o={search:e=>a.get("/menu-categories/search",{params:e}).then(t=>t.data),get:e=>a.get(`/menu-categories/${e}`).then(t=>t.data),create:e=>a.post("/menu-categories",e).then(t=>t.data),update:(e,t)=>a.patch(`/menu-categories/${e}`,t).then(r=>r.data),delete:e=>a.delete(`/menu-categories/${e}`)};export{o as m};
