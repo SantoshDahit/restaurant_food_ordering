@@ -1,10 +1,12 @@
 package com.restaurant.api.service.facade;
 
 import com.restaurant.api.annotation.Facade;
+import com.restaurant.api.constant.EmailVerificationPurpose;
 import com.restaurant.api.dto.UserDto;
 import com.restaurant.api.entity.User;
 import com.restaurant.api.mapper.UserMapper;
 import com.restaurant.api.security.JwtTokenProvider;
+import com.restaurant.api.service.EmailVerificationService;
 import com.restaurant.api.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,9 +17,16 @@ public class AuthFacade {
     private final UserService userService;
     private final UserMapper userMapper;
     private final JwtTokenProvider jwtTokenProvider;
+    private final EmailVerificationService emailVerificationService;
 
     @Transactional
     public UserDto.LoginResponse register(UserDto.RegisterRequest request) {
+        // Block registration unless the email was verified within the last 10 minutes.
+        emailVerificationService.markUsed(
+                request.emailVerificationCode(),
+                request.email(),
+                EmailVerificationPurpose.JOIN
+        );
         User user = userService.create(request);
         String accessToken = jwtTokenProvider.generateAccessToken(user.getCode(), user.getRole().name());
         String refreshToken = jwtTokenProvider.generateRefreshToken(user.getCode(), user.getRole().name());

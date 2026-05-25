@@ -11,4 +11,6 @@ public interface RestaurantJpaRepository extends JpaRepository<Restaurant, Strin
     Optional<Restaurant> findByBusinessNumberAndDeletedAtIsNull(String businessNumber);
     boolean existsByBusinessNumberAndDeletedAtIsNull(String businessNumber);
     Optional<Restaurant> findByUserCodeAndDeletedAtIsNull(String userCode);
+    long countByDeletedAtIsNull();
+    long countByIsActiveAndDeletedAtIsNull(Boolean isActive);
 }

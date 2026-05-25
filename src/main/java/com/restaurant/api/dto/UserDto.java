@@ -3,7 +3,6 @@ package com.restaurant.api.dto;
 import com.restaurant.api.constant.UserRole;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -16,7 +15,7 @@ public class UserDto {
             @Email @NotBlank String email,
             String phone,
             @NotBlank String password,
-            @NotNull UserRole role
+            @NotBlank String emailVerificationCode
     ) {}
 
     public record LoginRequest(

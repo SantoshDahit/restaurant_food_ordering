@@ -66,4 +66,13 @@ public class User extends BaseFullTimeEntity {
         this.isActive = false;
         this.softDelete();
     }
+
+    public void activate() {
+        this.isActive = true;
+        this.restore();
+    }
+
+    public void changeRole(UserRole role) {
+        this.role = role;
+    }
 }

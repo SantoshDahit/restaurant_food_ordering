@@ -21,11 +21,11 @@ const router = createRouter({
       ],
     },
 
-    // ─── Admin Dashboard (auth required) ──────────────────────────────────
+    // ─── Manager portal (auth required, MANAGER role) ─────────────────────
     {
-      path: '/admin',
+      path: '/dashboard',
       component: () => import('@/layouts/DashboardLayout.vue'),
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, role: 'MANAGER' },
       children: [
         { path: '', name: 'dashboard', component: () => import('@/views/dashboard/DashboardView.vue') },
         { path: 'restaurant', name: 'restaurant', component: () => import('@/views/restaurant/RestaurantView.vue') },
@@ -41,6 +41,20 @@ const router = createRouter({
         { path: 'waiter', name: 'waiter', component: () => import('@/views/customer/WaiterView.vue') },
       ],
     },
+
+    // ─── Platform admin portal (auth required, ADMIN role) ────────────────
+    {
+      path: '/admin',
+      component: () => import('@/layouts/AdminLayout.vue'),
+      meta: { requiresAuth: true, role: 'ADMIN' },
+      children: [
+        { path: '', name: 'admin-dashboard', component: () => import('@/views/admin/AdminDashboardView.vue') },
+        { path: 'restaurants', name: 'admin-restaurants', component: () => import('@/views/admin/AdminRestaurantsView.vue') },
+        { path: 'restaurants/:code', name: 'admin-restaurant-detail', component: () => import('@/views/admin/AdminRestaurantDetailView.vue') },
+        { path: 'users', name: 'admin-users', component: () => import('@/views/admin/AdminUsersView.vue') },
+      ],
+    },
+
     { path: '/:pathMatch(.*)*', redirect: '/' },
   ],
 })
@@ -50,8 +64,11 @@ router.beforeEach((to) => {
   if (to.meta.requiresAuth && !auth.isLoggedIn) {
     return { name: 'login' }
   }
+  if (to.meta.requiresAuth && to.meta.role && auth.user?.role !== to.meta.role) {
+    return auth.homePath
+  }
   if (to.name === 'login' && auth.isLoggedIn) {
-    return { name: 'dashboard' }  // redirects to /admin
+    return auth.homePath
   }
 })
 

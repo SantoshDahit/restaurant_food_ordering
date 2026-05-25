@@ -1,9 +1,11 @@
 package com.restaurant.api.controller;
 
+import com.restaurant.api.constant.FileType;
 import com.restaurant.api.dto.FileDto;
 import com.restaurant.api.dto.PreSignedUrlDto;
 import com.restaurant.api.entity.File;
 import com.restaurant.api.mapper.FileMapper;
+import com.restaurant.api.service.FileLocalUploadService;
 import com.restaurant.api.service.FilePresignedUrlService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -15,16 +17,19 @@ import java.util.List;
 @RequestMapping("/v1/files")
 @RequiredArgsConstructor
 public class FileController {
-//    private final FileService fileService;
     private final FileMapper fileMapper;
     private final FilePresignedUrlService filePresignedUrlService;
+    private final FileLocalUploadService fileLocalUploadService;
 
-//    @PostMapping("/upload")
-//    public FileDto.Response upload(@RequestParam("file") MultipartFile file) {
-//        File entity = fileService.upload(file);
-//        return fileMapper.toResponse(entity);
-//    }
-//
+    @PostMapping(value = "/upload", consumes = "multipart/form-data")
+    public FileDto.Response upload(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "folderName", defaultValue = "menu-items") String folderName,
+            @RequestParam(value = "type", defaultValue = "IMAGE") FileType type) {
+        File entity = fileLocalUploadService.store(file, folderName, type);
+        return fileMapper.toResponse(entity);
+    }
+
     @GetMapping("/{code}")
     public FileDto.Response getByCode(@PathVariable String code) {
         File entity = filePresignedUrlService.getById(code);

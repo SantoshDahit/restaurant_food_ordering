@@ -12,3 +12,6 @@ local.env
 .vscode/
 .idea/
 *.iml
+
+# Local uploads
+/uploads/

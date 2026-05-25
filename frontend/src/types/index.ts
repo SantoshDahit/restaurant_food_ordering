@@ -1,6 +1,6 @@
 // ─── Enums ───────────────────────────────────────────────────────────────────
 
-export type UserRole = 'ADMIN' | 'MANAGER'
+export type UserRole = 'ADMIN' | 'MANAGER' | 'STAFF'
 export type OrderStatus = 'PENDING' | 'CONFIRMED' | 'PREPARING' | 'READY' | 'COMPLETED' | 'CANCELLED'
 export type OrderType = 'DINE_IN' | 'TAKEAWAY' | 'QR_ORDER' | 'KIOSK'
 export type PaymentMethod = 'CASH' | 'POS' | 'ESEWA' | 'KHALTI' | 'PHONEPAY' | 'IBANK'
@@ -49,7 +49,53 @@ export interface RegisterRequest {
   email: string
   phone?: string
   password: string
-  role: UserRole
+  emailVerificationCode: string
+}
+
+// ─── Admin ────────────────────────────────────────────────────────────────────
+
+export interface PlatformStats {
+  totalRestaurants: number
+  activeRestaurants: number
+  totalUsers: number
+  totalManagers: number
+  totalStaff: number
+  totalOrders: number
+  ordersToday: number
+  totalRevenue: number
+  revenueToday: number
+}
+
+export interface RestaurantOverview {
+  totalOrders: number
+  totalRevenue: number
+}
+
+// ─── Email verification ───────────────────────────────────────────────────────
+
+export type EmailVerificationPurpose = 'JOIN' | 'PASSWORD_RESET' | 'CHANGE_EMAIL'
+export type EmailVerificationStatus = 'PENDING' | 'VERIFIED' | 'USED' | 'EXPIRED'
+
+export interface EmailVerificationSendRequest {
+  email: string
+  purpose: EmailVerificationPurpose
+}
+
+export interface EmailVerificationVerifyRequest {
+  code: string
+  email: string
+  pin: string
+  purpose: EmailVerificationPurpose
+}
+
+export interface EmailVerificationResponse {
+  code: string
+  email: string
+  purpose: EmailVerificationPurpose
+  status: EmailVerificationStatus
+  verifiedAt?: string
+  expiredAt: string
+  createdAt: string
 }
 
 export interface UserResponse {

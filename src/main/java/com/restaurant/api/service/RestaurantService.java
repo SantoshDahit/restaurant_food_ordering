@@ -41,6 +41,10 @@ public class RestaurantService {
 
         User user = userService.getByCode(request.userCode());
 
+        if (restaurantRepository.findByUserCode(user.getCode()).isPresent()) {
+            throw new ApiException(ErrorCode.RESTAURANT_ALREADY_EXISTS_FOR_USER);
+        }
+
         Restaurant restaurant = new Restaurant(
                 user,
                 request.name(),

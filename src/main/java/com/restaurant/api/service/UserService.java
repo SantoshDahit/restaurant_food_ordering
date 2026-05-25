@@ -1,6 +1,7 @@
 package com.restaurant.api.service;
 
 import com.restaurant.api.common.UuidUtil;
+import com.restaurant.api.constant.UserRole;
 import com.restaurant.api.dto.UserDto;
 import com.restaurant.api.entity.User;
 import com.restaurant.api.exception.ApiException;
@@ -47,8 +48,26 @@ public class UserService {
                 request.email(),
                 request.phone(),
                 hashedPassword,
-                request.role()
+                UserRole.MANAGER
         );
+        return userRepository.save(user);
+    }
+
+    @Transactional
+    public User changeRole(String code, UserRole newRole) {
+        User user = getByCode(code);
+        user.changeRole(newRole);
+        return userRepository.save(user);
+    }
+
+    @Transactional
+    public User setActive(String code, boolean active) {
+        User user = getByCode(code);
+        if (active) {
+            user.activate();
+        } else {
+            user.deactivate();
+        }
         return userRepository.save(user);
     }
 

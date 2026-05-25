@@ -1,4 +1,7 @@
 spring:
+  config:
+    import: optional:classpath:local.env[.properties]
+
   application:
     name: restaurant-food-ordering-system
 

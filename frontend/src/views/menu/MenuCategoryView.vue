@@ -4,6 +4,9 @@ import { useAuthStore } from '@/stores/auth'
 import { menuCategoryApi } from '@/api/menuCategory'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import ConfirmDialog from '@/components/shared/ConfirmDialog.vue'
+import RestaurantGuard from '@/components/shared/RestaurantGuard.vue'
+import EmptyState from '@/components/shared/EmptyState.vue'
+import { ListTree } from 'lucide-vue-next'
 import { toast } from 'vue-sonner'
 import type { MenuCategoryResponse, MenuCategoryType } from '@/types'
 
@@ -26,6 +29,7 @@ const form = ref({
 onMounted(loadCategories)
 
 async function loadCategories() {
+  if (!auth.restaurantCode) return
   loading.value = true
   try {
     const data = await menuCategoryApi.search({ restaurantCode: auth.restaurantCode })
@@ -92,21 +96,21 @@ async function confirmDelete() {
 </script>
 
 <template>
-  <div>
+  <RestaurantGuard resource="menu categories">
     <PageHeader title="Menu Categories" description="Manage menu categories">
       <template #actions>
         <button @click="openAdd"
-          class="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700">
+          class="px-4 py-2 bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 text-white text-sm rounded-xl shadow-md shadow-violet-500/30 transition-all">
           + Add Category
         </button>
       </template>
     </PageHeader>
 
-    <div v-if="loading" class="text-center py-12 text-gray-400">Loading...</div>
+    <div v-if="loading" class="text-center py-12 text-slate-400">Loading...</div>
 
-    <div v-else class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-      <table class="w-full text-sm">
-        <thead class="bg-gray-50 text-gray-500 uppercase text-xs">
+    <div v-else class="bg-white rounded-2xl shadow-sm ring-1 ring-slate-200/60 overflow-x-auto">
+      <table class="w-full text-sm min-w-[600px]">
+        <thead class="bg-slate-50/60 text-slate-500 uppercase text-[11px] tracking-wide">
           <tr>
             <th class="px-5 py-3 text-left">Name</th>
             <th class="px-5 py-3 text-left">Type</th>
@@ -115,11 +119,11 @@ async function confirmDelete() {
             <th class="px-5 py-3 text-right">Actions</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-gray-100">
-          <tr v-for="cat in categories" :key="cat.code" class="hover:bg-gray-50">
+        <tbody class="divide-y divide-slate-100">
+          <tr v-for="cat in categories" :key="cat.code" class="hover:bg-slate-50/60 transition-colors">
             <td class="px-5 py-3 font-medium text-gray-900">{{ cat.name }}</td>
-            <td class="px-5 py-3 text-gray-500">{{ cat.categoryType || '—' }}</td>
-            <td class="px-5 py-3 text-center text-gray-500">{{ cat.sortOrder }}</td>
+            <td class="px-5 py-3 text-slate-500">{{ cat.categoryType || '—' }}</td>
+            <td class="px-5 py-3 text-center text-slate-500">{{ cat.sortOrder }}</td>
             <td class="px-5 py-3 text-center">
               <span :class="cat.isActive ? 'text-green-600' : 'text-red-500'">
                 {{ cat.isActive ? 'Yes' : 'No' }}
@@ -128,14 +132,20 @@ async function confirmDelete() {
             <td class="px-5 py-3 text-right">
               <div class="flex justify-end gap-2">
                 <button @click="openEdit(cat)"
-                  class="text-xs px-3 py-1 bg-gray-100 rounded hover:bg-gray-200">Edit</button>
+                  class="text-xs px-2.5 py-1 bg-slate-50 ring-1 ring-slate-200 text-slate-700 rounded-lg hover:bg-slate-100 transition-colors">Edit</button>
                 <button @click="deleteTarget = cat.code"
-                  class="text-xs px-3 py-1 bg-red-100 text-red-600 rounded hover:bg-red-200">Delete</button>
+                  class="text-xs px-2.5 py-1 bg-rose-50 ring-1 ring-rose-200 text-rose-600 rounded-lg hover:bg-rose-100 transition-colors">Delete</button>
               </div>
             </td>
           </tr>
           <tr v-if="!categories.length">
-            <td colspan="5" class="px-5 py-8 text-center text-gray-400">No categories found</td>
+            <td colspan="5" class="p-0">
+              <EmptyState
+                :icon="ListTree"
+                title="No categories yet"
+                description="Create your first category to group menu items."
+              />
+            </td>
           </tr>
         </tbody>
       </table>
@@ -145,18 +155,18 @@ async function confirmDelete() {
     <Teleport to="body">
       <div v-if="showFormDialog" class="fixed inset-0 z-50 flex items-center justify-center">
         <div class="absolute inset-0 bg-black/50" @click="showFormDialog = false" />
-        <div class="relative bg-white rounded-xl shadow-xl p-6 w-full max-w-sm mx-4">
+        <div class="relative bg-white rounded-2xl shadow-xl ring-1 ring-slate-200/60 p-6 w-full max-w-sm mx-4">
           <h3 class="text-lg font-semibold mb-4">{{ editTarget ? 'Edit Category' : 'Add Category' }}</h3>
           <form @submit.prevent="save" class="space-y-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">Name *</label>
               <input v-model="form.name" required
-                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40 focus:border-violet-300 transition-all" />
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">Type</label>
               <select v-model="form.categoryType"
-                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40 focus:border-violet-300 transition-all">
                 <option value="">— None —</option>
                 <option v-for="t in categoryTypes" :key="t" :value="t">{{ t }}</option>
               </select>
@@ -164,11 +174,11 @@ async function confirmDelete() {
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">Sort Order</label>
               <input v-model.number="form.sortOrder" type="number" min="0"
-                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40 focus:border-violet-300 transition-all" />
             </div>
             <div class="flex justify-end gap-3 pt-2">
               <button type="button" @click="showFormDialog = false"
-                class="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
+                class="px-4 py-2 text-sm bg-white ring-1 ring-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 transition-colors">Cancel</button>
               <button type="submit"
                 class="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700">Save</button>
             </div>
@@ -185,5 +195,5 @@ async function confirmDelete() {
       @confirm="confirmDelete"
       @cancel="deleteTarget = null"
     />
-  </div>
+  </RestaurantGuard>
 </template>

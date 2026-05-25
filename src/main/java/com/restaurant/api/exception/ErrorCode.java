@@ -27,6 +27,7 @@ public enum ErrorCode {
 
     // Restaurant
     RESTAURANT_NOT_FOUND(HttpStatus.NOT_FOUND, "Restaurant not found"),
+    RESTAURANT_ALREADY_EXISTS_FOR_USER(HttpStatus.CONFLICT, "User already owns a restaurant"),
 
     // Table
     TABLE_NOT_FOUND(HttpStatus.NOT_FOUND, "Table not found"),
@@ -61,7 +62,17 @@ public enum ErrorCode {
     PAYROLL_NOT_FOUND(HttpStatus.NOT_FOUND, "Payroll record not found"),
 
     // File
-    FILE_NOT_FOUND(HttpStatus.NOT_FOUND, "File not found");
+    FILE_NOT_FOUND(HttpStatus.NOT_FOUND, "File not found"),
+
+    // Email verification
+    EMAIL_VERIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "Email verification record not found"),
+    EMAIL_VERIFICATION_EXPIRED(HttpStatus.BAD_REQUEST, "Email verification code has expired"),
+    EMAIL_VERIFICATION_PIN_MISMATCH(HttpStatus.BAD_REQUEST, "Email verification PIN does not match"),
+    EMAIL_VERIFICATION_EMAIL_MISMATCH(HttpStatus.BAD_REQUEST, "Email does not match the verification record"),
+    EMAIL_VERIFICATION_PURPOSE_MISMATCH(HttpStatus.BAD_REQUEST, "Email verification purpose does not match"),
+    EMAIL_VERIFICATION_NOT_VERIFIED(HttpStatus.BAD_REQUEST, "Email has not been verified"),
+    EMAIL_VERIFICATION_ALREADY_USED(HttpStatus.BAD_REQUEST, "Email verification has already been used"),
+    EMAIL_SEND_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to send email");
 
     private final HttpStatus httpStatus;
     private final String message;

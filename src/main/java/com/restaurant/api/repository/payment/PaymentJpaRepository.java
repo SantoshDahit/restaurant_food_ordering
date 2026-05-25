@@ -1,12 +1,26 @@
 package com.restaurant.api.repository.payment;
 
+import com.restaurant.api.constant.PaymentStatus;
 import com.restaurant.api.entity.Payment;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 public interface PaymentJpaRepository extends JpaRepository<Payment, String> {
     Optional<Payment> findByCode(String code);
     Optional<Payment> findByOrderCode(String orderCode);
     boolean existsByOrderCode(String orderCode);
+
+    @Query("SELECT COALESCE(SUM(p.amount - p.refundedAmount), 0) FROM Payment p WHERE p.status = :status")
+    BigDecimal sumNetAmountByStatus(@Param("status") PaymentStatus status);
+
+    @Query("SELECT COALESCE(SUM(p.amount - p.refundedAmount), 0) FROM Payment p WHERE p.status = :status AND p.processedAt >= :since")
+    BigDecimal sumNetAmountByStatusSince(@Param("status") PaymentStatus status, @Param("since") LocalDateTime since);
+
+    @Query("SELECT COALESCE(SUM(p.amount - p.refundedAmount), 0) FROM Payment p WHERE p.status = :status AND p.restaurantCode = :restaurantCode")
+    BigDecimal sumNetAmountByStatusAndRestaurant(@Param("status") PaymentStatus status, @Param("restaurantCode") String restaurantCode);
 }

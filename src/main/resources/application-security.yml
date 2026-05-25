@@ -3,16 +3,7 @@ spring:
     activate:
       on-profile: security
 
-security:
-  whitelist:
-    - /v1/auth/**
-    - /v1/menu-items/**
-    - /v1/menu-categories/**
-    - /v1/restaurants/**
-    - /v1/tables/by-token/**
-    - /v1/orders/**
-    - /v1/payments
-    - /v1/files/**
-    - /swagger-ui/**
-    - /v3/api-docs/**
-    - /swagger-ui.html
+# Access control is defined in SecurityConfig.java (Spring Security's
+# authorizeHttpRequests). The previous `security.whitelist` YAML list was
+# replaced because it could not distinguish between safe public GETs and
+# dangerous unauthenticated writes on the same path prefix.

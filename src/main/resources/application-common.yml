@@ -23,6 +23,20 @@ spring:
       max-file-size: 10MB
       max-request-size: 10MB
 
+  mail:
+    host: ${SMTP_HOST:smtp.gmail.com}
+    port: ${SMTP_PORT:587}
+    username: ${SMTP_USERNAME:}
+    password: ${SMTP_PASSWORD:dmnw emjx fqsu eyyi}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+        debug: false
+
 jwt:
   access-token-expiry: 3600000      # 1 hour in milliseconds
   refresh-token-expiry: 604800000   # 7 days in milliseconds

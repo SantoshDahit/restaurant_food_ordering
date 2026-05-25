@@ -14,30 +14,30 @@ function launchKiosk() {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-orange-50 to-amber-50">
-    <div class="container mx-auto px-4 py-16">
+  <div class="min-h-screen bg-gradient-to-br from-violet-50 to-fuchsia-50">
+    <div class="container mx-auto px-4 py-10 sm:py-16">
 
       <!-- Header -->
-      <div class="text-center mb-16">
-        <h1 class="text-5xl font-bold text-gray-900 mb-4">
+      <div class="text-center mb-10 sm:mb-16">
+        <h1 class="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 mb-4 leading-tight">
           Restaurant Management System
         </h1>
-        <p class="text-xl text-gray-600 max-w-2xl mx-auto">
+        <p class="text-base sm:text-xl text-gray-600 max-w-2xl mx-auto">
           Complete solution for managing your restaurant with admin dashboard,
           customer ordering, and multi-device support
         </p>
       </div>
 
       <!-- Mode Cards -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 max-w-6xl mx-auto">
 
         <!-- Admin Dashboard -->
         <button
           @click="router.push('/login')"
-          class="group bg-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 text-left"
+          class="group bg-white rounded-2xl p-6 sm:p-8 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 text-left"
         >
-          <div class="bg-orange-100 w-16 h-16 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-            <svg class="w-8 h-8 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div class="bg-violet-100 w-16 h-16 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+            <svg class="w-8 h-8 text-violet-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
             </svg>
@@ -47,7 +47,7 @@ function launchKiosk() {
         </button>
 
         <!-- QR Ordering -->
-        <div class="bg-white rounded-2xl p-8 shadow-lg">
+        <div class="bg-white rounded-2xl p-6 sm:p-8 shadow-lg">
           <div class="bg-blue-100 w-16 h-16 rounded-xl flex items-center justify-center mb-4">
             <svg class="w-8 h-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -66,9 +66,9 @@ function launchKiosk() {
         </div>
 
         <!-- Kiosk Mode -->
-        <div class="bg-white rounded-2xl p-8 shadow-lg">
-          <div class="bg-purple-100 w-16 h-16 rounded-xl flex items-center justify-center mb-4">
-            <svg class="w-8 h-8 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div class="bg-white rounded-2xl p-6 sm:p-8 shadow-lg">
+          <div class="bg-teal-100 w-16 h-16 rounded-xl flex items-center justify-center mb-4">
+            <svg class="w-8 h-8 text-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
             </svg>
@@ -79,7 +79,7 @@ function launchKiosk() {
           <div v-if="!showKioskInput">
             <button
               @click="showKioskInput = true"
-              class="w-full py-2 bg-purple-500 text-white rounded-xl text-sm font-medium hover:bg-purple-600 transition-colors"
+              class="w-full py-2 bg-teal-500 text-white rounded-xl text-sm font-medium hover:bg-teal-600 transition-colors"
             >
               Launch Kiosk
             </button>
@@ -88,15 +88,15 @@ function launchKiosk() {
             <input
               v-model="kioskCode"
               @keyup.enter="launchKiosk"
-              placeholder="Enter restaurant code"
+              placeholder="Enter kiosk code"
               autofocus
-              class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+              class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
             />
             <div class="flex gap-2">
               <button
                 @click="launchKiosk"
                 :disabled="!kioskCode.trim()"
-                class="flex-1 py-2 bg-purple-500 text-white rounded-lg text-sm font-medium hover:bg-purple-600 disabled:opacity-40 transition-colors"
+                class="flex-1 py-2 bg-teal-500 text-white rounded-lg text-sm font-medium hover:bg-teal-600 disabled:opacity-40 transition-colors"
               >
                 Go
               </button>
@@ -113,7 +113,7 @@ function launchKiosk() {
         <!-- Waiter Mode -->
         <button
           @click="router.push('/login')"
-          class="group bg-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 text-left"
+          class="group bg-white rounded-2xl p-6 sm:p-8 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 text-left"
         >
           <div class="bg-green-100 w-16 h-16 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
             <svg class="w-8 h-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">

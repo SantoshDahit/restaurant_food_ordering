@@ -3,35 +3,44 @@ import { computed } from 'vue'
 
 const props = defineProps<{ status: string }>()
 
-const colorMap: Record<string, string> = {
-  PENDING: 'bg-gray-100 text-gray-700',
-  CONFIRMED: 'bg-blue-100 text-blue-700',
-  PREPARING: 'bg-amber-100 text-amber-700',
-  READY: 'bg-green-100 text-green-700',
-  COMPLETED: 'bg-emerald-100 text-emerald-700',
-  CANCELLED: 'bg-red-100 text-red-700',
-  AVAILABLE: 'bg-green-100 text-green-700',
-  OCCUPIED: 'bg-red-100 text-red-700',
-  RESERVED: 'bg-yellow-100 text-yellow-700',
-  CLEANING: 'bg-gray-100 text-gray-700',
-  PAID: 'bg-emerald-100 text-emerald-700',
-  ON_HOLD: 'bg-orange-100 text-orange-700',
-  PRESENT: 'bg-green-100 text-green-700',
-  ABSENT: 'bg-red-100 text-red-700',
-  HALF_DAY: 'bg-yellow-100 text-yellow-700',
-  LEAVE: 'bg-blue-100 text-blue-700',
-  HOLIDAY: 'bg-purple-100 text-purple-700',
-  FAILED: 'bg-red-100 text-red-700',
-  REFUNDED: 'bg-purple-100 text-purple-700',
-  OUT_OF_STOCK: 'bg-orange-100 text-orange-700',
-  HIDDEN: 'bg-gray-100 text-gray-500',
+// Each status gets a soft chip color + a saturated dot color.
+const styleMap: Record<string, { chip: string; dot: string }> = {
+  PENDING:      { chip: 'bg-slate-100 text-slate-700 ring-slate-200',     dot: 'bg-slate-400' },
+  CONFIRMED:    { chip: 'bg-sky-50 text-sky-700 ring-sky-200',            dot: 'bg-sky-500' },
+  PREPARING:    { chip: 'bg-amber-50 text-amber-700 ring-amber-200',      dot: 'bg-amber-500' },
+  READY:        { chip: 'bg-green-50 text-green-700 ring-green-200',      dot: 'bg-green-500' },
+  COMPLETED:    { chip: 'bg-emerald-50 text-emerald-700 ring-emerald-200', dot: 'bg-emerald-500' },
+  CANCELLED:    { chip: 'bg-rose-50 text-rose-700 ring-rose-200',         dot: 'bg-rose-500' },
+  AVAILABLE:    { chip: 'bg-emerald-50 text-emerald-700 ring-emerald-200', dot: 'bg-emerald-500' },
+  OCCUPIED:     { chip: 'bg-rose-50 text-rose-700 ring-rose-200',         dot: 'bg-rose-500' },
+  RESERVED:     { chip: 'bg-amber-50 text-amber-700 ring-amber-200',      dot: 'bg-amber-500' },
+  CLEANING:     { chip: 'bg-slate-100 text-slate-600 ring-slate-200',     dot: 'bg-slate-400' },
+  PAID:         { chip: 'bg-emerald-50 text-emerald-700 ring-emerald-200', dot: 'bg-emerald-500' },
+  ON_HOLD:      { chip: 'bg-amber-50 text-amber-700 ring-amber-200',      dot: 'bg-amber-500' },
+  PRESENT:      { chip: 'bg-emerald-50 text-emerald-700 ring-emerald-200', dot: 'bg-emerald-500' },
+  ABSENT:       { chip: 'bg-rose-50 text-rose-700 ring-rose-200',         dot: 'bg-rose-500' },
+  HALF_DAY:     { chip: 'bg-amber-50 text-amber-700 ring-amber-200',      dot: 'bg-amber-500' },
+  LEAVE:        { chip: 'bg-sky-50 text-sky-700 ring-sky-200',            dot: 'bg-sky-500' },
+  HOLIDAY:      { chip: 'bg-purple-50 text-purple-700 ring-purple-200',   dot: 'bg-purple-500' },
+  FAILED:       { chip: 'bg-rose-50 text-rose-700 ring-rose-200',         dot: 'bg-rose-500' },
+  REFUNDED:     { chip: 'bg-purple-50 text-purple-700 ring-purple-200',   dot: 'bg-purple-500' },
+  OUT_OF_STOCK: { chip: 'bg-amber-50 text-amber-700 ring-amber-200',      dot: 'bg-amber-500' },
+  HIDDEN:       { chip: 'bg-slate-100 text-slate-500 ring-slate-200',     dot: 'bg-slate-400' },
 }
 
-const classes = computed(() => colorMap[props.status] || 'bg-gray-100 text-gray-600')
+const style = computed(() =>
+  styleMap[props.status] || { chip: 'bg-slate-100 text-slate-600 ring-slate-200', dot: 'bg-slate-400' }
+)
 </script>
 
 <template>
-  <span :class="['inline-flex items-center px-2 py-0.5 rounded text-xs font-medium', classes]">
+  <span
+    :class="[
+      'inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium ring-1 ring-inset',
+      style.chip,
+    ]"
+  >
+    <span :class="['w-1.5 h-1.5 rounded-full', style.dot]" />
     {{ status.replace(/_/g, ' ') }}
   </span>
 </template>
