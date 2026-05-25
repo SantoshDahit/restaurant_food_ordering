@@ -21,15 +21,6 @@ public class FileController {
     private final FilePresignedUrlService filePresignedUrlService;
     private final FileLocalUploadService fileLocalUploadService;
 
-    @PostMapping("/upload")
-    public FileDto.Response upload(
-            @RequestParam("file") MultipartFile file,
-            @RequestParam(value = "folderName", defaultValue = "menu-items") String folderName,
-            @RequestParam(value = "type", defaultValue = "IMAGE") FileType type) {
-        File entity = fileLocalUploadService.store(file, folderName, type);
-        return fileMapper.toResponse(entity);
-    }
-
     @GetMapping("/{code}")
     public FileDto.Response getByCode(@PathVariable String code) {
         File entity = filePresignedUrlService.getById(code);
