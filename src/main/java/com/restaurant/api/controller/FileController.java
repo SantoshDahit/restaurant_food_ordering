@@ -21,7 +21,7 @@ public class FileController {
     private final FilePresignedUrlService filePresignedUrlService;
     private final FileLocalUploadService fileLocalUploadService;
 
-    @PostMapping(value = "/upload", consumes = "multipart/form-data")
+    @PostMapping("/upload")
     public FileDto.Response upload(
             @RequestParam("file") MultipartFile file,
             @RequestParam(value = "folderName", defaultValue = "menu-items") String folderName,
