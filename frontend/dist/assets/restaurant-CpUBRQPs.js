@@ -1,1 +1,0 @@
-import{k as e}from"./index-B8qoitBQ.js";const n={get:t=>e.get(`/restaurants/${t}`).then(a=>a.data),search:t=>e.get("/restaurants/search",{params:t}).then(a=>a.data),create:t=>e.post("/restaurants",t).then(a=>a.data),update:(t,a)=>e.patch(`/restaurants/${t}`,a).then(r=>r.data),delete:t=>e.delete(`/restaurants/${t}`)};export{n as r};

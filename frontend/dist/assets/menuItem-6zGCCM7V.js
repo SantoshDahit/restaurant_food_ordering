@@ -1,1 +1,0 @@
-import{k as a}from"./index-B8qoitBQ.js";const s={search:e=>a.get("/menu-items/search",{params:e}).then(t=>t.data),get:e=>a.get(`/menu-items/${e}`).then(t=>t.data),create:e=>a.post("/menu-items",e).then(t=>t.data),update:(e,t)=>a.patch(`/menu-items/${e}`,t).then(m=>m.data),delete:e=>a.delete(`/menu-items/${e}`)};export{s as m};

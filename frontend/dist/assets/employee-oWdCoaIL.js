@@ -1,0 +1,1 @@
+import{k as a}from"./index-CiCW4_65.js";const s={search:e=>a.get("/employees/search",{params:e}).then(t=>t.data),get:e=>a.get(`/employees/${e}`).then(t=>t.data),create:e=>a.post("/employees",e).then(t=>t.data),update:(e,t)=>a.patch(`/employees/${e}`,t).then(p=>p.data),delete:e=>a.delete(`/employees/${e}`)};export{s as e};

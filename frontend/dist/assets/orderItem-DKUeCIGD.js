@@ -1,1 +1,0 @@
-import{k as r}from"./index-B8qoitBQ.js";const s={getByOrder:e=>r.get(`/orders/${e}/items`).then(t=>t.data),add:(e,t)=>r.post(`/orders/${e}/items`,t).then(d=>d.data),update:(e,t,d)=>r.patch(`/orders/${e}/items/${t}`,d).then(a=>a.data),remove:(e,t)=>r.delete(`/orders/${e}/items/${t}`)};export{s as o};
