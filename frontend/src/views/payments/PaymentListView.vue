@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { paymentApi } from '@/api/payment'
 import { ordersApi } from '@/api/orders'
@@ -9,10 +9,11 @@ import RestaurantGuard from '@/components/shared/RestaurantGuard.vue'
 import EmptyState from '@/components/shared/EmptyState.vue'
 import { CreditCard } from 'lucide-vue-next'
 import { toast } from 'vue-sonner'
-import type { PaymentResponse, PaymentStatus, PaymentMethod } from '@/types'
+import type { PaymentResponse, PaymentStatus, PaymentMethod, OrdersResponse } from '@/types'
 
 const auth = useAuthStore()
 const payments = ref<PaymentResponse[]>([])
+const orders = ref<OrdersResponse[]>([])
 const loading = ref(false)
 const showCreateDialog = ref(false)
 const creating = ref(false)
@@ -42,6 +43,23 @@ async function loadPayments() {
     loading.value = false
   }
 }
+
+async function loadOrders() {
+  if (!auth.restaurantCode) return
+  try {
+    const data = await ordersApi.search({ restaurantCode: auth.restaurantCode, size: 50 })
+    orders.value = data.content
+  } catch { /* silent — picker just falls back to empty list */ }
+}
+
+// Load orders the first time the dialog opens, and auto-fill amount when an order is picked
+watch(showCreateDialog, (open) => {
+  if (open && orders.value.length === 0) loadOrders()
+})
+watch(() => form.value.orderCode, (code) => {
+  const o = orders.value.find(x => x.code === code)
+  if (o) form.value.amount = o.totalAmount
+})
 
 async function createPayment() {
   if (!form.value.orderCode || form.value.amount <= 0) {
@@ -113,7 +131,7 @@ async function updateStatus(code: string, status: PaymentStatus) {
             <td class="px-5 py-3 text-right font-semibold">{{ payment.amount.toFixed(2) }}</td>
             <td class="px-5 py-3"><StatusBadge :status="payment.status" /></td>
             <td class="px-5 py-3 text-gray-400 text-xs">{{ payment.receiptNumber || '—' }}</td>
-            <td class="px-5 py-3 text-gray-400">{{ new Date(payment.createAt).toLocaleDateString() }}</td>
+            <td class="px-5 py-3 text-gray-400">{{ payment.createdAt ? new Date(payment.createdAt).toLocaleDateString() : '—' }}</td>
             <td class="px-5 py-3 text-center">
               <select
                 :value="payment.status"
@@ -144,9 +162,15 @@ async function updateStatus(code: string, status: PaymentStatus) {
           <h3 class="text-lg font-semibold mb-4">Record Payment</h3>
           <form @submit.prevent="createPayment" class="space-y-4">
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Order Code *</label>
-              <input v-model="form.orderCode" required placeholder="Order code"
-                class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40 focus:border-violet-300 transition-all" />
+              <label class="block text-sm font-medium text-gray-700 mb-1">Order *</label>
+              <select v-model="form.orderCode" required
+                class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40 focus:border-violet-300 transition-all">
+                <option value="" disabled>Select an order…</option>
+                <option v-for="o in orders" :key="o.code" :value="o.code">
+                  #{{ o.orderNumber }} — NPR {{ o.totalAmount.toFixed(0) }} · {{ o.status }}
+                </option>
+              </select>
+              <p v-if="!orders.length" class="text-xs text-slate-400 mt-1">No recent orders. Create an order first.</p>
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">Payment Method</label>

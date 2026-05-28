@@ -64,9 +64,10 @@ public class Restaurant extends BaseFullTimeEntity {
         this.currency = currency != null ? currency : "NPR";
     }
 
-    public void update(String name, String address, String phone, String email, String currency, String fileCode) {
+    public void update(String name, String address, String businessNumber, String phone, String email, String currency, String fileCode) {
         if (name != null) this.name = name;
         if (address != null) this.address = address;
+        if (businessNumber != null) this.businessNumber = businessNumber;
         if (phone != null) this.phone = phone;
         if (email != null) this.email = email;
         if (currency != null) this.currency = currency;

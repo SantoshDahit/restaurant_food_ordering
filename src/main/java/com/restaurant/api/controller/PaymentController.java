@@ -24,6 +24,11 @@ public class PaymentController {
         return paymentFacade.getByCode(code);
     }
 
+    @GetMapping("/by-order/{orderCode}")
+    public PaymentDto.Response getByOrderCode(@PathVariable String orderCode) {
+        return paymentFacade.getByOrderCodeOrNull(orderCode);
+    }
+
     @GetMapping("/search")
     public Page<PaymentDto.Response> search(@ModelAttribute PaymentDto.SearchRequest request,
                                             Pageable pageable) {

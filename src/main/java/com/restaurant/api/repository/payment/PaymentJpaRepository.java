@@ -8,12 +8,23 @@ import org.springframework.data.repository.query.Param;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 public interface PaymentJpaRepository extends JpaRepository<Payment, String> {
     Optional<Payment> findByCode(String code);
     Optional<Payment> findByOrderCode(String orderCode);
     boolean existsByOrderCode(String orderCode);
+
+    @Query("""
+        SELECT p FROM Payment p
+        WHERE NOT EXISTS (
+            SELECT 1 FROM com.restaurant.api.entity.Receipt r
+            WHERE r.orderCode = p.orderCode AND r.deletedAt IS NULL
+        )
+        ORDER BY p.createdAt ASC
+    """)
+    List<Payment> findAllWithoutReceipts();
 
     @Query("SELECT COALESCE(SUM(p.amount - p.refundedAmount), 0) FROM Payment p WHERE p.status = :status")
     BigDecimal sumNetAmountByStatus(@Param("status") PaymentStatus status);

@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { emailVerificationApi } from '@/api/emailVerification'
 import { toast } from 'vue-sonner'
@@ -10,9 +10,14 @@ import {
 } from 'lucide-vue-next'
 
 const router = useRouter()
+const route = useRoute()
 const auth = useAuthStore()
 
 const tab = ref<'login' | 'register'>('login')
+
+onMounted(() => {
+  if (route.query.tab === 'register') tab.value = 'register'
+})
 
 const loginForm = ref({ email: '', password: '' })
 const loginLoading = ref(false)

@@ -31,6 +31,16 @@ public class RestaurantTableRepositoryImpl implements RestaurantTableRepository 
     }
 
     @Override
+    public Optional<RestaurantTable> findByTableCode(String tableCode) {
+        return restaurantTableJpaRepository.findByTableCodeAndDeletedAtIsNull(tableCode);
+    }
+
+    @Override
+    public boolean existsByTableCode(String tableCode) {
+        return restaurantTableJpaRepository.existsByTableCode(tableCode);
+    }
+
+    @Override
     public RestaurantTable save(RestaurantTable restaurantTable) {
         return restaurantTableJpaRepository.save(restaurantTable);
     }

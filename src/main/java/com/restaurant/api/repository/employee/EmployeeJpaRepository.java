@@ -8,4 +8,5 @@ import java.util.Optional;
 public interface EmployeeJpaRepository extends JpaRepository<Employee, String> {
     Optional<Employee> findByCodeAndDeletedAtIsNull(String code);
     boolean existsByRestaurantCodeAndPhoneAndDeletedAtIsNull(String restaurantCode, String phone);
+    long countByRestaurantCodeAndIsActiveAndDeletedAtIsNull(String restaurantCode, Boolean isActive);
 }

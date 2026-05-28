@@ -9,6 +9,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/v1/orders")
 @RequiredArgsConstructor
@@ -28,6 +30,21 @@ public class OrdersController {
     @GetMapping("/{code}/detail")
     public OrdersDto.DetailResponse getDetail(@PathVariable String code) {
         return ordersFacade.getDetail(code);
+    }
+
+    @GetMapping("/by-number/{orderNumber}")
+    public OrdersDto.DetailResponse getByOrderNumber(@PathVariable String orderNumber) {
+        return ordersFacade.getDetailByOrderNumber(orderNumber);
+    }
+
+    @GetMapping("/tracking")
+    public List<OrdersDto.Response> getActiveByRestaurant(@RequestParam String restaurantCode) {
+        return ordersFacade.getActiveByRestaurant(restaurantCode);
+    }
+
+    @GetMapping("/kitchen")
+    public List<OrdersDto.DetailResponse> getKitchenQueue(@RequestParam String restaurantCode) {
+        return ordersFacade.getKitchenQueue(restaurantCode);
     }
 
     @GetMapping("/search")

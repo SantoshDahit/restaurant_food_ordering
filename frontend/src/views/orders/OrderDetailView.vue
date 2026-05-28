@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import QRCode from 'qrcode'
 import { ordersApi } from '@/api/orders'
 import { orderItemApi } from '@/api/orderItem'
 import { menuItemApi } from '@/api/menuItem'
@@ -101,12 +102,54 @@ async function removeItem() {
 function getMenuItemName(item: OrderItemDetail) {
   return item.menuItemName || item.menuItemCode
 }
+
+// ── Tracking URL + QR ───────────────────────────────────────────────────────
+const trackingUrl = computed(() =>
+  order.value ? `${window.location.origin}/track/${order.value.orderNumber}` : '',
+)
+const trackingQr = ref<string>('')
+
+watch(trackingUrl, async (url) => {
+  if (!url) { trackingQr.value = ''; return }
+  trackingQr.value = await QRCode.toDataURL(url, {
+    width: 220, margin: 2, color: { dark: '#111827', light: '#ffffff' },
+  })
+}, { immediate: true })
+
+async function copyToClipboard(text: string): Promise<boolean> {
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text); return true
+    }
+  } catch { /* fall through */ }
+  try {
+    const ta = document.createElement('textarea')
+    ta.value = text; ta.setAttribute('readonly', '')
+    ta.style.position = 'fixed'; ta.style.opacity = '0'
+    document.body.appendChild(ta); ta.select()
+    const ok = document.execCommand('copy')
+    document.body.removeChild(ta); return ok
+  } catch { return false }
+}
+
+async function copyTrackingUrl() {
+  const ok = await copyToClipboard(trackingUrl.value)
+  ok ? toast.success('Tracking URL copied!') : toast.error('Copy failed')
+}
+
+function openTrackingPage() {
+  if (trackingUrl.value) window.open(trackingUrl.value, '_blank')
+}
 </script>
 
 <template>
   <div>
     <PageHeader :title="`Order ${order?.orderNumber || ''}`" description="Order details and items">
       <template #actions>
+        <button v-if="order" @click="$router.push({ path: `/receipt/${order.orderNumber}`, query: { from: 'order', code: order.code } })"
+          class="px-4 py-2 text-sm bg-white ring-1 ring-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 transition-colors">
+          Print receipt
+        </button>
         <button @click="router.push({ name: 'orders' })"
           class="px-4 py-2 text-sm bg-white ring-1 ring-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 transition-colors">
           ← Back
@@ -119,7 +162,15 @@ function getMenuItemName(item: OrderItemDetail) {
     <div v-else-if="order" class="space-y-6">
       <!-- Order Info -->
       <div class="bg-white rounded-2xl shadow-sm ring-1 ring-slate-200/60 p-6">
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-4">
+          <div>
+            <p class="text-xs text-slate-500">Ticket</p>
+            <p v-if="order.ticketNumber != null"
+              class="inline-flex items-center justify-center min-w-[3rem] px-2 py-0.5 rounded-md bg-violet-50 text-violet-700 ring-1 ring-violet-200 font-mono font-bold text-lg tabular-nums">
+              {{ String(order.ticketNumber).padStart(3, '0') }}
+            </p>
+            <p v-else class="text-slate-300 text-sm">—</p>
+          </div>
           <div>
             <p class="text-xs text-slate-500">Order Number</p>
             <p class="font-semibold">{{ order.orderNumber }}</p>
@@ -182,6 +233,41 @@ function getMenuItemName(item: OrderItemDetail) {
             class="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40 focus:border-violet-300 transition-all">
             <option v-for="s in orderStatuses" :key="s" :value="s">{{ s }}</option>
           </select>
+        </div>
+      </div>
+
+      <!-- Customer Tracking -->
+      <div class="bg-white rounded-2xl shadow-sm ring-1 ring-slate-200/60 p-6">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h3 class="font-semibold text-slate-800">Customer Tracking</h3>
+            <p class="text-xs text-slate-500 mt-0.5">Share this link or QR so the customer can follow their order live.</p>
+          </div>
+        </div>
+        <div class="flex flex-col sm:flex-row gap-5 items-start">
+          <div class="flex-shrink-0 self-center sm:self-start">
+            <div class="bg-white rounded-2xl ring-1 ring-slate-200 p-2">
+              <img v-if="trackingQr" :src="trackingQr" alt="Tracking QR"
+                class="w-40 h-40 sm:w-44 sm:h-44 block" />
+            </div>
+          </div>
+          <div class="flex-1 min-w-0 w-full">
+            <p class="text-xs text-slate-500 mb-1.5 font-medium uppercase tracking-wider">Tracking URL</p>
+            <div class="flex items-center gap-2 bg-slate-50 ring-1 ring-slate-200 rounded-xl px-3 py-2">
+              <code class="flex-1 min-w-0 text-xs sm:text-sm font-mono text-slate-700 truncate">{{ trackingUrl }}</code>
+            </div>
+            <div class="flex flex-wrap gap-2 mt-3">
+              <button @click="copyTrackingUrl"
+                class="px-4 py-2 text-sm font-medium bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 text-white rounded-xl shadow-sm shadow-violet-500/30 transition-all">
+                Copy URL
+              </button>
+              <button @click="openTrackingPage"
+                class="px-4 py-2 text-sm font-medium bg-white ring-1 ring-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 transition-colors">
+                Open tracking page
+              </button>
+            </div>
+            <p class="text-[11px] text-slate-400 mt-3">Customers see the live status, a 4-step timeline, and the items list. No login required.</p>
+          </div>
         </div>
       </div>
 

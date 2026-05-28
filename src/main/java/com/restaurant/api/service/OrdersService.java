@@ -30,8 +30,35 @@ public class OrdersService {
     }
 
     @Transactional(readOnly = true)
+    public Orders getByOrderNumber(String orderNumber) {
+        return ordersRepository.findByOrderNumber(orderNumber)
+                .orElseThrow(() -> new ApiException(ErrorCode.ORDER_NOT_FOUND));
+    }
+
+    @Transactional(readOnly = true)
     public Page<Orders> search(OrdersDto.SearchRequest searchRequest, Pageable pageable) {
         return ordersRepository.search(searchRequest, pageable);
+    }
+
+    /**
+     * Assign tickets to any orders still missing one (pre-V12 rows). Idempotent.
+     * Tickets land in the order's original business day so sequences stay coherent.
+     */
+    @Transactional
+    public int backfillTickets() {
+        java.util.List<Orders> orphans = ordersRepository.findAllWithoutTicket();
+        // Process in created_at order so older orders get the lower numbers per day.
+        orphans.sort(java.util.Comparator.comparing(Orders::getCreatedAt));
+        int issued = 0;
+        for (Orders o : orphans) {
+            java.time.LocalDate bd = o.getCreatedAt() != null
+                    ? o.getCreatedAt().toLocalDate() : java.time.LocalDate.now();
+            int next = nextTicketNumber(o.getRestaurantCode(), bd);
+            o.assignTicket(next, bd);
+            ordersRepository.save(o);
+            issued++;
+        }
+        return issued;
     }
 
     @Transactional
@@ -46,7 +73,20 @@ public class OrdersService {
                 request.specialNotes(),
                 request.deviceType()
         );
+        java.time.LocalDate today = java.time.LocalDate.now();
+        orders.assignTicket(nextTicketNumber(request.restaurantCode(), today), today);
         return ordersRepository.save(orders);
+    }
+
+    private static final int TICKET_MIN = 100;
+    private static final int TICKET_MAX = 999;
+
+    /** Compute the next ticket number for this restaurant on this business day. */
+    public int nextTicketNumber(String restaurantCode, java.time.LocalDate businessDate) {
+        int max = ordersRepository.findMaxTicketNumber(restaurantCode, businessDate).orElse(TICKET_MIN - 1);
+        int next = max + 1;
+        if (next > TICKET_MAX) next = TICKET_MIN; // wrap; UNIQUE-like enforcement happens in app code
+        return next;
     }
 
     @Transactional

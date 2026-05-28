@@ -6,6 +6,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
 
 public class AdminDto {
 
@@ -28,6 +30,9 @@ public class AdminDto {
     public static class RestaurantOverview {
         private long totalOrders;
         private BigDecimal totalRevenue;
+        private long activeStaffCount;
+        private LocalDateTime lastOrderAt;
+        private List<AnalyticsDto.TopItem> topItems;
     }
 
     public record RoleChangeRequest(@NotNull UserRole role) {}

@@ -22,6 +22,7 @@ public class RestaurantDto {
     public record PatchRequest(
             String name,
             String address,
+            String businessNumber,
             String phone,
             String email,
             String currency,

@@ -43,11 +43,15 @@ public class RestaurantTable extends BaseFullTimeEntity {
     @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;
 
-    public RestaurantTable(String restaurantCode, String tableNumber, Integer capacity) {
+    @Column(name = "table_code", unique = true, length = 20, nullable = false)
+    private String tableCode;
+
+    public RestaurantTable(String restaurantCode, String tableNumber, Integer capacity, String tableCode) {
         this.code = UUID.randomUUID().toString();
         this.restaurantCode = restaurantCode;
         this.tableNumber = tableNumber;
         this.capacity = capacity != null ? capacity : 4;
+        this.tableCode = tableCode;
     }
 
     public void update(String tableNumber, Integer capacity, TableStatus status) {

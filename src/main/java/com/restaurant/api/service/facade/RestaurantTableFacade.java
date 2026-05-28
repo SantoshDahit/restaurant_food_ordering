@@ -56,4 +56,10 @@ public class RestaurantTableFacade {
         RestaurantTable table = restaurantTableService.getByQrToken(token);
         return restaurantTableMapper.toResponse(table);
     }
+
+    @Transactional(readOnly = true)
+    public RestaurantTableDto.Response getByTableCode(String tableCode) {
+        RestaurantTable table = restaurantTableService.getByTableCode(tableCode);
+        return restaurantTableMapper.toResponse(table);
+    }
 }

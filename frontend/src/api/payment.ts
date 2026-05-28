@@ -8,6 +8,9 @@ export const paymentApi = {
   get: (code: string) =>
     api.get<PaymentResponse>(`/payments/${code}`).then(r => r.data),
 
+  getByOrder: (orderCode: string) =>
+    api.get<PaymentResponse | null>(`/payments/by-order/${orderCode}`).then(r => r.data),
+
   create: (data: PaymentCreateRequest) =>
     api.post<PaymentResponse>('/payments', data).then(r => r.data),
 

@@ -29,6 +29,13 @@ public class PaymentFacade {
     }
 
     @Transactional(readOnly = true)
+    public PaymentDto.Response getByOrderCodeOrNull(String orderCode) {
+        return paymentService.findByOrderCode(orderCode)
+                .map(paymentMapper::toResponse)
+                .orElse(null);
+    }
+
+    @Transactional(readOnly = true)
     public Page<PaymentDto.Response> search(PaymentDto.SearchRequest request, Pageable pageable) {
         return paymentService.search(request, pageable)
                 .map(paymentMapper::toResponse);

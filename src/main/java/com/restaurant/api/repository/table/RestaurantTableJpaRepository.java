@@ -10,4 +10,6 @@ public interface RestaurantTableJpaRepository extends JpaRepository<RestaurantTa
     Optional<RestaurantTable> findByRestaurantCodeAndTableNumberAndDeletedAtIsNull(String restaurantCode, String tableNumber);
     boolean existsByRestaurantCodeAndTableNumberAndDeletedAtIsNull(String restaurantCode, String tableNumber);
     Optional<RestaurantTable> findByQrCodeTokenAndDeletedAtIsNull(String qrCodeToken);
+    Optional<RestaurantTable> findByTableCodeAndDeletedAtIsNull(String tableCode);
+    boolean existsByTableCode(String tableCode);
 }

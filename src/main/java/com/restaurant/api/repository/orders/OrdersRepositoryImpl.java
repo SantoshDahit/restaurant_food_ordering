@@ -7,6 +7,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -23,6 +25,18 @@ public class OrdersRepositoryImpl implements OrdersRepository {
     @Override
     public Optional<Orders> findByOrderNumber(String orderNumber) {
         return ordersJpaRepository.findByOrderNumberAndDeletedAtIsNull(orderNumber);
+    }
+
+    @Override
+    public Optional<Integer> findMaxTicketNumber(String restaurantCode, LocalDate businessDate) {
+        return ordersJpaRepository
+                .findTopByRestaurantCodeAndBusinessDateOrderByTicketNumberDesc(restaurantCode, businessDate)
+                .map(Orders::getTicketNumber);
+    }
+
+    @Override
+    public List<Orders> findAllWithoutTicket() {
+        return ordersJpaRepository.findAllByTicketNumberIsNullAndDeletedAtIsNull();
     }
 
     @Override

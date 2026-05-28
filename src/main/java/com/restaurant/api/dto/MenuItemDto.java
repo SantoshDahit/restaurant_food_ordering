@@ -20,7 +20,8 @@ public class MenuItemDto {
             String fileCode,
             Boolean isVeg,
             Integer prepTimeMinutes,
-            Integer sortOrder
+            Integer sortOrder,
+            ItemAvailability availability
     ) {}
 
     public record PatchRequest(

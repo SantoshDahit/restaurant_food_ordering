@@ -39,6 +39,8 @@ public class OrdersDto {
         private String tableCode;
         private String waiterCode;
         private String orderNumber;
+        /** Customer-facing 3-digit daily ticket (100-999). Null until a receipt is issued. */
+        private Integer ticketNumber;
         private OrderType orderType;
         private OrderStatus status;
         private BigDecimal subtotal;
@@ -49,6 +51,8 @@ public class OrdersDto {
         private String deviceType;
         private LocalDateTime createdAt;
         private LocalDateTime updatedAt;
+
+        public void setTicketNumber(Integer ticketNumber) { this.ticketNumber = ticketNumber; }
     }
 
     public record DetailResponse(
@@ -60,6 +64,7 @@ public class OrdersDto {
             String waiterCode,
             String waiterName,
             String orderNumber,
+            Integer ticketNumber,
             OrderType orderType,
             OrderStatus status,
             BigDecimal subtotal,

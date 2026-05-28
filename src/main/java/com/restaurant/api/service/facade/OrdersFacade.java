@@ -52,8 +52,15 @@ public class OrdersFacade {
 
     @Transactional(readOnly = true)
     public OrdersDto.DetailResponse getDetail(String code) {
-        Orders orders = ordersService.getByCode(code);
+        return buildDetail(ordersService.getByCode(code));
+    }
 
+    @Transactional(readOnly = true)
+    public OrdersDto.DetailResponse getDetailByOrderNumber(String orderNumber) {
+        return buildDetail(ordersService.getByOrderNumber(orderNumber));
+    }
+
+    private OrdersDto.DetailResponse buildDetail(Orders orders) {
         String restaurantName = restaurantRepository.findByCode(orders.getRestaurantCode())
                 .map(Restaurant::getName)
                 .orElse(null);
@@ -68,12 +75,47 @@ public class OrdersFacade {
                         .map(User::getFullName)
                         .orElse(null);
 
-        List<OrderItem> items = orderItemService.findAllByOrderCode(code);
+        // ticketNumber now lives on the Order entity (V12+).
+        List<OrderItem> items = orderItemService.findAllByOrderCode(orders.getCode());
         List<OrdersDto.OrderItemDetail> itemDetails = items.stream()
                 .map(item -> orderItemMapper.toDetail(item, resolveMenuItemName(item.getMenuItemCode())))
                 .toList();
 
-        return ordersMapper.toDetailResponse(orders, restaurantName, tableNumber, waiterName, itemDetails);
+        return ordersMapper.toDetailResponse(orders, restaurantName, tableNumber, waiterName,
+                orders.getTicketNumber(), itemDetails);
+    }
+
+    /**
+     * Kitchen Display System feed: orders still in PENDING or PREPARING, with
+     * their items. Sorted oldest-first so the kitchen always works the head of
+     * the queue.
+     */
+    @Transactional(readOnly = true)
+    public List<OrdersDto.DetailResponse> getKitchenQueue(String restaurantCode) {
+        OrdersDto.SearchRequest req = new OrdersDto.SearchRequest(restaurantCode, null, null, null);
+        return ordersService.search(req, Pageable.ofSize(200)).getContent().stream()
+                .filter(o -> o.getStatus() == OrderStatus.PENDING || o.getStatus() == OrderStatus.PREPARING)
+                .sorted((a, b) -> a.getCreatedAt().compareTo(b.getCreatedAt()))
+                .map(this::buildDetail)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<OrdersDto.Response> getActiveByRestaurant(String restaurantCode) {
+        OrdersDto.SearchRequest req = new OrdersDto.SearchRequest(restaurantCode, null, null, null);
+        Page<Orders> page = ordersService.search(req, Pageable.ofSize(200));
+        // ticketNumber maps automatically from Orders.ticketNumber via ModelMapper.
+        return page.getContent().stream()
+                .filter(o -> isActiveStatus(o.getStatus()))
+                .map(ordersMapper::toResponse)
+                .toList();
+    }
+
+    private boolean isActiveStatus(OrderStatus s) {
+        return s == OrderStatus.PENDING
+                || s == OrderStatus.CONFIRMED
+                || s == OrderStatus.PREPARING
+                || s == OrderStatus.READY;
     }
 
     private String resolveMenuItemName(String menuItemCode) {
@@ -84,8 +126,7 @@ public class OrdersFacade {
 
     @Transactional(readOnly = true)
     public Page<OrdersDto.Response> search(OrdersDto.SearchRequest request, Pageable pageable) {
-        return ordersService.search(request, pageable)
-                .map(ordersMapper::toResponse);
+        return ordersService.search(request, pageable).map(ordersMapper::toResponse);
     }
 
     @Transactional

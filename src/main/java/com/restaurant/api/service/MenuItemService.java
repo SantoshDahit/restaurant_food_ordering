@@ -41,7 +41,8 @@ public class MenuItemService {
                 request.fileCode(),
                 request.isVeg(),
                 request.prepTimeMinutes(),
-                request.sortOrder()
+                request.sortOrder(),
+                request.availability()
         );
         return menuItemRepository.save(menuItem);
     }

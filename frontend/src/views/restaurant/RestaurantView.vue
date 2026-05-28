@@ -12,7 +12,7 @@ const notFound = ref(false)
 const editing = ref(false)
 const loading = ref(false)
 
-const form = ref({ name: '', address: '', phone: '', email: '', currency: 'NPR' })
+const form = ref({ name: '', address: '', businessNumber: '', phone: '', email: '', currency: 'NPR' })
 const createForm = ref({ name: '', address: '', businessNumber: '', phone: '', email: '', currency: 'NPR' })
 const creating = ref(false)
 
@@ -30,6 +30,7 @@ async function loadRestaurant() {
     form.value = {
       name: restaurant.value.name,
       address: restaurant.value.address,
+      businessNumber: restaurant.value.businessNumber || '',
       phone: restaurant.value.phone || '',
       email: restaurant.value.email || '',
       currency: restaurant.value.currency,
@@ -216,6 +217,11 @@ async function save() {
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Address</label>
           <input v-model="form.address"
+            class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40 focus:border-violet-300 transition-all" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Business Number</label>
+          <input v-model="form.businessNumber" placeholder="e.g. 123456789"
             class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40 focus:border-violet-300 transition-all" />
         </div>
         <div>

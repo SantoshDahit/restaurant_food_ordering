@@ -101,30 +101,14 @@ async function save() {
   }
 }
 
-async function generateQr(table: RestaurantTableResponse) {
-  try {
-    const updated = await tableApi.generateQr(table.code)
-    toast.success('QR code generated')
-    await loadTables()
-    // Auto-open QR modal with the freshly generated token
-    await showQr(updated)
-  } catch {
-    toast.error('Failed to generate QR')
-  }
-}
-
 async function showQr(table: RestaurantTableResponse) {
-  if (!table.qrCodeToken) {
-    toast.error('No QR token — click "Gen QR" first')
-    return
-  }
-  const url = `${window.location.origin}/qr/${table.qrCodeToken}`
+  const url = tableUrl(table.tableCode)
   const dataUrl = await QRCode.toDataURL(url, { width: 300, margin: 2, color: { dark: '#111827', light: '#ffffff' } })
   qrModal.value = { table, dataUrl }
 }
 
-function qrUrl(token: string) {
-  return `${window.location.origin}/qr/${token}`
+function tableUrl(tableCode: string) {
+  return `${window.location.origin}/table/${tableCode}`
 }
 
 function downloadQr() {
@@ -135,10 +119,42 @@ function downloadQr() {
   a.click()
 }
 
-function copyUrl() {
-  if (!qrModal.value?.table.qrCodeToken) return
-  navigator.clipboard.writeText(qrUrl(qrModal.value.table.qrCodeToken))
-  toast.success('URL copied!')
+async function copyToClipboard(text: string): Promise<boolean> {
+  // navigator.clipboard requires a secure context (https or localhost).
+  // Fall back to a hidden textarea + execCommand for plain-http LAN access.
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text)
+      return true
+    }
+  } catch { /* fall through */ }
+  try {
+    const ta = document.createElement('textarea')
+    ta.value = text
+    ta.setAttribute('readonly', '')
+    ta.style.position = 'fixed'
+    ta.style.top = '0'
+    ta.style.left = '0'
+    ta.style.opacity = '0'
+    document.body.appendChild(ta)
+    ta.select()
+    const ok = document.execCommand('copy')
+    document.body.removeChild(ta)
+    return ok
+  } catch {
+    return false
+  }
+}
+
+async function copyUrl() {
+  if (!qrModal.value) return
+  const ok = await copyToClipboard(tableUrl(qrModal.value.table.tableCode))
+  ok ? toast.success('URL copied!') : toast.error('Copy failed — long-press to copy manually')
+}
+
+async function copyCode(tableCode: string) {
+  const ok = await copyToClipboard(tableCode)
+  ok ? toast.success('Table code copied!') : toast.error('Copy failed — long-press to copy manually')
 }
 
 async function confirmDelete() {
@@ -184,6 +200,15 @@ async function confirmDelete() {
           <StatusBadge :status="table.status" />
         </div>
 
+        <!-- Short table code (copy-able, used by Launch → Table Ordering & QR) -->
+        <button @click="copyCode(table.tableCode)"
+          class="w-full mb-3 group flex items-center gap-2 bg-slate-50 hover:bg-violet-50 ring-1 ring-slate-200 hover:ring-violet-200 rounded-lg px-2 py-1.5 transition-colors">
+          <svg class="w-3.5 h-3.5 text-slate-400 group-hover:text-violet-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+          </svg>
+          <span class="text-sm font-mono font-semibold text-slate-700 group-hover:text-violet-600 tracking-wider">{{ table.tableCode }}</span>
+        </button>
+
         <!-- Active order panel -->
         <button
           v-if="activeOrderByTable[table.code]"
@@ -198,8 +223,8 @@ async function confirmDelete() {
           </div>
         </button>
 
-        <!-- QR preview thumbnail if token exists -->
-        <div v-if="table.qrCodeToken" class="mb-3">
+        <!-- QR preview thumbnail (always available, points at /table/<code>) -->
+        <div class="mb-3">
           <button @click="showQr(table)" class="w-full group">
             <div class="bg-gray-50 rounded-lg p-2 flex items-center gap-2 hover:bg-violet-50 transition-colors border border-gray-100 hover:border-violet-200">
               <svg class="w-4 h-4 text-gray-400 group-hover:text-violet-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -214,10 +239,6 @@ async function confirmDelete() {
         <div class="flex flex-wrap gap-1">
           <button @click="openEdit(table)"
             class="text-xs px-2 py-1 bg-slate-50 ring-1 ring-slate-200 text-slate-700 rounded-lg hover:bg-slate-100 transition-colors">Edit</button>
-          <button @click="generateQr(table)"
-            class="text-xs px-2 py-1 bg-violet-100 text-violet-700 rounded hover:bg-violet-200">
-            {{ table.qrCodeToken ? 'Regen QR' : 'Gen QR' }}
-          </button>
           <button @click="deleteTarget = table.code"
             class="text-xs px-2 py-1 bg-rose-50 ring-1 ring-rose-200 text-rose-600 rounded-lg hover:bg-rose-100 transition-colors">Del</button>
         </div>
@@ -278,7 +299,7 @@ async function confirmDelete() {
           <div class="bg-gray-50 rounded-xl p-3 mb-4 break-all">
             <p class="text-xs text-gray-500 mb-1 font-medium">Customer URL</p>
             <p class="text-xs text-gray-700 font-mono">
-              {{ qrUrl(qrModal.table.qrCodeToken!) }}
+              {{ tableUrl(qrModal.table.tableCode) }}
             </p>
           </div>
 

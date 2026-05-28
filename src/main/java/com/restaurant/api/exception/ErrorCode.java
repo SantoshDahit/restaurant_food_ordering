@@ -51,6 +51,9 @@ public enum ErrorCode {
     PAYMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "Payment not found"),
     ORDER_ALREADY_PAID(HttpStatus.CONFLICT, "Order has already been paid"),
 
+    // Receipt
+    RECEIPT_NOT_FOUND(HttpStatus.NOT_FOUND, "Receipt not found"),
+
     // Employee
     EMPLOYEE_NOT_FOUND(HttpStatus.NOT_FOUND, "Employee not found"),
 

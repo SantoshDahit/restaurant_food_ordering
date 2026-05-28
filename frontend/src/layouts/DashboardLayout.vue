@@ -6,6 +6,7 @@ import {
   LayoutDashboard, Store, Armchair, ClipboardList, CreditCard,
   Users, CalendarCheck, Wallet, ChefHat, UtensilsCrossed,
   ListTree, Pizza, ChevronDown, Menu as MenuIcon, X, LogOut,
+  BellRing,
 } from 'lucide-vue-next'
 
 const router = useRouter()
@@ -19,6 +20,8 @@ const navItems = [
   { label: 'Restaurant',  path: '/dashboard/restaurant', icon: Store },
   { label: 'Tables',      path: '/dashboard/tables',     icon: Armchair },
   { label: 'Orders',      path: '/dashboard/orders',     icon: ClipboardList },
+  { label: 'Kitchen',     path: '/dashboard/kitchen',    icon: ChefHat },
+  { label: 'Pickup Board', path: '/dashboard/pickup-board', icon: BellRing },
   { label: 'Payments',    path: '/dashboard/payments',   icon: CreditCard },
   { label: 'Employees',   path: '/dashboard/employees',  icon: Users },
   { label: 'Attendance',  path: '/dashboard/attendance', icon: CalendarCheck },

@@ -29,6 +29,7 @@ public class RestaurantTableDto {
     @Getter
     public static class Response {
         private String code;
+        private String tableCode;
         private String restaurantCode;
         private String tableNumber;
         private Integer capacity;

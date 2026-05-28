@@ -169,6 +169,7 @@ async function save() {
         isVeg: form.value.isVeg,
         prepTimeMinutes: form.value.prepTimeMinutes,
         sortOrder: form.value.sortOrder,
+        availability: form.value.availability,
         fileCode,
       })
       toast.success('Item created')
@@ -341,7 +342,7 @@ onMounted(async () => {
                 <option v-for="c in categories" :key="c.code" :value="c.code">{{ c.name }}</option>
               </select>
             </div>
-            <div v-if="editTarget">
+            <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">Availability</label>
               <select v-model="form.availability"
                 class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40 focus:border-violet-300 transition-all">

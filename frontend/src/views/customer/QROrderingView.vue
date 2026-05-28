@@ -8,8 +8,8 @@ import { toast } from 'vue-sonner'
 import api from '@/api/axios'
 import { fileApi } from '@/api/file'
 import {
-  ShoppingBag, Search, Plus, Minus, X, UtensilsCrossed,
-  ArrowRight, Loader2, AlertTriangle, Trash2,
+  UtensilsCrossed, ShoppingBag, Sparkles, Trash2, Minus, Plus,
+  X, ArrowRight, Loader2, AlertTriangle,
 } from 'lucide-vue-next'
 import type { RestaurantTableResponse, MenuItemResponse, MenuCategoryResponse, PageResponse } from '@/types'
 
@@ -21,21 +21,13 @@ const categories = ref<MenuCategoryResponse[]>([])
 const items = ref<MenuItemResponse[]>([])
 const cart = ref<Record<string, number>>({})
 const activeCategory = ref('All')
-const search = ref('')
 const loading = ref(true)
 const ordering = ref(false)
-const showCart = ref(false)
 const fileUrlCache = ref<Record<string, string>>({})
 
 const filteredItems = computed(() => {
-  let result = items.value
-  if (search.value) {
-    result = result.filter(i => i.name.toLowerCase().includes(search.value.toLowerCase()))
-  }
-  if (activeCategory.value !== 'All') {
-    result = result.filter(i => i.categoryCode === activeCategory.value)
-  }
-  return result
+  if (activeCategory.value === 'All') return items.value
+  return items.value.filter(i => i.categoryCode === activeCategory.value)
 })
 
 const cartItems = computed(() =>
@@ -55,8 +47,11 @@ const cartCount = computed(() =>
 async function load() {
   try {
     loading.value = true
-    const token = route.params.token as string
-    table.value = await tableApi.getByToken(token)
+    const token = route.params.token as string | undefined
+    const tableCode = route.params.tableCode as string | undefined
+    table.value = token
+      ? await tableApi.getByToken(token)
+      : await tableApi.getByTableCode(tableCode!)
     const rCode = table.value.restaurantCode
     const [cats, its] = await Promise.all([
       api.get<PageResponse<MenuCategoryResponse>>('/menu-categories/search', { params: { restaurantCode: rCode, size: 50 } }).then(r => r.data),
@@ -95,22 +90,35 @@ function deleteFromCart(code: string) {
   cart.value = updated
 }
 
-async function placeOrder() {
+function clearCart() {
+  cart.value = {}
+}
+
+async function checkout() {
   if (!cartItems.value.length) {
     toast.error('Please add items to your order'); return
+  }
+  if (!table.value) {
+    toast.error('Table not loaded'); return
   }
   ordering.value = true
   try {
     const order = await ordersApi.create({
-      restaurantCode: table.value!.restaurantCode,
-      tableCode: table.value!.code,
+      restaurantCode: table.value.restaurantCode,
+      tableCode: table.value.code,
       orderType: 'QR_ORDER',
       deviceType: 'MOBILE',
     })
     for (const item of cartItems.value) {
       await orderItemApi.add(order.code, { menuItemCode: item.code, quantity: item.quantity })
     }
-    router.push({ path: '/payment', query: { orderCode: order.code, restaurantCode: table.value!.restaurantCode, source: 'qr', token: route.params.token as string } })
+    const token = route.params.token as string | undefined
+    router.push({
+      path: '/payment',
+      query: token
+        ? { orderCode: order.code, restaurantCode: table.value.restaurantCode, source: 'qr', token }
+        : { orderCode: order.code, restaurantCode: table.value.restaurantCode, source: 'table', tableCode: route.params.tableCode as string },
+    })
   } catch {
     toast.error('Failed to place order. Please try again.')
     ordering.value = false
@@ -121,163 +129,161 @@ onMounted(load)
 </script>
 
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-violet-50/30">
-    <!-- Loading -->
-    <div v-if="loading" class="flex items-center justify-center min-h-screen">
-      <div class="text-center">
-        <Loader2 class="w-12 h-12 text-violet-500 mx-auto mb-3 animate-spin" />
-        <p class="text-slate-500">Loading menu…</p>
+  <div class="min-h-screen md:h-screen bg-gradient-to-br from-slate-50 via-white to-violet-50/40 flex flex-col md:overflow-hidden">
+
+    <!-- Invalid QR / table -->
+    <div v-if="!loading && !table" class="flex-1 flex items-center justify-center px-4">
+      <div class="text-center max-w-sm">
+        <div class="w-16 h-16 rounded-2xl bg-rose-50 ring-1 ring-rose-200 flex items-center justify-center mx-auto mb-3">
+          <AlertTriangle class="w-7 h-7 text-rose-500" />
+        </div>
+        <p class="text-slate-900 font-semibold">Invalid QR code or table</p>
+        <p class="text-sm text-slate-500 mt-1">Please scan the QR code on your table again.</p>
       </div>
     </div>
 
-    <template v-else-if="table">
+    <template v-else>
       <!-- Header -->
-      <header class="bg-white/80 backdrop-blur border-b border-slate-200/60 sticky top-0 z-10">
-        <div class="px-4 py-3">
-          <div class="flex items-center justify-between gap-3">
-            <div class="min-w-0">
-              <h1 class="text-base font-bold text-slate-900">Order Menu</h1>
-              <div class="flex items-center gap-1.5 mt-0.5">
-                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white">
-                  Table {{ table.tableNumber }}
-                </span>
-              </div>
+      <header class="relative overflow-hidden bg-gradient-to-r from-violet-500 via-violet-500 to-fuchsia-500 text-white px-4 sm:px-8 py-4 sm:py-5 flex-shrink-0">
+        <!-- decorative -->
+        <div aria-hidden="true" class="absolute -top-12 -right-12 w-48 h-48 rounded-full bg-white/10 blur-2xl" />
+        <div aria-hidden="true" class="absolute -bottom-16 left-1/3 w-56 h-56 rounded-full bg-fuchsia-300/20 blur-3xl" />
+
+        <div class="relative flex items-center justify-between gap-3">
+          <div class="flex items-center gap-3 min-w-0">
+            <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-white/15 backdrop-blur ring-1 ring-white/30 flex items-center justify-center flex-shrink-0">
+              <UtensilsCrossed class="w-6 h-6 text-white" />
             </div>
-            <button
-              @click="showCart = !showCart"
-              class="relative w-11 h-11 rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 shadow-md shadow-violet-500/30 flex items-center justify-center text-white active:scale-95 transition-transform"
-            >
-              <ShoppingBag class="w-5 h-5" />
-              <span v-if="cartCount > 0"
-                class="absolute -top-1 -right-1 bg-rose-500 text-white text-[10px] rounded-full min-w-[18px] h-[18px] px-1 flex items-center justify-center font-bold ring-2 ring-white">
-                {{ cartCount }}
-              </span>
-            </button>
+            <div class="min-w-0">
+              <h1 class="text-xl sm:text-2xl font-bold tracking-tight truncate">
+                Table {{ table?.tableNumber ?? '' }}
+              </h1>
+              <p class="text-violet-50/90 text-xs sm:text-sm flex items-center gap-1.5">
+                <Sparkles class="w-3.5 h-3.5" />
+                Tap any item to add it to your order
+              </p>
+            </div>
           </div>
-
-          <!-- Search -->
-          <div class="mt-3 relative">
-            <Search class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-            <input v-model="search" type="text" placeholder="Search the menu…"
-              class="w-full pl-9 pr-3 py-2 bg-slate-100 border border-transparent rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40 focus:bg-white focus:border-violet-300 transition-all" />
-          </div>
-
-          <!-- Category Pills -->
-          <div class="flex gap-2 mt-3 overflow-x-auto pb-1 -mx-4 px-4">
-            <button @click="activeCategory = 'All'"
-              :class="activeCategory === 'All'
-                ? 'bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white shadow-sm'
-                : 'bg-slate-100 text-slate-600'"
-              class="px-4 py-1.5 rounded-full text-sm font-semibold whitespace-nowrap flex-shrink-0 transition-all">
-              All
-            </button>
-            <button v-for="cat in categories" :key="cat.code" @click="activeCategory = cat.code"
-              :class="activeCategory === cat.code
-                ? 'bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white shadow-sm'
-                : 'bg-slate-100 text-slate-600'"
-              class="px-4 py-1.5 rounded-full text-sm font-semibold whitespace-nowrap flex-shrink-0 transition-all">
-              {{ cat.name }}
-            </button>
+          <div class="text-right flex-shrink-0 bg-white/10 backdrop-blur ring-1 ring-white/20 rounded-2xl px-3 sm:px-4 py-1.5 sm:py-2">
+            <p class="text-xl sm:text-2xl font-bold tabular-nums">NPR {{ cartTotal.toFixed(0) }}</p>
+            <p class="text-violet-50/90 text-[11px] sm:text-xs">{{ cartCount }} item{{ cartCount === 1 ? '' : 's' }}</p>
           </div>
         </div>
       </header>
 
-      <!-- Menu Grid -->
-      <div class="p-3 sm:p-4 pb-28">
-        <div v-if="filteredItems.length === 0" class="flex flex-col items-center justify-center py-16 text-slate-400">
-          <UtensilsCrossed class="w-14 h-14 mb-3 opacity-40" />
-          <p>No items found</p>
+      <!-- Loading -->
+      <div v-if="loading" class="flex-1 flex items-center justify-center">
+        <div class="text-center">
+          <Loader2 class="w-12 h-12 text-violet-500 mx-auto mb-3 animate-spin" />
+          <p class="text-slate-500">Loading menu…</p>
         </div>
-        <div v-else class="grid grid-cols-2 gap-3">
-          <div v-for="item in filteredItems" :key="item.code"
-            class="bg-white rounded-2xl ring-1 ring-slate-200/60 shadow-sm overflow-hidden flex flex-col">
-            <div class="relative bg-gradient-to-br from-violet-50 to-fuchsia-50 h-28 sm:h-32 flex items-center justify-center overflow-hidden">
-              <img v-if="item.fileCode && fileUrlCache[item.fileCode]"
-                :src="fileUrlCache[item.fileCode]" :alt="item.name"
-                class="w-full h-full object-cover" />
-              <UtensilsCrossed v-else class="w-10 h-10 text-violet-300" />
-              <div v-if="item.isVeg" class="absolute top-1.5 left-1.5 bg-emerald-500/90 backdrop-blur text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">VEG</div>
+      </div>
+
+      <div v-else class="flex-1 flex flex-col md:flex-row md:overflow-hidden">
+        <!-- Left: Menu -->
+        <div class="flex-1 flex flex-col md:overflow-hidden min-w-0">
+          <!-- Category Tabs -->
+          <div class="flex gap-2 px-3 sm:px-6 py-3 bg-white/70 backdrop-blur border-b border-slate-200/60 overflow-x-auto flex-shrink-0">
+            <button @click="activeCategory = 'All'"
+              :class="activeCategory === 'All'
+                ? 'bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white shadow-md shadow-violet-500/30'
+                : 'bg-white text-slate-700 ring-1 ring-slate-200 hover:ring-slate-300'"
+              class="px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl font-semibold whitespace-nowrap text-sm transition-all">
+              All Items
+            </button>
+            <button v-for="cat in categories" :key="cat.code" @click="activeCategory = cat.code"
+              :class="activeCategory === cat.code
+                ? 'bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white shadow-md shadow-violet-500/30'
+                : 'bg-white text-slate-700 ring-1 ring-slate-200 hover:ring-slate-300'"
+              class="px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl font-semibold whitespace-nowrap text-sm transition-all">
+              {{ cat.name }}
+            </button>
+          </div>
+
+          <!-- Items Grid -->
+          <div class="flex-1 md:overflow-y-auto p-3 sm:p-5">
+            <div v-if="filteredItems.length === 0" class="flex flex-col items-center justify-center h-full text-slate-400 py-12">
+              <UtensilsCrossed class="w-16 h-16 mb-3 opacity-40" />
+              <p class="text-lg">No items in this category yet</p>
             </div>
-            <div class="p-3 flex-1 flex flex-col">
-              <h3 class="font-semibold text-slate-900 text-sm leading-tight line-clamp-2">{{ item.name }}</h3>
-              <p v-if="item.description" class="text-[11px] text-slate-400 mt-1 line-clamp-1">{{ item.description }}</p>
-              <div class="flex items-center justify-between mt-auto pt-2">
-                <span class="text-violet-600 font-bold text-sm tabular-nums">NPR {{ item.price.toFixed(0) }}</span>
-                <div class="flex items-center gap-1">
-                  <button v-if="cart[item.code]" @click="removeFromCart(item.code)"
-                    class="w-7 h-7 bg-slate-100 rounded-full flex items-center justify-center text-slate-700 hover:bg-slate-200 transition-colors">
-                    <Minus class="w-3.5 h-3.5" />
-                  </button>
-                  <span v-if="cart[item.code]"
-                    class="text-sm font-bold text-slate-900 min-w-[18px] text-center tabular-nums">{{ cart[item.code] }}</span>
-                  <button @click="addToCart(item.code)"
-                    class="w-7 h-7 bg-gradient-to-br from-violet-500 to-fuchsia-500 rounded-full flex items-center justify-center text-white shadow-sm hover:shadow-md transition-all active:scale-95">
-                    <Plus class="w-3.5 h-3.5" />
-                  </button>
+            <div v-else class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+              <button v-for="item in filteredItems" :key="item.code" @click="addToCart(item.code)"
+                :class="cart[item.code]
+                  ? 'bg-white ring-2 ring-violet-500 shadow-md shadow-violet-500/10'
+                  : 'bg-white ring-1 ring-slate-200/60 hover:ring-violet-300 hover:shadow-md'"
+                class="rounded-2xl p-3 sm:p-4 text-left relative transition-all active:scale-[0.97]">
+                <!-- quantity badge -->
+                <div v-if="cart[item.code]"
+                  class="absolute -top-2 -right-2 bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold text-sm shadow-lg shadow-violet-500/40 ring-2 ring-white">
+                  {{ cart[item.code] }}
                 </div>
-              </div>
+                <!-- image -->
+                <div class="relative rounded-xl h-28 sm:h-32 mb-3 overflow-hidden bg-gradient-to-br from-violet-50 to-fuchsia-50">
+                  <img v-if="item.fileCode && fileUrlCache[item.fileCode]"
+                    :src="fileUrlCache[item.fileCode]" :alt="item.name"
+                    class="w-full h-full object-cover" loading="lazy" />
+                  <div v-else class="w-full h-full flex items-center justify-center">
+                    <UtensilsCrossed class="w-10 h-10 text-violet-300" />
+                  </div>
+                  <div v-if="item.isVeg" class="absolute top-1.5 left-1.5 bg-emerald-500/90 backdrop-blur text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">VEG</div>
+                </div>
+                <h3 class="font-semibold text-slate-900 text-sm leading-tight line-clamp-1">{{ item.name }}</h3>
+                <p v-if="item.description" class="text-[11px] text-slate-400 mt-0.5 line-clamp-2">{{ item.description }}</p>
+                <div class="mt-2 flex items-center justify-between">
+                  <p class="text-base sm:text-lg font-bold text-violet-600 tabular-nums">NPR {{ item.price.toFixed(0) }}</p>
+                  <div :class="cart[item.code] ? 'bg-violet-500 text-white' : 'bg-violet-100 text-violet-600'"
+                    class="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 transition-colors">
+                    <Plus class="w-4 h-4" />
+                  </div>
+                </div>
+              </button>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- Sticky bottom order bar -->
-      <div v-if="cartCount > 0" class="fixed bottom-0 left-0 right-0 z-20 p-3 bg-white/95 backdrop-blur border-t border-slate-200/60 shadow-[0_-8px_24px_-12px_rgba(0,0,0,0.15)]">
-        <button @click="placeOrder" :disabled="ordering"
-          class="w-full py-3.5 bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 text-white font-bold rounded-2xl shadow-lg shadow-violet-500/30 transition-all disabled:opacity-60 flex items-center justify-between px-4">
-          <span class="bg-white/20 rounded-lg px-2 py-1 text-xs tabular-nums">{{ cartCount }} {{ cartCount === 1 ? 'item' : 'items' }}</span>
-          <span class="text-base flex items-center gap-1.5">{{ ordering ? 'Placing…' : 'Place order' }}<ArrowRight v-if="!ordering" class="w-4 h-4" /></span>
-          <span class="font-bold tabular-nums">NPR {{ cartTotal.toFixed(0) }}</span>
-        </button>
-      </div>
-
-      <!-- Cart slide-in -->
-      <Teleport to="body">
-        <div v-if="showCart" class="fixed inset-0 z-50">
-          <div @click="showCart = false" class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" />
-          <div class="absolute right-0 top-0 bottom-0 w-full max-w-sm bg-white shadow-2xl flex flex-col rounded-l-3xl">
-            <div class="p-4 border-b border-slate-100 flex items-center justify-between">
-              <div class="flex items-center gap-2.5">
-                <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center shadow-md shadow-violet-500/30">
-                  <ShoppingBag class="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <h2 class="text-base font-bold text-slate-900">Your cart</h2>
-                  <p class="text-xs text-slate-500">{{ cartCount }} item{{ cartCount === 1 ? '' : 's' }}</p>
-                </div>
-              </div>
-              <button @click="showCart = false" class="w-9 h-9 rounded-full text-slate-500 hover:bg-slate-100 flex items-center justify-center">
-                <X class="w-5 h-5" />
-              </button>
+        <!-- Right: Cart -->
+        <div class="w-full md:w-[22rem] bg-white border-t md:border-t-0 md:border-l border-slate-200/60 flex flex-col md:flex-shrink-0">
+          <div class="px-5 py-4 border-b border-slate-100 flex items-center gap-2.5">
+            <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center shadow-md shadow-violet-500/30">
+              <ShoppingBag class="w-5 h-5 text-white" />
             </div>
-            <div class="flex-1 overflow-y-auto p-3 space-y-2">
-              <div v-if="cartItems.length === 0" class="flex flex-col items-center justify-center py-16 text-slate-400 text-center">
-                <div class="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mb-3">
-                  <ShoppingBag class="w-7 h-7 text-slate-300" />
-                </div>
-                <p>Your cart is empty</p>
+            <div>
+              <h2 class="text-base font-bold text-slate-900">Your Order</h2>
+              <p class="text-xs text-slate-500">{{ cartCount }} item{{ cartCount === 1 ? '' : 's' }}</p>
+            </div>
+          </div>
+
+          <!-- Cart items -->
+          <div class="md:flex-1 md:overflow-y-auto">
+            <div v-if="cartItems.length === 0" class="flex flex-col items-center justify-center h-full text-slate-400 py-16 px-6 text-center">
+              <div class="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mb-3">
+                <ShoppingBag class="w-7 h-7 text-slate-300" />
               </div>
-              <div v-else v-for="item in cartItems" :key="item.code"
+              <p class="font-medium text-slate-500">Your cart is empty</p>
+              <p class="text-xs mt-1">Tap items on the left to add them.</p>
+            </div>
+            <div v-else class="p-3 space-y-2">
+              <div v-for="item in cartItems" :key="item.code"
                 class="bg-slate-50 ring-1 ring-slate-200/60 rounded-2xl p-3">
-                <div class="flex items-start justify-between gap-2 mb-2.5">
-                  <div class="min-w-0">
+                <div class="flex justify-between items-start mb-2.5 gap-2">
+                  <div class="min-w-0 flex-1">
                     <p class="font-semibold text-slate-900 text-sm truncate">{{ item.name }}</p>
                     <p class="text-[11px] text-slate-500 tabular-nums">NPR {{ item.price.toFixed(0) }} each</p>
                   </div>
                   <button @click="deleteFromCart(item.code)"
-                    class="w-7 h-7 rounded-full text-slate-400 hover:text-rose-600 hover:bg-rose-50 flex items-center justify-center transition-colors flex-shrink-0">
+                    class="w-7 h-7 -mr-1 -mt-1 rounded-full text-slate-400 hover:text-rose-600 hover:bg-rose-50 flex items-center justify-center transition-colors flex-shrink-0">
                     <X class="w-3.5 h-3.5" />
                   </button>
                 </div>
                 <div class="flex items-center justify-between">
                   <div class="flex items-center gap-1 bg-white ring-1 ring-slate-200 rounded-full p-0.5">
                     <button @click="removeFromCart(item.code)"
-                      class="w-7 h-7 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-600">
+                      class="w-7 h-7 rounded-full flex items-center justify-center text-slate-600 hover:bg-slate-100 transition-colors">
                       <Minus class="w-3.5 h-3.5" />
                     </button>
-                    <span class="w-6 text-center font-bold text-slate-900 text-sm tabular-nums">{{ item.quantity }}</span>
+                    <span class="w-7 text-center font-bold text-slate-900 text-sm tabular-nums">{{ item.quantity }}</span>
                     <button @click="addToCart(item.code)"
-                      class="w-7 h-7 rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white flex items-center justify-center shadow-sm">
+                      class="w-7 h-7 rounded-full flex items-center justify-center bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white shadow-sm hover:shadow-md transition-shadow">
                       <Plus class="w-3.5 h-3.5" />
                     </button>
                   </div>
@@ -285,31 +291,34 @@ onMounted(load)
                 </div>
               </div>
             </div>
-            <div v-if="cartItems.length > 0" class="p-4 border-t border-slate-100 space-y-3">
-              <div class="bg-gradient-to-br from-violet-50 to-fuchsia-50 rounded-2xl p-3.5 ring-1 ring-violet-100/60 flex items-center justify-between">
+          </div>
+
+          <!-- Footer -->
+          <div v-if="cartItems.length > 0" class="p-4 border-t border-slate-100 space-y-3 bg-white">
+            <div class="bg-gradient-to-br from-violet-50 to-fuchsia-50 rounded-2xl p-3.5 ring-1 ring-violet-100/60">
+              <div class="flex justify-between text-sm mb-1">
+                <span class="text-slate-600">Subtotal</span>
+                <span class="font-medium tabular-nums">NPR {{ cartTotal.toFixed(0) }}</span>
+              </div>
+              <div class="flex justify-between items-end pt-1.5 border-t border-violet-100/60 mt-1.5">
                 <span class="font-bold text-slate-900">Total</span>
                 <span class="font-bold text-violet-600 text-xl tabular-nums">NPR {{ cartTotal.toFixed(0) }}</span>
               </div>
-              <button @click="() => { showCart = false; placeOrder() }" :disabled="ordering"
-                class="w-full py-3 bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 text-white font-bold rounded-2xl shadow-md shadow-violet-500/30 disabled:opacity-60 transition-all flex items-center justify-center gap-1.5">
-                {{ ordering ? 'Placing…' : 'Place order' }}
-                <ArrowRight v-if="!ordering" class="w-4 h-4" />
-              </button>
             </div>
+            <button @click="checkout" :disabled="ordering"
+              class="w-full py-3.5 bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 text-white font-bold rounded-2xl shadow-lg shadow-violet-500/30 disabled:opacity-60 transition-all text-base flex items-center justify-center gap-2">
+              <span>{{ ordering ? 'Processing…' : 'Proceed to Payment' }}</span>
+              <ArrowRight v-if="!ordering" class="w-4 h-4" />
+              <Loader2 v-else class="w-4 h-4 animate-spin" />
+            </button>
+            <button @click="clearCart"
+              class="w-full py-2.5 bg-slate-50 hover:bg-slate-100 text-slate-600 font-medium rounded-xl ring-1 ring-slate-200/60 transition-colors text-sm inline-flex items-center justify-center gap-1.5">
+              <Trash2 class="w-3.5 h-3.5" />
+              Clear order
+            </button>
           </div>
         </div>
-      </Teleport>
-    </template>
-
-    <!-- Invalid QR -->
-    <div v-else class="flex items-center justify-center min-h-screen px-4">
-      <div class="text-center max-w-sm">
-        <div class="w-16 h-16 rounded-2xl bg-rose-50 ring-1 ring-rose-200 flex items-center justify-center mx-auto mb-3">
-          <AlertTriangle class="w-7 h-7 text-rose-500" />
-        </div>
-        <p class="text-slate-900 font-semibold">Invalid QR code</p>
-        <p class="text-sm text-slate-500 mt-1">Please scan the QR code on your table again.</p>
       </div>
-    </div>
+    </template>
   </div>
 </template>

@@ -5,8 +5,10 @@ import { useAuthStore } from '@/stores/auth'
 import { ordersApi } from '@/api/orders'
 import { orderItemApi } from '@/api/orderItem'
 import { tableApi } from '@/api/table'
+import { fileApi } from '@/api/file'
 import { toast } from 'vue-sonner'
 import api from '@/api/axios'
+import { UtensilsCrossed } from 'lucide-vue-next'
 import type { RestaurantTableResponse, MenuItemResponse, MenuCategoryResponse, PageResponse } from '@/types'
 
 const router = useRouter()
@@ -21,6 +23,8 @@ const activeCategory = ref('All')
 const notes = ref('')
 const loading = ref(true)
 const submitting = ref(false)
+const fileUrlCache = ref<Record<string, string>>({})
+const submittedOrder = ref<{ orderNumber: string; ticketNumber?: number | null; tableNumber: string } | null>(null)
 
 const restaurantCode = computed(() => auth.restaurantCode)
 
@@ -61,6 +65,13 @@ async function load() {
     tables.value = tbls.content
     categories.value = cats.content
     items.value = its.content
+    const codes = its.content.filter(i => i.fileCode).map(i => i.fileCode!)
+    await Promise.all(codes.map(async (code) => {
+      try {
+        const f = await fileApi.get(code)
+        fileUrlCache.value[code] = f.url
+      } catch { /* silent */ }
+    }))
   } catch {
     toast.error('Failed to load data')
   } finally {
@@ -107,7 +118,11 @@ async function submitOrder() {
     for (const item of cartItems.value) {
       await orderItemApi.add(order.code, { menuItemCode: item.code, quantity: item.quantity })
     }
-    toast.success(`Order submitted for Table ${selectedTable.value.tableNumber}`)
+    submittedOrder.value = {
+      orderNumber: order.orderNumber,
+      ticketNumber: order.ticketNumber ?? null,
+      tableNumber: selectedTable.value.tableNumber,
+    }
     selectedTable.value = null
     cart.value = {}
     notes.value = ''
@@ -116,6 +131,18 @@ async function submitOrder() {
   } finally {
     submitting.value = false
   }
+}
+
+function closeSubmittedDialog() {
+  submittedOrder.value = null
+}
+
+function viewReceipt() {
+  if (submittedOrder.value) router.push(`/receipt/${submittedOrder.value.orderNumber}`)
+}
+
+function viewTracking() {
+  if (submittedOrder.value) router.push(`/track/${submittedOrder.value.orderNumber}`)
 }
 
 onMounted(load)
@@ -197,15 +224,22 @@ onMounted(load)
           <div class="flex-1 md:overflow-y-auto">
             <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3">
               <button v-for="item in filteredItems" :key="item.code" @click="addToCart(item.code)"
-                class="bg-white rounded-xl p-4 border-2 text-left relative hover:border-violet-500 transition-colors"
+                class="bg-white rounded-xl p-3 border-2 text-left relative hover:border-violet-500 transition-colors flex items-center gap-3"
                 :class="cart[item.code] ? 'border-violet-500' : 'border-gray-200'">
                 <div v-if="cart[item.code]"
-                  class="absolute -top-2 -right-2 bg-violet-500 text-white w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold">
+                  class="absolute -top-2 -right-2 bg-violet-500 text-white w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold z-10">
                   {{ cart[item.code] }}
                 </div>
-                <h3 class="font-medium text-gray-900 text-sm mb-1">{{ item.name }}</h3>
-                <p class="text-xs text-gray-500 mb-2 capitalize">{{ item.categoryCode ? categories.find(c => c.code === item.categoryCode)?.name ?? '' : '' }}</p>
-                <p class="text-base font-bold text-violet-500">NPR {{ item.price.toFixed(0) }}</p>
+                <div class="w-14 h-14 rounded-lg bg-slate-100 flex-shrink-0 overflow-hidden flex items-center justify-center">
+                  <img v-if="item.fileCode && fileUrlCache[item.fileCode]" :src="fileUrlCache[item.fileCode]" :alt="item.name"
+                    class="w-full h-full object-cover" loading="lazy" />
+                  <UtensilsCrossed v-else class="w-5 h-5 text-slate-300" />
+                </div>
+                <div class="min-w-0 flex-1">
+                  <h3 class="font-medium text-gray-900 text-sm mb-0.5 truncate">{{ item.name }}</h3>
+                  <p class="text-[11px] text-gray-500 capitalize truncate">{{ item.categoryCode ? categories.find(c => c.code === item.categoryCode)?.name ?? '' : '' }}</p>
+                  <p class="text-sm font-bold text-violet-500 mt-1">NPR {{ item.price.toFixed(0) }}</p>
+                </div>
               </button>
             </div>
           </div>
@@ -229,7 +263,12 @@ onMounted(load)
           </div>
           <div v-else class="space-y-3">
             <div v-for="item in cartItems" :key="item.code" class="bg-gray-50 rounded-lg p-3">
-              <div class="flex justify-between items-start mb-2">
+              <div class="flex justify-between items-start mb-2 gap-2">
+                <div class="w-10 h-10 rounded-md bg-white flex-shrink-0 overflow-hidden flex items-center justify-center ring-1 ring-slate-200">
+                  <img v-if="item.fileCode && fileUrlCache[item.fileCode]" :src="fileUrlCache[item.fileCode]" :alt="item.name"
+                    class="w-full h-full object-cover" loading="lazy" />
+                  <UtensilsCrossed v-else class="w-4 h-4 text-slate-300" />
+                </div>
                 <div class="flex-1 min-w-0">
                   <h3 class="font-medium text-gray-900 text-sm truncate">{{ item.name }}</h3>
                   <p class="text-xs text-gray-500">NPR {{ item.price.toFixed(0) }} each</p>
@@ -294,5 +333,53 @@ onMounted(load)
         </div>
       </div>
     </div>
+
+    <!-- Submitted-order dialog: shows the ticket + actions to view receipt / tracking -->
+    <Teleport to="body">
+      <div v-if="submittedOrder" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" @click="closeSubmittedDialog" />
+        <div class="relative bg-white rounded-3xl shadow-2xl ring-1 ring-slate-200/60 w-full max-w-sm p-6 text-center">
+          <button @click="closeSubmittedDialog"
+            class="absolute top-3 right-3 w-8 h-8 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 flex items-center justify-center transition-colors">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+
+          <div class="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-br from-emerald-400 to-green-500 flex items-center justify-center shadow-lg shadow-emerald-500/30 mb-3">
+            <svg class="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <h2 class="text-lg font-bold text-slate-900">Order submitted</h2>
+          <p class="text-sm text-slate-500 mt-0.5">Table {{ submittedOrder.tableNumber }}</p>
+
+          <div class="mt-5">
+            <p class="text-[11px] font-semibold uppercase tracking-widest text-slate-500">Ticket</p>
+            <p v-if="submittedOrder.ticketNumber != null"
+              class="text-6xl font-extrabold tabular-nums leading-none mt-1 bg-gradient-to-br from-violet-600 to-fuchsia-600 bg-clip-text text-transparent">
+              {{ String(submittedOrder.ticketNumber).padStart(3, '0') }}
+            </p>
+            <p v-else class="text-sm font-mono text-slate-700 mt-2">{{ submittedOrder.orderNumber }}</p>
+            <p class="text-[10px] text-slate-400 mt-2 font-mono tabular-nums">{{ submittedOrder.orderNumber }}</p>
+          </div>
+
+          <div class="mt-6 space-y-2">
+            <button @click="viewReceipt"
+              class="w-full py-2.5 bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 text-white text-sm font-semibold rounded-xl shadow-md shadow-violet-500/30 transition-all">
+              View / print receipt
+            </button>
+            <button @click="viewTracking"
+              class="w-full py-2.5 bg-white ring-1 ring-slate-200 text-slate-700 text-sm font-medium rounded-xl hover:bg-slate-50 transition-colors">
+              Open tracking page
+            </button>
+            <button @click="closeSubmittedDialog"
+              class="w-full py-2.5 text-sm text-slate-500 hover:text-slate-700 transition-colors">
+              Take another order
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>

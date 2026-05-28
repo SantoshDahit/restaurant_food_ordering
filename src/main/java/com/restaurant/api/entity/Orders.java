@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.UUID;
 
 @Getter
@@ -34,6 +35,13 @@ public class Orders extends BaseFullTimeEntity {
 
     @Column(name = "order_number", nullable = false, unique = true, length = 30)
     private String orderNumber;
+
+    /** Customer-facing 3-digit daily ticket (100-999), unique per (restaurant, business_date). */
+    @Column(name = "ticket_number")
+    private Integer ticketNumber;
+
+    @Column(name = "business_date")
+    private LocalDate businessDate;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "order_type", nullable = false)
@@ -71,6 +79,11 @@ public class Orders extends BaseFullTimeEntity {
         this.orderType = orderType != null ? orderType : OrderType.DINE_IN;
         this.specialNotes = specialNotes;
         this.deviceType = deviceType;
+    }
+
+    public void assignTicket(int ticketNumber, LocalDate businessDate) {
+        this.ticketNumber = ticketNumber;
+        this.businessDate = businessDate;
     }
 
     public void updateStatus(OrderStatus status) {

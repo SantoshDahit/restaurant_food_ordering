@@ -22,4 +22,7 @@ export const tableApi = {
 
   getByToken: (token: string) =>
     api.get<RestaurantTableResponse>(`/tables/by-token/${token}`).then(r => r.data),
+
+  getByTableCode: (tableCode: string) =>
+    api.get<RestaurantTableResponse>(`/tables/by-table-code/${tableCode}`).then(r => r.data),
 }

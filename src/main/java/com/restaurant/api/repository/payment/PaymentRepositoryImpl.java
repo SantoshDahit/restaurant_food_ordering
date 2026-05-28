@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -23,6 +24,11 @@ public class PaymentRepositoryImpl implements PaymentRepository {
     @Override
     public Optional<Payment> findByOrderCode(String orderCode) {
         return paymentJpaRepository.findByOrderCode(orderCode);
+    }
+
+    @Override
+    public List<Payment> findAllWithoutReceipts() {
+        return paymentJpaRepository.findAllWithoutReceipts();
     }
 
     @Override

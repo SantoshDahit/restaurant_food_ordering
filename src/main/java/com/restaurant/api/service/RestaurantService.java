@@ -77,8 +77,8 @@ public class RestaurantService {
     @Transactional
     public Restaurant update(String code, RestaurantDto.PatchRequest request) {
         Restaurant restaurant = getByCode(code);
-        restaurant.update(request.name(), request.address(), request.phone(),
-                request.email(), request.currency(), request.fileCode());
+        restaurant.update(request.name(), request.address(), request.businessNumber(),
+                request.phone(), request.email(), request.currency(), request.fileCode());
         return restaurantRepository.save(restaurant);
     }
 

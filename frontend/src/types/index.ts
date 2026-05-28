@@ -18,7 +18,7 @@ export interface FileResponse {
   type: 'IMAGE' | 'PDF' | 'DOCUMENT'
   url: string
   isSuccess: boolean
-  createAt: string
+  createdAt: string
 }
 
 // ─── API Response Wrappers ────────────────────────────────────────────────────
@@ -69,6 +69,9 @@ export interface PlatformStats {
 export interface RestaurantOverview {
   totalOrders: number
   totalRevenue: number
+  activeStaffCount: number
+  lastOrderAt?: string | null
+  topItems: TopItem[]
 }
 
 // ─── Email verification ───────────────────────────────────────────────────────
@@ -124,7 +127,7 @@ export interface RestaurantResponse {
   currency: string
   fileCode?: string
   isActive: boolean
-  createAt: string
+  createdAt: string
   updateAt?: string
 }
 
@@ -142,6 +145,7 @@ export interface RestaurantCreateRequest {
 export interface RestaurantPatchRequest {
   name?: string
   address?: string
+  businessNumber?: string
   phone?: string
   email?: string
   currency?: string
@@ -152,6 +156,7 @@ export interface RestaurantPatchRequest {
 
 export interface RestaurantTableResponse {
   code: string
+  tableCode: string
   restaurantCode: string
   tableNumber: string
   capacity: number
@@ -159,7 +164,7 @@ export interface RestaurantTableResponse {
   qrCodeUrl?: string
   qrCodeToken?: string
   isActive: boolean
-  createAt: string
+  createdAt: string
   updateAt?: string
 }
 
@@ -185,7 +190,7 @@ export interface MenuCategoryResponse {
   fileCode?: string
   sortOrder: number
   isActive: boolean
-  createAt: string
+  createdAt: string
 }
 
 export interface MenuCategoryCreateRequest {
@@ -219,7 +224,7 @@ export interface MenuItemResponse {
   isVeg: boolean
   prepTimeMinutes: number
   sortOrder: number
-  createAt: string
+  createdAt: string
 }
 
 export interface MenuItemCreateRequest {
@@ -233,6 +238,7 @@ export interface MenuItemCreateRequest {
   isVeg?: boolean
   prepTimeMinutes?: number
   sortOrder?: number
+  availability?: ItemAvailability
 }
 
 export interface MenuItemPatchRequest {
@@ -257,6 +263,7 @@ export interface OrdersResponse {
   tableCode?: string
   waiterCode?: string
   orderNumber: string
+  ticketNumber?: number | null
   orderType: OrderType
   status: OrderStatus
   subtotal: number
@@ -293,6 +300,7 @@ export interface OrderDetailResponse {
   waiterCode?: string
   waiterName?: string
   orderNumber: string
+  ticketNumber?: number | null
   orderType: OrderType
   status: OrderStatus
   subtotal: number
@@ -332,7 +340,7 @@ export interface OrderItemResponse {
   spiceLevel?: string
   notes?: string
   status: OrderStatus
-  createAt: string
+  createdAt: string
 }
 
 export interface OrderItemCreateRequest {
@@ -363,7 +371,7 @@ export interface PaymentResponse {
   receiptNumber?: string
   refundedAmount: number
   processedAt?: string
-  createAt: string
+  createdAt: string
 }
 
 export interface PaymentCreateRequest {
@@ -381,6 +389,69 @@ export interface PaymentStatusUpdateRequest {
   refundedAmount?: number
 }
 
+// ─── Receipt ──────────────────────────────────────────────────────────────────
+
+export interface ReceiptItemSnapshot {
+  menuItemCode: string
+  name?: string | null
+  quantity: number
+  unitPrice: number
+  totalPrice: number
+  notes?: string | null
+}
+
+export interface ReceiptResponse {
+  code: string
+  receiptNumber: number
+  businessDate: string
+  restaurantCode: string
+  orderCode: string
+  paymentCode: string
+  subtotal: number
+  discountAmount: number
+  taxAmount: number
+  totalAmount: number
+  paymentMethod: PaymentMethod
+  paymentStatus: PaymentStatus
+  gatewayProvider?: string | null
+  gatewayTransactionId?: string | null
+  restaurantNameSnapshot: string
+  restaurantAddress?: string | null
+  restaurantPhone?: string | null
+  restaurantBusinessNumber?: string | null
+  orderNumberSnapshot: string
+  tableNumberSnapshot?: string | null
+  itemsJson: string
+  customerName?: string | null
+  customerEmail?: string | null
+  customerPhone?: string | null
+  notes?: string | null
+  issuedAt: string
+}
+
+// ─── Analytics ────────────────────────────────────────────────────────────────
+
+export interface RevenuePoint {
+  date: string            // ISO yyyy-mm-dd
+  orderCount: number
+  revenue: number
+}
+
+export interface RevenueSeries {
+  from: string
+  to: string
+  totalRevenue: number
+  totalOrders: number
+  points: RevenuePoint[]
+}
+
+export interface TopItem {
+  menuItemCode: string
+  menuItemName?: string | null
+  quantity: number
+  revenue: number
+}
+
 // ─── Employee ─────────────────────────────────────────────────────────────────
 
 export interface EmployeeResponse {
@@ -394,7 +465,7 @@ export interface EmployeeResponse {
   bankAccount?: string
   bankName?: string
   isActive: boolean
-  createAt: string
+  createdAt: string
 }
 
 export interface EmployeeCreateRequest {
@@ -430,7 +501,7 @@ export interface AttendanceResponse {
   workedHours?: number
   overtimeHours: number
   notes?: string
-  createAt: string
+  createdAt: string
 }
 
 export interface AttendanceCreateRequest {
@@ -466,7 +537,7 @@ export interface PayrollResponse {
   netSalary: number
   status: SalaryStatus
   paidAt?: string
-  createAt: string
+  createdAt: string
 }
 
 export interface PayrollCreateRequest {

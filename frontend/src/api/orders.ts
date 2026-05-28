@@ -11,6 +11,15 @@ export const ordersApi = {
   getDetail: (code: string) =>
     api.get<OrderDetailResponse>(`/orders/${code}/detail`).then(r => r.data),
 
+  getByOrderNumber: (orderNumber: string) =>
+    api.get<OrderDetailResponse>(`/orders/by-number/${orderNumber}`).then(r => r.data),
+
+  getActiveByRestaurant: (restaurantCode: string) =>
+    api.get<OrdersResponse[]>('/orders/tracking', { params: { restaurantCode } }).then(r => r.data),
+
+  kitchen: (restaurantCode: string) =>
+    api.get<OrderDetailResponse[]>('/orders/kitchen', { params: { restaurantCode } }).then(r => r.data),
+
   create: (data: OrderCreateRequest) =>
     api.post<OrdersResponse>('/orders', data).then(r => r.data),
 

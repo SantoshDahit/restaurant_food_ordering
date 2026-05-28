@@ -77,6 +77,7 @@ async function updateStatus(code: string, status: OrderStatus) {
       <table class="w-full text-sm min-w-[640px]">
         <thead class="bg-slate-50/60 text-slate-500 uppercase text-[11px] tracking-wide">
           <tr>
+            <th class="px-5 py-3 text-left">Ticket</th>
             <th class="px-5 py-3 text-left">Order #</th>
             <th class="px-5 py-3 text-left">Type</th>
             <th class="px-5 py-3 text-left">Status</th>
@@ -89,6 +90,13 @@ async function updateStatus(code: string, status: OrderStatus) {
           <tr v-for="order in orders" :key="order.code"
             class="hover:bg-gray-50 cursor-pointer"
             @click="router.push({ name: 'order-detail', params: { code: order.code } })">
+            <td class="px-5 py-3">
+              <span v-if="order.ticketNumber != null"
+                class="inline-flex items-center justify-center min-w-[2.5rem] px-2 py-0.5 rounded-md bg-violet-50 text-violet-700 ring-1 ring-violet-200 font-mono font-bold text-sm tabular-nums">
+                {{ String(order.ticketNumber).padStart(3, '0') }}
+              </span>
+              <span v-else class="text-slate-300 text-xs">—</span>
+            </td>
             <td class="px-5 py-3 font-medium text-blue-600">{{ order.orderNumber }}</td>
             <td class="px-5 py-3 text-slate-500">{{ order.orderType.replace(/_/g, ' ') }}</td>
             <td class="px-5 py-3"><StatusBadge :status="order.status" /></td>
@@ -104,7 +112,7 @@ async function updateStatus(code: string, status: OrderStatus) {
             </td>
           </tr>
           <tr v-if="!orders.length">
-            <td colspan="6" class="p-0">
+            <td colspan="7" class="p-0">
               <EmptyState
                 :icon="ClipboardList"
                 title="No orders yet"

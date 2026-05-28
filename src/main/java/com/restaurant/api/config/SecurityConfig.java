@@ -49,6 +49,7 @@ public class SecurityConfig {
                         // Public lookups the customer-facing UI relies on
                         .requestMatchers(HttpMethod.GET, "/v1/restaurants/by-kiosk-code/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/v1/tables/by-token/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/v1/tables/by-table-code/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/v1/menu-categories/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/v1/menu-items/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/v1/files/*").permitAll()
@@ -60,7 +61,12 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/v1/orders/*/detail").permitAll()
                         .requestMatchers(HttpMethod.GET, "/v1/orders/*/items").permitAll()
                         .requestMatchers(HttpMethod.POST, "/v1/orders/*/items").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/v1/orders/by-number/*").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/v1/orders/tracking").permitAll()
                         .requestMatchers(HttpMethod.POST, "/v1/payments").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/v1/payments/by-order/*").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/v1/receipts/by-order/*").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/v1/receipts/*").permitAll()
 
                         // Platform admin endpoints — ADMIN role only
                         .requestMatchers("/v1/admin/**").hasAuthority("ADMIN")

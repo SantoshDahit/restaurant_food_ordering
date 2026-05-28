@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { restaurantApi } from '@/api/restaurant'
 import { userApi } from '@/api/user'
@@ -9,7 +9,7 @@ import { toast } from 'vue-sonner'
 import StatusBadge from '@/components/shared/StatusBadge.vue'
 import {
   ArrowLeft, Store, Mail, Phone, MapPin, ShoppingBag, TrendingUp,
-  Circle, UserCircle,
+  Circle, UserCircle, Users, Clock4, Trophy,
 } from 'lucide-vue-next'
 import type { RestaurantResponse, RestaurantOverview, OrdersResponse, UserResponse } from '@/types'
 
@@ -59,6 +59,16 @@ async function toggleOwnerActive() {
 function fmtMoney(n: number | undefined): string {
   return 'NPR ' + (n ?? 0).toLocaleString(undefined, { maximumFractionDigits: 0 })
 }
+
+function fmtDateTime(iso: string | null | undefined): string {
+  if (!iso) return '—'
+  return new Date(iso).toLocaleString(undefined, {
+    year: 'numeric', month: 'short', day: 'numeric',
+    hour: '2-digit', minute: '2-digit',
+  })
+}
+
+const maxTopQty = computed(() => (overview.value?.topItems ?? []).reduce((m, t) => Math.max(m, t.quantity), 0))
 </script>
 
 <template>
@@ -104,7 +114,7 @@ function fmtMoney(n: number | undefined): string {
     </div>
 
     <!-- Stats -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
       <div class="bg-white rounded-2xl ring-1 ring-slate-200/60 shadow-sm p-5">
         <div class="flex items-start justify-between mb-2">
           <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Total orders</span>
@@ -112,7 +122,7 @@ function fmtMoney(n: number | undefined): string {
             <ShoppingBag class="w-5 h-5" />
           </div>
         </div>
-        <div class="text-3xl font-bold text-slate-900 tabular-nums">{{ (overview?.totalOrders ?? 0).toLocaleString() }}</div>
+        <div class="text-2xl sm:text-3xl font-bold text-slate-900 tabular-nums">{{ (overview?.totalOrders ?? 0).toLocaleString() }}</div>
       </div>
       <div class="bg-white rounded-2xl ring-1 ring-slate-200/60 shadow-sm p-5">
         <div class="flex items-start justify-between mb-2">
@@ -121,8 +131,56 @@ function fmtMoney(n: number | undefined): string {
             <TrendingUp class="w-5 h-5" />
           </div>
         </div>
-        <div class="text-3xl font-bold text-slate-900 tabular-nums">{{ fmtMoney(overview?.totalRevenue) }}</div>
+        <div class="text-2xl sm:text-3xl font-bold text-slate-900 tabular-nums">{{ fmtMoney(overview?.totalRevenue) }}</div>
       </div>
+      <div class="bg-white rounded-2xl ring-1 ring-slate-200/60 shadow-sm p-5">
+        <div class="flex items-start justify-between mb-2">
+          <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Active staff</span>
+          <div class="w-9 h-9 rounded-xl flex items-center justify-center text-white bg-gradient-to-br from-sky-500 to-indigo-500 shadow-sm">
+            <Users class="w-5 h-5" />
+          </div>
+        </div>
+        <div class="text-2xl sm:text-3xl font-bold text-slate-900 tabular-nums">{{ (overview?.activeStaffCount ?? 0).toLocaleString() }}</div>
+      </div>
+      <div class="bg-white rounded-2xl ring-1 ring-slate-200/60 shadow-sm p-5">
+        <div class="flex items-start justify-between mb-2">
+          <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Last order</span>
+          <div class="w-9 h-9 rounded-xl flex items-center justify-center text-white bg-gradient-to-br from-amber-500 to-orange-500 shadow-sm">
+            <Clock4 class="w-5 h-5" />
+          </div>
+        </div>
+        <div class="text-sm sm:text-base font-semibold text-slate-900 leading-tight">{{ fmtDateTime(overview?.lastOrderAt) }}</div>
+      </div>
+    </div>
+
+    <!-- Top sellers -->
+    <div class="bg-white rounded-2xl ring-1 ring-slate-200/60 shadow-sm p-5 mb-4">
+      <div class="flex items-center gap-2 mb-3">
+        <Trophy class="w-4 h-4 text-amber-500" />
+        <h3 class="text-sm font-semibold text-slate-900">Top sellers</h3>
+        <span class="text-xs text-slate-400">all time</span>
+      </div>
+      <div v-if="!overview?.topItems?.length" class="text-sm text-slate-500 text-center py-6">
+        No items sold yet.
+      </div>
+      <ol v-else class="space-y-2.5">
+        <li v-for="(item, idx) in overview.topItems" :key="item.menuItemCode" class="flex items-center gap-2.5">
+          <span class="inline-flex w-6 h-6 rounded-lg bg-slate-100 ring-1 ring-slate-200 items-center justify-center text-xs font-bold text-slate-600 tabular-nums">
+            {{ idx + 1 }}
+          </span>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-medium text-slate-900 truncate">{{ item.menuItemName ?? '—' }}</p>
+            <div class="mt-1 h-1.5 bg-slate-200 rounded-full overflow-hidden">
+              <div class="h-full bg-gradient-to-r from-amber-400 to-orange-500 rounded-full"
+                :style="{ width: maxTopQty > 0 ? `${(item.quantity / maxTopQty) * 100}%` : '0%' }" />
+            </div>
+          </div>
+          <div class="text-right flex-shrink-0">
+            <p class="text-sm font-bold text-slate-900 tabular-nums">{{ item.quantity }}</p>
+            <p class="text-[10px] text-slate-400 tabular-nums">NPR {{ item.revenue.toFixed(0) }}</p>
+          </div>
+        </li>
+      </ol>
     </div>
 
     <!-- Owner -->

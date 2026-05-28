@@ -52,4 +52,9 @@ public class RestaurantTableController {
     public RestaurantTableDto.Response getByQrToken(@PathVariable String token) {
         return restaurantTableFacade.getByQrToken(token);
     }
+
+    @GetMapping("/by-table-code/{tableCode}")
+    public RestaurantTableDto.Response getByTableCode(@PathVariable String tableCode) {
+        return restaurantTableFacade.getByTableCode(tableCode);
+    }
 }

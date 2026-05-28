@@ -21,6 +21,7 @@ public class OrdersMapper extends BaseMapper<Orders, OrdersDto> {
                                                      String restaurantName,
                                                      String tableNumber,
                                                      String waiterName,
+                                                     Integer ticketNumber,
                                                      List<OrdersDto.OrderItemDetail> items) {
         return new OrdersDto.DetailResponse(
                 entity.getCode(),
@@ -31,6 +32,7 @@ public class OrdersMapper extends BaseMapper<Orders, OrdersDto> {
                 entity.getWaiterCode(),
                 waiterName,
                 entity.getOrderNumber(),
+                ticketNumber,
                 entity.getOrderType(),
                 entity.getStatus(),
                 entity.getSubtotal(),

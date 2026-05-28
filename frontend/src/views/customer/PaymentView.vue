@@ -16,15 +16,18 @@ const router = useRouter()
 
 const orderCode = computed(() => route.query.orderCode as string)
 const restaurantCode = computed(() => route.query.restaurantCode as string)
-const source = computed(() => route.query.source as 'qr' | 'kiosk' | undefined)
+const source = computed(() => route.query.source as 'qr' | 'kiosk' | 'table' | undefined)
 const sourceToken = computed(() => route.query.token as string | undefined)
 const sourceKioskCode = computed(() => route.query.kioskCode as string | undefined)
+const sourceTableCode = computed(() => route.query.tableCode as string | undefined)
 
 function goBackToStart() {
   if (source.value === 'qr' && sourceToken.value) {
     router.push(`/qr/${sourceToken.value}`)
   } else if (source.value === 'kiosk' && sourceKioskCode.value) {
     router.push(`/kiosk/${sourceKioskCode.value}`)
+  } else if (source.value === 'table' && sourceTableCode.value) {
+    router.push(`/table/${sourceTableCode.value}`)
   } else {
     router.push('/')
   }
@@ -140,13 +143,22 @@ onMounted(loadOrder)
       </p>
 
       <div class="mt-6 space-y-2">
-        <button @click="goBackToStart"
-          class="w-full py-3 bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 text-white font-medium rounded-xl shadow-md shadow-violet-500/30 transition-all flex items-center justify-center gap-1.5">
-          Back to start
+        <button @click="router.push(`/track/${orderNumber}`)"
+          class="w-full py-3 bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 text-white font-semibold rounded-xl shadow-md shadow-violet-500/30 transition-all flex items-center justify-center gap-1.5">
+          Track your order
           <ArrowRight class="w-4 h-4" />
         </button>
+        <button @click="router.push(`/receipt/${orderNumber}`)"
+          class="w-full py-2.5 bg-white hover:bg-slate-50 text-slate-700 font-medium rounded-xl ring-1 ring-slate-200/60 transition-colors flex items-center justify-center gap-1.5">
+          <Receipt class="w-4 h-4" />
+          View / print receipt
+        </button>
+        <button @click="goBackToStart"
+          class="w-full py-2.5 bg-white hover:bg-slate-50 text-slate-700 font-medium rounded-xl ring-1 ring-slate-200/60 transition-colors flex items-center justify-center gap-1.5">
+          Back to start
+        </button>
         <button @click="toast.success('Receipt sent to your email')"
-          class="w-full py-3 bg-slate-50 hover:bg-slate-100 text-slate-700 font-medium rounded-xl ring-1 ring-slate-200/60 transition-colors flex items-center justify-center gap-1.5">
+          class="w-full py-2.5 bg-slate-50 hover:bg-slate-100 text-slate-700 font-medium rounded-xl ring-1 ring-slate-200/60 transition-colors flex items-center justify-center gap-1.5">
           <Mail class="w-4 h-4" />
           Email receipt
         </button>

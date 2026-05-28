@@ -2,6 +2,7 @@ package com.restaurant.api.service;
 
 import com.restaurant.api.common.UuidUtil;
 import com.restaurant.api.dto.PaymentDto;
+import com.restaurant.api.entity.Orders;
 import com.restaurant.api.entity.Payment;
 import com.restaurant.api.exception.ApiException;
 import com.restaurant.api.exception.ErrorCode;
@@ -17,11 +18,17 @@ import org.springframework.transaction.annotation.Transactional;
 public class PaymentService {
     private final PaymentRepository paymentRepository;
     private final OrdersService ordersService;
+    private final ReceiptService receiptService;
 
     @Transactional(readOnly = true)
     public Payment getByCode(String code) {
         return paymentRepository.findByCode(code)
                 .orElseThrow(() -> new ApiException(ErrorCode.PAYMENT_NOT_FOUND));
+    }
+
+    @Transactional(readOnly = true)
+    public java.util.Optional<Payment> findByOrderCode(String orderCode) {
+        return paymentRepository.findByOrderCode(orderCode);
     }
 
     @Transactional(readOnly = true)
@@ -33,7 +40,7 @@ public class PaymentService {
     public Payment create(PaymentDto.CreateRequest request) {
         // Verify the order exists before insert so we return a clean 404
         // instead of a DB FK violation 500.
-        ordersService.getByCode(request.orderCode());
+        Orders order = ordersService.getByCode(request.orderCode());
 
         Payment payment = new Payment(
                 request.restaurantCode(),
@@ -44,7 +51,10 @@ public class PaymentService {
                 request.transactionRef(),
                 request.receiptNumber()
         );
-        return paymentRepository.save(payment);
+        Payment saved = paymentRepository.save(payment);
+        // Issue the immutable receipt now. Idempotent — won't double-issue if retried.
+        receiptService.issue(saved, order);
+        return saved;
     }
 
     @Transactional

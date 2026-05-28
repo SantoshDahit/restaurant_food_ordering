@@ -6,11 +6,16 @@ const router = createRouter({
   routes: [
     // ─── Public landing page ──────────────────────────────────────────────
     { path: '/', name: 'home', component: () => import('@/views/HomeView.vue') },
+    { path: '/launch', name: 'launch', component: () => import('@/views/LaunchView.vue') },
 
     // ─── Customer-facing routes (no auth required) ────────────────────────
     { path: '/qr/:token', name: 'qr-ordering', component: () => import('@/views/customer/QROrderingView.vue') },
+    { path: '/table/:tableCode', name: 'table-ordering', component: () => import('@/views/customer/QROrderingView.vue') },
     { path: '/kiosk/:kioskCode', name: 'kiosk', component: () => import('@/views/customer/KioskView.vue') },
     { path: '/payment', name: 'payment', component: () => import('@/views/customer/PaymentView.vue') },
+    { path: '/track/:orderNumber', name: 'order-tracking', component: () => import('@/views/customer/OrderTrackingView.vue') },
+    { path: '/receipt/:orderNumber', name: 'order-receipt', component: () => import('@/views/customer/ReceiptView.vue') },
+    { path: '/pickup-board/:kioskCode', name: 'pickup-board', component: () => import('@/views/customer/PickupBoardView.vue') },
 
     // ─── Auth ──────────────────────────────────────────────────────────────
     {
@@ -34,6 +39,8 @@ const router = createRouter({
         { path: 'menu/items', name: 'menu-items', component: () => import('@/views/menu/MenuItemView.vue') },
         { path: 'orders', name: 'orders', component: () => import('@/views/orders/OrderListView.vue') },
         { path: 'orders/:code', name: 'order-detail', component: () => import('@/views/orders/OrderDetailView.vue') },
+        { path: 'pickup-board', name: 'dashboard-pickup-board', component: () => import('@/views/orders/PickupBoardDashboardView.vue') },
+        { path: 'kitchen', name: 'kitchen-display', component: () => import('@/views/orders/KitchenView.vue') },
         { path: 'payments', name: 'payments', component: () => import('@/views/payments/PaymentListView.vue') },
         { path: 'employees', name: 'employees', component: () => import('@/views/employees/EmployeeListView.vue') },
         { path: 'attendance', name: 'attendance', component: () => import('@/views/attendance/AttendanceView.vue') },

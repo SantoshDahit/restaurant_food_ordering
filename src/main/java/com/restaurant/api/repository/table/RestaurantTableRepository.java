@@ -11,6 +11,8 @@ public interface RestaurantTableRepository {
     Optional<RestaurantTable> findByCode(String code);
     Optional<RestaurantTable> findByRestaurantCodeAndTableNumber(String restaurantCode, String tableNumber);
     Optional<RestaurantTable> findByQrToken(String token);
+    Optional<RestaurantTable> findByTableCode(String tableCode);
+    boolean existsByTableCode(String tableCode);
     RestaurantTable save(RestaurantTable restaurantTable);
     Page<RestaurantTable> search(RestaurantTableDto.SearchRequest searchRequest, Pageable pageable);
 }
