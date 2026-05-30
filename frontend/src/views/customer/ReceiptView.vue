@@ -3,8 +3,9 @@ import { ref, onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { ordersApi } from '@/api/orders'
 import { receiptApi } from '@/api/receipt'
+import { paymentApi } from '@/api/payment'
 import { Loader2, AlertTriangle, Printer, ArrowLeft } from 'lucide-vue-next'
-import type { OrderDetailResponse, ReceiptResponse, ReceiptItemSnapshot } from '@/types'
+import type { OrderDetailResponse, ReceiptResponse, ReceiptItemSnapshot, PaymentResponse } from '@/types'
 
 const route = useRoute()
 const orderNumber = computed(() => route.params.orderNumber as string)
@@ -25,6 +26,7 @@ const backLabel = computed(() => route.query.from === 'order' ? 'Back to order' 
 // live order detail for legacy orders that pre-date the receipt table.
 const receipt = ref<ReceiptResponse | null>(null)
 const order = ref<OrderDetailResponse | null>(null)
+const payment = ref<PaymentResponse | null>(null)
 const loading = ref(true)
 const notFound = ref(false)
 
@@ -33,15 +35,30 @@ async function load() {
     loading.value = true
     const detail = await ordersApi.getByOrderNumber(orderNumber.value)
     order.value = detail
-    try {
-      receipt.value = await receiptApi.getByOrder(detail.code)
-    } catch { /* no receipt yet — render from the order as a soft fallback */ }
+    // Receipt + live payment — load in parallel; either may be absent for
+    // unpaid orders. We use the live payment row for the *current* status
+    // (PENDING vs. COMPLETED) since the receipt snapshot is frozen at issue.
+    const [r, p] = await Promise.allSettled([
+      receiptApi.getByOrder(detail.code),
+      paymentApi.getByOrder(detail.code),
+    ])
+    if (r.status === 'fulfilled') receipt.value = r.value
+    if (p.status === 'fulfilled') payment.value = p.value
   } catch (e: any) {
     if (e?.response?.status === 404) notFound.value = true
   } finally {
     loading.value = false
   }
 }
+
+const paymentStatus = computed(() => payment.value?.status ?? receipt.value?.paymentStatus ?? null)
+const paymentStatusTint = computed(() => {
+  const s = paymentStatus.value
+  if (s === 'COMPLETED') return 'bg-emerald-50 text-emerald-700 ring-emerald-200'
+  if (s === 'PENDING')   return 'bg-amber-50 text-amber-700 ring-amber-200'
+  if (s === 'FAILED' || s === 'REFUNDED') return 'bg-rose-50 text-rose-700 ring-rose-200'
+  return 'bg-slate-50 text-slate-600 ring-slate-200'
+})
 
 function print() {
   window.print()
@@ -224,9 +241,16 @@ onMounted(load)
           </div>
 
           <!-- Payment -->
-          <div v-if="receipt" class="mt-3 pt-2 border-t border-dashed border-slate-300 grid grid-cols-2 gap-y-1 text-xs">
+          <div v-if="receipt" class="mt-3 pt-2 border-t border-dashed border-slate-300 grid grid-cols-2 gap-y-1.5 text-xs">
             <span class="text-slate-500">Paid via</span>
             <span class="text-right font-semibold">{{ receipt.paymentMethod }}</span>
+            <span class="text-slate-500">Status</span>
+            <span class="text-right">
+              <span :class="['inline-flex items-center gap-1 px-2 py-0.5 rounded ring-1 font-bold uppercase tracking-wider text-[10px]', paymentStatusTint]">
+                <span class="w-1.5 h-1.5 rounded-full bg-current" />
+                {{ paymentStatus }}
+              </span>
+            </span>
             <template v-if="receipt.gatewayProvider">
               <span class="text-slate-500">Gateway</span>
               <span class="text-right">{{ receipt.gatewayProvider }}</span>

@@ -51,10 +51,22 @@ public class PaymentService {
                 request.transactionRef(),
                 request.receiptNumber()
         );
+        // Digital methods (eSewa, Khalti, PhonePay, iBank) confirm at the gateway
+        // so we mark them COMPLETED immediately. CASH and POS stay PENDING — the
+        // cashier confirms manually after physically receiving the payment.
+        if (isAutoCompleteMethod(request.paymentMethod())) {
+            payment.complete();
+        }
         Payment saved = paymentRepository.save(payment);
         // Issue the immutable receipt now. Idempotent — won't double-issue if retried.
         receiptService.issue(saved, order);
         return saved;
+    }
+
+    private boolean isAutoCompleteMethod(com.restaurant.api.constant.PaymentMethod m) {
+        return m != null
+                && m != com.restaurant.api.constant.PaymentMethod.CASH
+                && m != com.restaurant.api.constant.PaymentMethod.POS;
     }
 
     @Transactional

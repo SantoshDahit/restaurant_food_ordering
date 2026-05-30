@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { paymentApi } from '@/api/payment'
 import { ordersApi } from '@/api/orders'
@@ -7,11 +8,12 @@ import PageHeader from '@/components/shared/PageHeader.vue'
 import StatusBadge from '@/components/shared/StatusBadge.vue'
 import RestaurantGuard from '@/components/shared/RestaurantGuard.vue'
 import EmptyState from '@/components/shared/EmptyState.vue'
-import { CreditCard } from 'lucide-vue-next'
+import { CreditCard, Receipt } from 'lucide-vue-next'
 import { toast } from 'vue-sonner'
 import type { PaymentResponse, PaymentStatus, PaymentMethod, OrdersResponse } from '@/types'
 
 const auth = useAuthStore()
+const router = useRouter()
 const payments = ref<PaymentResponse[]>([])
 const orders = ref<OrdersResponse[]>([])
 const loading = ref(false)
@@ -87,6 +89,15 @@ async function createPayment() {
   }
 }
 
+async function viewReceipt(orderCode: string) {
+  try {
+    const order = await ordersApi.get(orderCode)
+    router.push(`/receipt/${order.orderNumber}`)
+  } catch {
+    toast.error('Failed to open receipt')
+  }
+}
+
 async function updateStatus(code: string, status: PaymentStatus) {
   try {
     await paymentApi.updateStatus(code, { status })
@@ -112,16 +123,17 @@ async function updateStatus(code: string, status: PaymentStatus) {
     <div v-if="loading" class="text-center py-12 text-slate-400">Loading...</div>
 
     <div v-else class="bg-white rounded-2xl shadow-sm ring-1 ring-slate-200/60 overflow-x-auto">
-      <table class="w-full text-sm min-w-[640px]">
+      <table class="w-full text-sm min-w-[760px]">
         <thead class="bg-slate-50/60 text-slate-500 uppercase text-[11px] tracking-wide">
           <tr>
             <th class="px-5 py-3 text-left">Order</th>
             <th class="px-5 py-3 text-left">Method</th>
             <th class="px-5 py-3 text-right">Amount</th>
             <th class="px-5 py-3 text-left">Status</th>
-            <th class="px-5 py-3 text-left">Receipt</th>
+            <th class="px-5 py-3 text-left">Ref #</th>
             <th class="px-5 py-3 text-left">Date</th>
             <th class="px-5 py-3 text-center">Update</th>
+            <th class="px-5 py-3 text-center sticky right-0 bg-slate-50/60 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.08)]">Receipt</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-100">
@@ -139,6 +151,12 @@ async function updateStatus(code: string, status: PaymentStatus) {
                 class="text-xs px-2 py-1 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500/40 focus:border-violet-300">
                 <option v-for="s in paymentStatuses" :key="s" :value="s">{{ s }}</option>
               </select>
+            </td>
+            <td class="px-5 py-3 text-center sticky right-0 bg-white shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.08)]">
+              <button @click="viewReceipt(payment.orderCode)"
+                class="inline-flex items-center gap-1 text-xs px-2.5 py-1 bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 text-white rounded-lg shadow-sm shadow-violet-500/30 transition-all">
+                <Receipt class="w-3.5 h-3.5" /> View
+              </button>
             </td>
           </tr>
           <tr v-if="!payments.length">
