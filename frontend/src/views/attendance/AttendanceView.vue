@@ -51,7 +51,7 @@ function getAttendanceForDay(day: number) {
 onMounted(async () => {
   if (!auth.restaurantCode) return
   try {
-    const data = await employeeApi.search({ restaurantCode: auth.restaurantCode })
+    const data = await employeeApi.search({ restaurantCode: auth.restaurantCode, size: 200 })
     employees.value = data.content
     if (employees.value.length > 0) {
       selectedEmployee.value = employees.value[0].code

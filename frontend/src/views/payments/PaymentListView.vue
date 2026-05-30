@@ -35,7 +35,7 @@ async function loadPayments() {
   if (!auth.restaurantCode) return
   loading.value = true
   try {
-    const data = await paymentApi.search({ restaurantCode: auth.restaurantCode })
+    const data = await paymentApi.search({ restaurantCode: auth.restaurantCode, size: 200 })
     payments.value = data.content
   } catch {
     toast.error('Failed to load payments')

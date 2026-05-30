@@ -38,7 +38,7 @@ async function loadPayrolls() {
   if (!auth.restaurantCode) return
   loading.value = true
   try {
-    const data = await payrollApi.search({ restaurantCode: auth.restaurantCode })
+    const data = await payrollApi.search({ restaurantCode: auth.restaurantCode, size: 200 })
     payrolls.value = data.content
   } catch {
     toast.error('Failed to load payroll records')
@@ -50,7 +50,7 @@ async function loadPayrolls() {
 async function loadEmployees() {
   if (!auth.restaurantCode) return
   try {
-    const data = await employeeApi.search({ restaurantCode: auth.restaurantCode })
+    const data = await employeeApi.search({ restaurantCode: auth.restaurantCode, size: 200 })
     employees.value = data.content
   } catch { /* silent */ }
 }

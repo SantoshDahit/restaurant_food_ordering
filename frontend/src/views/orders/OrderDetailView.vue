@@ -45,7 +45,7 @@ onMounted(async () => {
   try {
     const [, menuData] = await Promise.all([
       loadDetail(code),
-      menuItemApi.search({ restaurantCode: auth.restaurantCode }),
+      menuItemApi.search({ restaurantCode: auth.restaurantCode, size: 200 }),
     ])
     menuItems.value = menuData.content
   } catch {

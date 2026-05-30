@@ -2,7 +2,7 @@ import api from './axios'
 import type { MenuItemResponse, MenuItemCreateRequest, MenuItemPatchRequest, PageResponse, ItemAvailability } from '@/types'
 
 export const menuItemApi = {
-  search: (params: { restaurantCode?: string; categoryCode?: string; availability?: ItemAvailability; isFeatured?: boolean; isVeg?: boolean }) =>
+  search: (params: { restaurantCode?: string; categoryCode?: string; availability?: ItemAvailability; isFeatured?: boolean; isVeg?: boolean; size?: number; page?: number }) =>
     api.get<PageResponse<MenuItemResponse>>('/menu-items/search', { params }).then(r => r.data),
 
   get: (code: string) =>

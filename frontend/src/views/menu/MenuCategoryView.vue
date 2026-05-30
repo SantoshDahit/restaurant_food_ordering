@@ -32,7 +32,7 @@ async function loadCategories() {
   if (!auth.restaurantCode) return
   loading.value = true
   try {
-    const data = await menuCategoryApi.search({ restaurantCode: auth.restaurantCode })
+    const data = await menuCategoryApi.search({ restaurantCode: auth.restaurantCode, size: 200 })
     categories.value = data.content
   } catch {
     toast.error('Failed to load categories')

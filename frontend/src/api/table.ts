@@ -2,7 +2,7 @@ import api from './axios'
 import type { RestaurantTableResponse, TableCreateRequest, TablePatchRequest, PageResponse, TableStatus } from '@/types'
 
 export const tableApi = {
-  search: (params: { restaurantCode: string; status?: TableStatus }) =>
+  search: (params: { restaurantCode: string; status?: TableStatus; size?: number; page?: number }) =>
     api.get<PageResponse<RestaurantTableResponse>>('/tables/search', { params }).then(r => r.data),
 
   get: (code: string) =>

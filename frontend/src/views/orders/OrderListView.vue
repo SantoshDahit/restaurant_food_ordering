@@ -31,6 +31,7 @@ async function loadOrders() {
       restaurantCode: auth.restaurantCode,
       status: filterStatus.value || undefined,
       orderType: filterType.value || undefined,
+      size: 200,
     })
     orders.value = data.content
   } catch {

@@ -43,7 +43,7 @@ async function loadTables() {
   if (!auth.restaurantCode) return
   loading.value = true
   try {
-    const data = await tableApi.search({ restaurantCode: auth.restaurantCode })
+    const data = await tableApi.search({ restaurantCode: auth.restaurantCode, size: 200 })
     tables.value = data.content
   } catch {
     toast.error('Failed to load tables')

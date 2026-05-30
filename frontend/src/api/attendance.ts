@@ -2,7 +2,7 @@ import api from './axios'
 import type { AttendanceResponse, AttendanceCreateRequest, AttendancePatchRequest, PageResponse, AttendanceStatus } from '@/types'
 
 export const attendanceApi = {
-  search: (params: { restaurantCode?: string; employeeCode?: string; dateFrom?: string; dateTo?: string; status?: AttendanceStatus }) =>
+  search: (params: { restaurantCode?: string; employeeCode?: string; dateFrom?: string; dateTo?: string; status?: AttendanceStatus; size?: number; page?: number }) =>
     api.get<PageResponse<AttendanceResponse>>('/attendance/search', { params }).then(r => r.data),
 
   create: (data: AttendanceCreateRequest) =>

@@ -2,7 +2,7 @@ import api from './axios'
 import type { PayrollResponse, PayrollCreateRequest, PayrollStatusUpdateRequest, PageResponse, SalaryStatus } from '@/types'
 
 export const payrollApi = {
-  search: (params: { restaurantCode?: string; employeeCode?: string; status?: SalaryStatus }) =>
+  search: (params: { restaurantCode?: string; employeeCode?: string; status?: SalaryStatus; size?: number; page?: number }) =>
     api.get<PageResponse<PayrollResponse>>('/payroll/search', { params }).then(r => r.data),
 
   get: (code: string) =>

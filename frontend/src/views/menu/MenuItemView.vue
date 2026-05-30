@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { menuItemApi } from '@/api/menuItem'
 import { menuCategoryApi } from '@/api/menuCategory'
@@ -16,6 +16,7 @@ import type { MenuItemResponse, MenuCategoryResponse, ItemAvailability } from '@
 const auth = useAuthStore()
 const items = ref<MenuItemResponse[]>([])
 const categories = ref<MenuCategoryResponse[]>([])
+const activeCategory = ref<string>('All')
 const loading = ref(false)
 const showFormDialog = ref(false)
 const deleteTarget = ref<string | null>(null)
@@ -48,7 +49,7 @@ async function loadItems() {
   if (!auth.restaurantCode) return
   loading.value = true
   try {
-    const data = await menuItemApi.search({ restaurantCode: auth.restaurantCode })
+    const data = await menuItemApi.search({ restaurantCode: auth.restaurantCode, size: 200 })
     items.value = data.content
     // Preload image URLs
     const codes = data.content.filter(i => i.fileCode).map(i => i.fileCode!)
@@ -200,6 +201,22 @@ function getCategoryName(code: string) {
   return categories.value.find(c => c.code === code)?.name || '—'
 }
 
+const filteredItems = computed(() => {
+  if (activeCategory.value === 'All') return items.value
+  if (activeCategory.value === 'Uncategorised') return items.value.filter(i => !i.categoryCode)
+  return items.value.filter(i => i.categoryCode === activeCategory.value)
+})
+
+const categoryCounts = computed(() => {
+  const counts: Record<string, number> = { All: items.value.length, Uncategorised: 0 }
+  for (const c of categories.value) counts[c.code] = 0
+  for (const i of items.value) {
+    if (!i.categoryCode) counts.Uncategorised++
+    else if (counts[i.categoryCode] !== undefined) counts[i.categoryCode]++
+  }
+  return counts
+})
+
 onMounted(async () => {
   await Promise.all([loadItems(), loadCategories()])
 })
@@ -218,7 +235,34 @@ onMounted(async () => {
 
     <div v-if="loading" class="text-center py-12 text-slate-400">Loading...</div>
 
-    <div v-else class="bg-white rounded-2xl shadow-sm ring-1 ring-slate-200/60 overflow-x-auto">
+    <!-- Category filter tabs (mirrors kiosk/table modes) -->
+    <div v-else-if="items.length" class="mb-4 relative">
+      <div class="flex gap-2 overflow-x-auto pb-1">
+        <button @click="activeCategory = 'All'"
+          :class="activeCategory === 'All'
+            ? 'bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white shadow-md shadow-violet-500/30'
+            : 'bg-white text-slate-700 ring-1 ring-slate-200 hover:ring-slate-300'"
+          class="px-4 py-2 rounded-xl font-semibold whitespace-nowrap text-sm transition-all flex items-center gap-1.5 flex-shrink-0">
+          All <span class="text-[10px] font-normal opacity-80 tabular-nums">({{ categoryCounts.All }})</span>
+        </button>
+        <button v-for="cat in categories" :key="cat.code" @click="activeCategory = cat.code"
+          :class="activeCategory === cat.code
+            ? 'bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white shadow-md shadow-violet-500/30'
+            : 'bg-white text-slate-700 ring-1 ring-slate-200 hover:ring-slate-300'"
+          class="px-4 py-2 rounded-xl font-semibold whitespace-nowrap text-sm transition-all flex items-center gap-1.5 flex-shrink-0">
+          {{ cat.name }} <span class="text-[10px] font-normal opacity-80 tabular-nums">({{ categoryCounts[cat.code] || 0 }})</span>
+        </button>
+        <button v-if="categoryCounts.Uncategorised > 0" @click="activeCategory = 'Uncategorised'"
+          :class="activeCategory === 'Uncategorised'
+            ? 'bg-gradient-to-r from-slate-500 to-slate-600 text-white shadow-md'
+            : 'bg-white text-slate-500 ring-1 ring-slate-200 hover:ring-slate-300'"
+          class="px-4 py-2 rounded-xl font-semibold whitespace-nowrap text-sm transition-all flex items-center gap-1.5 flex-shrink-0">
+          Uncategorised <span class="text-[10px] font-normal opacity-80 tabular-nums">({{ categoryCounts.Uncategorised }})</span>
+        </button>
+      </div>
+    </div>
+
+    <div v-if="!loading" class="bg-white rounded-2xl shadow-sm ring-1 ring-slate-200/60 overflow-x-auto">
       <table class="w-full text-sm min-w-[860px]">
         <thead class="bg-slate-50/60 text-slate-500 uppercase text-[11px] tracking-wide">
           <tr>
@@ -232,7 +276,7 @@ onMounted(async () => {
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-100">
-          <tr v-for="item in items" :key="item.code" class="hover:bg-slate-50/60 transition-colors">
+          <tr v-for="item in filteredItems" :key="item.code" class="hover:bg-slate-50/60 transition-colors">
             <td class="px-4 py-2">
               <img
                 v-if="item.fileCode && fileUrlCache[item.fileCode]"
@@ -261,7 +305,7 @@ onMounted(async () => {
               </div>
             </td>
           </tr>
-          <tr v-if="!items.length">
+          <tr v-if="!filteredItems.length">
             <td colspan="7" class="p-0">
               <EmptyState
                 :icon="Pizza"
