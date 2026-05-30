@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useAuthStore } from '@/stores/auth'
+import { orderTypeLabel } from '@/utils/orderType'
 import { ordersApi } from '@/api/orders'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import RestaurantGuard from '@/components/shared/RestaurantGuard.vue'
@@ -158,7 +159,7 @@ onBeforeUnmount(() => {
           <div class="flex items-center gap-2 min-w-0">
             <component :is="TYPE_ICON[o.orderType]" class="w-4 h-4 flex-shrink-0" />
             <span class="text-xs font-semibold uppercase tracking-wider truncate">
-              {{ o.orderType.replace(/_/g, ' ') }}<span v-if="o.tableNumber"> · Table {{ o.tableNumber }}</span>
+              {{ orderTypeLabel(o.orderType) }}<span v-if="o.tableNumber"> · Table {{ o.tableNumber }}</span>
             </span>
           </div>
           <span class="text-[10px] font-semibold uppercase tracking-wider bg-white/20 rounded px-1.5 py-0.5">

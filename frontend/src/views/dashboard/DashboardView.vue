@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { orderTypeLabel } from '@/utils/orderType'
 import { useAuthStore } from '@/stores/auth'
 import { ordersApi } from '@/api/orders'
 import { restaurantApi } from '@/api/restaurant'
@@ -381,7 +382,7 @@ onMounted(async () => {
           <tbody class="divide-y divide-slate-100">
             <tr v-for="order in recentOrders" :key="order.code" class="hover:bg-slate-50/60 transition-colors">
               <td class="px-5 py-3 font-medium text-slate-900">{{ order.orderNumber }}</td>
-              <td class="px-5 py-3 text-slate-500">{{ order.orderType.replace(/_/g, ' ') }}</td>
+              <td class="px-5 py-3 text-slate-500">{{ orderTypeLabel(order.orderType) }}</td>
               <td class="px-5 py-3"><StatusBadge :status="order.status" /></td>
               <td class="px-5 py-3 text-right font-medium tabular-nums text-slate-900">{{ order.totalAmount.toFixed(2) }}</td>
               <td class="px-5 py-3 text-slate-400">{{ new Date(order.createdAt).toLocaleDateString() }}</td>

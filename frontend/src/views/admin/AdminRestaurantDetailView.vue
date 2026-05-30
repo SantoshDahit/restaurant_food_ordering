@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { orderTypeLabel } from '@/utils/orderType'
 import { restaurantApi } from '@/api/restaurant'
 import { userApi } from '@/api/user'
 import { ordersApi } from '@/api/orders'
@@ -221,7 +222,7 @@ const maxTopQty = computed(() => (overview.value?.topItems ?? []).reduce((m, t) 
           class="py-2.5 flex items-center justify-between gap-3">
           <div class="min-w-0">
             <div class="text-sm font-medium text-slate-900">#{{ o.orderNumber }}</div>
-            <div class="text-xs text-slate-500">{{ o.orderType.replace(/_/g, ' ') }} · {{ new Date(o.createdAt).toLocaleString() }}</div>
+            <div class="text-xs text-slate-500">{{ orderTypeLabel(o.orderType) }} · {{ new Date(o.createdAt).toLocaleString() }}</div>
           </div>
           <div class="flex items-center gap-3 flex-shrink-0">
             <span class="text-sm font-semibold tabular-nums">{{ fmtMoney(o.totalAmount) }}</span>

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { orderTypeLabel } from '@/utils/orderType'
 import QRCode from 'qrcode'
 import { ordersApi } from '@/api/orders'
 import { orderItemApi } from '@/api/orderItem'
@@ -177,7 +178,7 @@ function openTrackingPage() {
           </div>
           <div>
             <p class="text-xs text-slate-500">Type</p>
-            <p class="font-semibold">{{ order.orderType.replace(/_/g, ' ') }}</p>
+            <p class="font-semibold">{{ orderTypeLabel(order.orderType) }}</p>
           </div>
           <div>
             <p class="text-xs text-slate-500">Status</p>

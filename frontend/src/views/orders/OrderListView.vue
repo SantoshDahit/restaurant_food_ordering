@@ -9,6 +9,7 @@ import RestaurantGuard from '@/components/shared/RestaurantGuard.vue'
 import EmptyState from '@/components/shared/EmptyState.vue'
 import { ClipboardList } from 'lucide-vue-next'
 import { toast } from 'vue-sonner'
+import { orderTypeLabel } from '@/utils/orderType'
 import type { OrdersResponse, OrderStatus, OrderType } from '@/types'
 
 const auth = useAuthStore()
@@ -66,7 +67,7 @@ async function updateStatus(code: string, status: OrderStatus) {
       <select v-model="filterType" @change="loadOrders"
         class="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40 focus:border-violet-300 transition-all">
         <option value="">All Types</option>
-        <option v-for="t in orderTypes" :key="t" :value="t">{{ t.replace(/_/g, ' ') }}</option>
+        <option v-for="t in orderTypes" :key="t" :value="t">{{ orderTypeLabel(t) }}</option>
       </select>
       <button @click="loadOrders"
         class="px-4 py-2 text-sm bg-gray-100 rounded-lg hover:bg-gray-200">Refresh</button>
@@ -99,7 +100,7 @@ async function updateStatus(code: string, status: OrderStatus) {
               <span v-else class="text-slate-300 text-xs">—</span>
             </td>
             <td class="px-5 py-3 font-medium text-blue-600">{{ order.orderNumber }}</td>
-            <td class="px-5 py-3 text-slate-500">{{ order.orderType.replace(/_/g, ' ') }}</td>
+            <td class="px-5 py-3 text-slate-500">{{ orderTypeLabel(order.orderType) }}</td>
             <td class="px-5 py-3"><StatusBadge :status="order.status" /></td>
             <td class="px-5 py-3 text-right font-medium">{{ order.totalAmount.toFixed(2) }}</td>
             <td class="px-5 py-3 text-gray-400">{{ new Date(order.createdAt).toLocaleDateString() }}</td>

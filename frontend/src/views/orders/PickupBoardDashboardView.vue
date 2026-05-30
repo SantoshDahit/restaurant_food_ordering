@@ -18,7 +18,7 @@ let pollTimer: ReturnType<typeof setInterval> | null = null
 // ── Layout groups: one column per orderType ──────────────────────────────────
 const TYPE_COLUMNS: Array<{ key: OrderType; label: string; icon: any; tint: string }> = [
   { key: 'DINE_IN',  label: 'Dine-in',    icon: Armchair,   tint: 'from-violet-500 to-fuchsia-500' },
-  { key: 'QR_ORDER', label: 'QR order',   icon: Smartphone, tint: 'from-sky-500 to-blue-500' },
+  { key: 'QR_ORDER', label: 'Table order', icon: Smartphone, tint: 'from-sky-500 to-blue-500' },
   { key: 'KIOSK',    label: 'Kiosk',      icon: Monitor,    tint: 'from-emerald-500 to-teal-500' },
   { key: 'TAKEAWAY', label: 'Takeaway',   icon: ShoppingBag, tint: 'from-amber-500 to-orange-500' },
 ]
