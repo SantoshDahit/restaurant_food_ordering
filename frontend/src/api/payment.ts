@@ -2,7 +2,7 @@ import api from './axios'
 import type { PaymentResponse, PaymentCreateRequest, PaymentStatusUpdateRequest, PageResponse, PaymentStatus, PaymentMethod } from '@/types'
 
 export const paymentApi = {
-  search: (params: { restaurantCode?: string; status?: PaymentStatus; paymentMethod?: PaymentMethod }) =>
+  search: (params: { restaurantCode?: string; status?: PaymentStatus; paymentMethod?: PaymentMethod; size?: number; page?: number }) =>
     api.get<PageResponse<PaymentResponse>>('/payments/search', { params }).then(r => r.data),
 
   get: (code: string) =>
