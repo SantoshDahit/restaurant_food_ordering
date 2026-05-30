@@ -92,7 +92,7 @@ async function createPayment() {
 async function viewReceipt(orderCode: string) {
   try {
     const order = await ordersApi.get(orderCode)
-    router.push(`/receipt/${order.orderNumber}`)
+    router.push({ path: `/receipt/${order.orderNumber}`, query: { from: 'payments' } })
   } catch {
     toast.error('Failed to open receipt')
   }

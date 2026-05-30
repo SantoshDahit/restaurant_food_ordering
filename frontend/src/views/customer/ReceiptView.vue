@@ -18,9 +18,14 @@ const backTarget = computed(() => {
   if (route.query.from === 'order' && route.query.code) {
     return `/dashboard/orders/${route.query.code}`
   }
+  if (route.query.from === 'payments') return '/dashboard/payments'
   return `/track/${orderNumber.value}`
 })
-const backLabel = computed(() => route.query.from === 'order' ? 'Back to order' : 'Back to tracking')
+const backLabel = computed(() => {
+  if (route.query.from === 'order') return 'Back to order'
+  if (route.query.from === 'payments') return 'Back to payments'
+  return 'Back to tracking'
+})
 
 // Either we render from a real receipt row (preferred) or fall back to the
 // live order detail for legacy orders that pre-date the receipt table.
