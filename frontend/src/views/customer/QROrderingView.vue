@@ -182,8 +182,9 @@ onMounted(load)
       <div v-else class="flex-1 flex flex-col md:flex-row md:overflow-hidden">
         <!-- Left: Menu -->
         <div class="flex-1 flex flex-col md:overflow-hidden min-w-0">
-          <!-- Category Tabs -->
-          <div class="flex gap-2 px-3 sm:px-6 py-3 bg-white/70 backdrop-blur border-b border-slate-200/60 overflow-x-auto flex-shrink-0">
+          <!-- Category Tabs (right fade hints there's more to scroll) -->
+          <div class="relative bg-white/70 backdrop-blur border-b border-slate-200/60 flex-shrink-0">
+            <div class="flex gap-2 px-3 sm:px-6 py-3 overflow-x-auto category-scroller">
             <button @click="activeCategory = 'All'"
               :class="activeCategory === 'All'
                 ? 'bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white shadow-md shadow-violet-500/30'
@@ -198,6 +199,9 @@ onMounted(load)
               class="px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl font-semibold whitespace-nowrap text-sm transition-all">
               {{ cat.name }}
             </button>
+            </div>
+            <!-- Right-edge fade hint that more categories are scrollable -->
+            <div aria-hidden="true" class="pointer-events-none absolute top-0 right-0 bottom-0 w-8 bg-gradient-to-l from-white via-white/70 to-transparent" />
           </div>
 
           <!-- Items Grid -->

@@ -116,7 +116,7 @@ async function confirmDelete() {
             <th class="px-5 py-3 text-left">Type</th>
             <th class="px-5 py-3 text-center">Sort Order</th>
             <th class="px-5 py-3 text-center">Active</th>
-            <th class="px-5 py-3 text-right">Actions</th>
+            <th class="px-5 py-3 text-right sticky right-0 bg-slate-50/60 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.08)]">Actions</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-100">
@@ -129,7 +129,7 @@ async function confirmDelete() {
                 {{ cat.isActive ? 'Yes' : 'No' }}
               </span>
             </td>
-            <td class="px-5 py-3 text-right">
+            <td class="px-5 py-3 text-right sticky right-0 bg-white shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.08)]">
               <div class="flex justify-end gap-2">
                 <button @click="openEdit(cat)"
                   class="text-xs px-2.5 py-1 bg-slate-50 ring-1 ring-slate-200 text-slate-700 rounded-lg hover:bg-slate-100 transition-colors">Edit</button>

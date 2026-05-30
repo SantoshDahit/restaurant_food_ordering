@@ -39,7 +39,7 @@ public class MenuItemDto {
     ) {}
 
     public record SearchRequest(
-            String restaurantCode,
+            @NotBlank String restaurantCode,
             String categoryCode,
             ItemAvailability availability,
             Boolean isFeatured,

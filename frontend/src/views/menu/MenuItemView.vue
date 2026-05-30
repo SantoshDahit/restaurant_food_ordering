@@ -219,7 +219,7 @@ onMounted(async () => {
     <div v-if="loading" class="text-center py-12 text-slate-400">Loading...</div>
 
     <div v-else class="bg-white rounded-2xl shadow-sm ring-1 ring-slate-200/60 overflow-x-auto">
-      <table class="w-full text-sm min-w-[720px]">
+      <table class="w-full text-sm min-w-[860px]">
         <thead class="bg-slate-50/60 text-slate-500 uppercase text-[11px] tracking-wide">
           <tr>
             <th class="px-4 py-3 text-left w-16">Image</th>
@@ -228,7 +228,7 @@ onMounted(async () => {
             <th class="px-4 py-3 text-right">Price</th>
             <th class="px-4 py-3 text-center">Veg</th>
             <th class="px-4 py-3 text-left">Availability</th>
-            <th class="px-4 py-3 text-right">Actions</th>
+            <th class="px-4 py-3 text-right sticky right-0 bg-slate-50/60 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.08)]">Actions</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-100">
@@ -252,7 +252,7 @@ onMounted(async () => {
             <td class="px-4 py-3 text-right">NPR {{ item.price.toFixed(0) }}</td>
             <td class="px-4 py-3 text-center">{{ item.isVeg ? '🌱' : '🍖' }}</td>
             <td class="px-4 py-3"><StatusBadge :status="item.availability" /></td>
-            <td class="px-4 py-3 text-right">
+            <td class="px-4 py-3 text-right sticky right-0 bg-white shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.08)]">
               <div class="flex justify-end gap-2">
                 <button @click="openEdit(item)"
                   class="text-xs px-2.5 py-1 bg-slate-50 ring-1 ring-slate-200 text-slate-700 rounded-lg hover:bg-slate-100 transition-colors">Edit</button>

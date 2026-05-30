@@ -26,7 +26,7 @@ public class MenuItemController {
     }
 
     @GetMapping("/search")
-    public Page<MenuItemDto.Response> search(@ModelAttribute MenuItemDto.SearchRequest request,
+    public Page<MenuItemDto.Response> search(@Valid @ModelAttribute MenuItemDto.SearchRequest request,
                                              Pageable pageable) {
         return menuItemFacade.search(request, pageable);
     }

@@ -54,27 +54,35 @@ const statusColor = (status: string) => {
 }
 
 async function load() {
+  loading.value = true
+  const rCode = restaurantCode.value
+  if (!rCode) {
+    toast.error('No restaurant on file — set one up before taking orders.')
+    loading.value = false
+    return
+  }
+  // Load each resource independently so one failure (e.g. empty menu) doesn't
+  // wipe out the others — the table grid must always render or the waiter
+  // can't even pick a table.
+  const [tblsRes, catsRes, itsRes] = await Promise.allSettled([
+    tableApi.search({ restaurantCode: rCode }),
+    api.get<PageResponse<MenuCategoryResponse>>('/menu-categories/search', { params: { restaurantCode: rCode, size: 50 } }).then(r => r.data),
+    api.get<PageResponse<MenuItemResponse>>('/menu-items/search', { params: { restaurantCode: rCode, availability: 'AVAILABLE', size: 200 } }).then(r => r.data),
+  ])
+  if (tblsRes.status === 'fulfilled') tables.value = tblsRes.value.content
+  else toast.error('Failed to load tables')
+  if (catsRes.status === 'fulfilled') categories.value = catsRes.value.content
+  if (itsRes.status === 'fulfilled') items.value = itsRes.value.content
+
   try {
-    loading.value = true
-    const rCode = restaurantCode.value
-    const [tbls, cats, its] = await Promise.all([
-      tableApi.search({ restaurantCode: rCode }),
-      api.get<PageResponse<MenuCategoryResponse>>('/menu-categories/search', { params: { restaurantCode: rCode, size: 50 } }).then(r => r.data),
-      api.get<PageResponse<MenuItemResponse>>('/menu-items/search', { params: { restaurantCode: rCode, availability: 'AVAILABLE', size: 200 } }).then(r => r.data),
-    ])
-    tables.value = tbls.content
-    categories.value = cats.content
-    items.value = its.content
-    const codes = its.content.filter(i => i.fileCode).map(i => i.fileCode!)
+    const codes = items.value.filter(i => i.fileCode).map(i => i.fileCode!)
     await Promise.all(codes.map(async (code) => {
       try {
         const f = await fileApi.get(code)
         fileUrlCache.value[code] = f.url
       } catch { /* silent */ }
     }))
-  } catch {
-    toast.error('Failed to load data')
-  } finally {
+  } catch { /* silent */ } finally {
     loading.value = false
   }
 }

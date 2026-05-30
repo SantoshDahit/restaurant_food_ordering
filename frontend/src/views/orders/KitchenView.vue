@@ -7,6 +7,7 @@ import RestaurantGuard from '@/components/shared/RestaurantGuard.vue'
 import { toast } from 'vue-sonner'
 import {
   Clock4, ChefHat, BellRing, Loader2, Armchair, ShoppingBag, Smartphone, Monitor,
+  Undo2, X,
 } from 'lucide-vue-next'
 import type { OrderDetailResponse, OrderType } from '@/types'
 
@@ -79,9 +80,41 @@ async function advance(o: OrderDetailResponse) {
   }
 }
 
+async function revert(o: OrderDetailResponse) {
+  // PREPARING → PENDING. PENDING has no earlier state to revert to.
+  if (o.status !== 'PREPARING') return
+  if (advancing.value[o.code]) return
+  advancing.value = { ...advancing.value, [o.code]: true }
+  try {
+    await ordersApi.updateStatus(o.code, { status: 'PENDING' })
+    toast.success(`#${o.ticketNumber ?? o.orderNumber} → back to Pending`)
+    await refresh(false)
+  } catch {
+    toast.error('Failed to revert status')
+  } finally {
+    advancing.value = { ...advancing.value, [o.code]: false }
+  }
+}
+
+async function cancel(o: OrderDetailResponse) {
+  if (!confirm(`Cancel order #${o.ticketNumber ?? o.orderNumber}? This cannot be undone from here.`)) return
+  if (advancing.value[o.code]) return
+  advancing.value = { ...advancing.value, [o.code]: true }
+  try {
+    await ordersApi.updateStatus(o.code, { status: 'CANCELLED' })
+    toast.success(`#${o.ticketNumber ?? o.orderNumber} cancelled`)
+    await refresh(false)
+  } catch {
+    toast.error('Failed to cancel order')
+  } finally {
+    advancing.value = { ...advancing.value, [o.code]: false }
+  }
+}
+
 onMounted(async () => {
   await refresh(true)
-  pollTimer = setInterval(() => refresh(false), 5000)
+  // Match the pickup board's 3s cadence so kitchen actions show on the board promptly.
+  pollTimer = setInterval(() => refresh(false), 3000)
   clockTimer = setInterval(() => { now.value = Date.now() }, 30000)
 })
 
@@ -174,18 +207,31 @@ onBeforeUnmount(() => {
           <span class="font-semibold">Note:</span> {{ o.specialNotes }}
         </div>
 
-        <!-- Action button — tap target sized for tablet -->
-        <button @click="advance(o)" :disabled="advancing[o.code]"
-          :class="['m-3 mt-1 py-3 rounded-xl font-bold text-white shadow-md transition-all flex items-center justify-center gap-2 text-base disabled:opacity-60',
-            o.status === 'PENDING'
-              ? 'bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 shadow-violet-500/30'
-              : 'bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 shadow-emerald-500/30']">
-          <Loader2 v-if="advancing[o.code]" class="w-5 h-5 animate-spin" />
-          <template v-else>
-            <component :is="o.status === 'PENDING' ? ChefHat : BellRing" class="w-5 h-5" />
-            {{ o.status === 'PENDING' ? 'Start preparing' : 'Mark ready' }}
-          </template>
-        </button>
+        <!-- Action buttons — tap target sized for tablet -->
+        <div class="m-3 mt-1 space-y-2">
+          <button @click="advance(o)" :disabled="advancing[o.code]"
+            :class="['w-full py-3 rounded-xl font-bold text-white shadow-md transition-all flex items-center justify-center gap-2 text-base disabled:opacity-60',
+              o.status === 'PENDING'
+                ? 'bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 shadow-violet-500/30'
+                : 'bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 shadow-emerald-500/30']">
+            <Loader2 v-if="advancing[o.code]" class="w-5 h-5 animate-spin" />
+            <template v-else>
+              <component :is="o.status === 'PENDING' ? ChefHat : BellRing" class="w-5 h-5" />
+              {{ o.status === 'PENDING' ? 'Start preparing' : 'Mark ready' }}
+            </template>
+          </button>
+          <!-- Secondary row: undo (only when PREPARING) + cancel -->
+          <div class="flex gap-2">
+            <button v-if="o.status === 'PREPARING'" @click="revert(o)" :disabled="advancing[o.code]"
+              class="flex-1 py-2 rounded-lg text-sm font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 ring-1 ring-slate-200 transition-colors disabled:opacity-60 inline-flex items-center justify-center gap-1.5">
+              <Undo2 class="w-3.5 h-3.5" /> Undo
+            </button>
+            <button @click="cancel(o)" :disabled="advancing[o.code]"
+              class="flex-1 py-2 rounded-lg text-sm font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 ring-1 ring-rose-200 transition-colors disabled:opacity-60 inline-flex items-center justify-center gap-1.5">
+              <X class="w-3.5 h-3.5" /> Cancel
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   </RestaurantGuard>

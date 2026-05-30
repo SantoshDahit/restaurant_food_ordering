@@ -24,7 +24,7 @@ public class MenuCategoryDto {
     ) {}
 
     public record SearchRequest(
-            String restaurantCode,
+            @NotBlank String restaurantCode,
             MenuCategoryType categoryType
     ) {}
 
