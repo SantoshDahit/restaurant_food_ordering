@@ -1,0 +1,7 @@
+# Only ship the static proposal files — Vercel doesn't need the app source.
+*
+!index.html
+!PROPOSAL.html
+!PROPOSAL.pdf
+!vercel.json
+!.nojekyll
