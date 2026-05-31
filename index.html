@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>RestaurantOS — Project Proposal</title>
+<style>
+  @page { size: A4; margin: 16mm 14mm; }
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font: 11pt/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, system-ui, sans-serif;
+    color: #0f172a; background: #fff;
+  }
+  .page { max-width: 720px; margin: 0 auto; padding: 0; }
+
+  /* ── Header ───────────────────────────────────────────────────── */
+  .header {
+    background: linear-gradient(135deg, #7c3aed 0%, #c026d3 60%, #ec4899 100%);
+    color: #fff; padding: 22px 26px; border-radius: 12px;
+    margin-bottom: 18px;
+    box-shadow: 0 6px 24px -10px rgba(124, 58, 237, 0.45);
+  }
+  .header h1 { margin: 0 0 4px; font-size: 26pt; letter-spacing: -0.02em; }
+  .header .tag { font-size: 11pt; opacity: 0.9; }
+  .header .meta { font-size: 9pt; opacity: 0.75; margin-top: 10px; }
+
+  /* ── Sections ─────────────────────────────────────────────────── */
+  h2 {
+    font-size: 13pt; margin: 18px 0 8px; color: #0f172a;
+    padding-bottom: 4px; border-bottom: 1.5px solid #e2e8f0;
+    letter-spacing: -0.01em;
+  }
+  h3 { font-size: 11pt; margin: 12px 0 4px; color: #334155; font-weight: 600; }
+  p { margin: 4px 0 8px; }
+  ul { margin: 4px 0 8px; padding-left: 18px; }
+  li { margin: 2px 0; }
+  .muted { color: #64748b; }
+  .small { font-size: 9.5pt; }
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+
+  /* ── Cards / grids ────────────────────────────────────────────── */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+  .card {
+    border: 1px solid #e2e8f0; border-radius: 10px;
+    padding: 10px 12px; background: #f8fafc;
+    page-break-inside: avoid;
+  }
+  .card h4 { margin: 0 0 4px; font-size: 10.5pt; }
+  .card p { margin: 0; font-size: 9.5pt; color: #475569; }
+
+  /* ── Status pills ─────────────────────────────────────────────── */
+  .pill {
+    display: inline-block; font-size: 8.5pt; font-weight: 700;
+    padding: 1.5px 7px; border-radius: 99px; vertical-align: middle;
+    margin-right: 4px;
+  }
+  .pill.done { background: #d1fae5; color: #047857; }
+  .pill.next { background: #fef3c7; color: #92400e; }
+  .pill.tag  { background: #ede9fe; color: #6d28d9; }
+
+  /* ── Tech chip row ────────────────────────────────────────────── */
+  .chips { display: flex; flex-wrap: wrap; gap: 5px; }
+  .chip {
+    font-size: 8.5pt; padding: 2px 8px; border-radius: 99px;
+    background: #f1f5f9; color: #334155; border: 1px solid #e2e8f0;
+  }
+
+  /* ── Architecture box ─────────────────────────────────────────── */
+  .arch {
+    background: #0f172a; color: #e2e8f0; border-radius: 10px;
+    padding: 12px 14px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 9pt; line-height: 1.55; white-space: pre;
+    overflow: hidden;
+  }
+  .arch .key { color: #c4b5fd; }
+  .arch .arr { color: #64748b; }
+
+  /* ── Footer ──────────────────────────────────────────────────── */
+  .footer {
+    margin-top: 18px; padding-top: 10px; border-top: 1px solid #e2e8f0;
+    font-size: 8.5pt; color: #64748b; display: flex; justify-content: space-between;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ────────────────────────────────────────────────────────────── -->
+  <header class="header">
+    <h1>RestaurantOS</h1>
+    <div class="tag">An all-in-one restaurant management platform — built for Nepal.</div>
+    <div class="meta">Project proposal · May 2026</div>
+  </header>
+
+  <!-- ────────────────────────────────────────────────────────────── -->
+  <h2>The problem</h2>
+  <p>
+    Nepali restaurants juggle four or five disconnected tools — a paper KOT pad, a separate
+    billing register, hand-written attendance, spreadsheets for payroll, and ad-hoc payment
+    apps (eSewa, Khalti, POS). Orders get lost in the chaos, customers don't know when their
+    food is ready, and owners can't see what their restaurant earned yesterday without
+    leafing through receipts.
+  </p>
+
+  <h2>The solution</h2>
+  <p>
+    <strong>RestaurantOS</strong> is a single web platform that runs the whole front-of-house:
+    QR/table ordering, self-serve kiosks, waiter-tablet mode, a kitchen display, a customer
+    pickup board, integrated payments, immutable receipts, and a manager dashboard with live
+    analytics. Built mobile-first so a phone is enough; scales to mounted tablets and TVs.
+  </p>
+
+  <!-- ────────────────────────────────────────────────────────────── -->
+  <h2>What it gives each role</h2>
+  <div class="grid-3">
+    <div class="card">
+      <h4>👨‍🍳 Customers</h4>
+      <p>Scan QR → browse menu → order → pay (CASH / POS / eSewa / Khalti / PhonePay / iBank) → live tracking + printable receipt.</p>
+    </div>
+    <div class="card">
+      <h4>🧑‍💼 Restaurant Managers</h4>
+      <p>Dashboard with revenue charts &amp; top sellers; orders, tables, menu, payments, employees, attendance &amp; payroll — all in one place.</p>
+    </div>
+    <div class="card">
+      <h4>🛠 Platform Admins</h4>
+      <p>Multi-restaurant overview: drill into any restaurant's totals, staff count, last order, best-sellers; suspend or reactivate users.</p>
+    </div>
+  </div>
+
+  <!-- ────────────────────────────────────────────────────────────── -->
+  <h2>Headline features</h2>
+  <div class="grid-2">
+    <div class="card">
+      <h4>📱 QR &amp; table ordering</h4>
+      <p>Each table has a short code (e.g. <span class="mono">BHO-A3F2</span>) and a QR — customers scan, order from their phone, pay live.</p>
+    </div>
+    <div class="card">
+      <h4>🖥 Self-serve kiosk</h4>
+      <p>Full-screen touch kiosk for quick-serve counters. One-click checkout, payment, receipt.</p>
+    </div>
+    <div class="card">
+      <h4>👨‍🍳 Kitchen Display</h4>
+      <p>Tablet-friendly card grid. Pending / Preparing tickets with elapsed-time alerts. One-tap status transitions, undo, and cancel.</p>
+    </div>
+    <div class="card">
+      <h4>🔔 Pickup Board</h4>
+      <p>TV-mounted board showing READY tickets in giant emerald digits. Customers spot their daily ticket (100–999) at a glance.</p>
+    </div>
+    <div class="card">
+      <h4>🧾 Printable receipts</h4>
+      <p>80mm thermal-printer optimised. Immutable receipt table snapshots restaurant + items + payment — gateway-integration ready.</p>
+    </div>
+    <div class="card">
+      <h4>📊 Live analytics</h4>
+      <p>Daily &amp; weekly revenue bar chart, top 5 sellers, custom date range — all on the dashboard, no extra page.</p>
+    </div>
+  </div>
+
+  <!-- ────────────────────────────────────────────────────────────── -->
+  <h2>Tech stack</h2>
+  <h3 class="small">Backend</h3>
+  <div class="chips">
+    <span class="chip">Java 17</span>
+    <span class="chip">Spring Boot 3.2</span>
+    <span class="chip">Spring Security · JWT</span>
+    <span class="chip">JPA · QueryDSL</span>
+    <span class="chip">Flyway migrations</span>
+    <span class="chip">MySQL 8</span>
+    <span class="chip">AWS S3 (file uploads)</span>
+  </div>
+  <h3 class="small" style="margin-top:8px">Frontend</h3>
+  <div class="chips">
+    <span class="chip">Vue 3 · &lt;script setup&gt;</span>
+    <span class="chip">TypeScript</span>
+    <span class="chip">Vite</span>
+    <span class="chip">Pinia (state)</span>
+    <span class="chip">Vue Router</span>
+    <span class="chip">Tailwind CSS</span>
+    <span class="chip">Lucide icons</span>
+    <span class="chip">QRCode + vue-sonner</span>
+  </div>
+
+  <!-- ────────────────────────────────────────────────────────────── -->
+  <h2>Architecture at a glance</h2>
+  <div class="arch"><span class="key">Customer</span>  <span class="arr">───────────────────────────────────────────────────────</span>
+   📱 QR scan        ➜  /table/&lt;code&gt;      <span class="arr">→</span> order &amp; pay
+   🖥 Kiosk          ➜  /kiosk/&lt;code&gt;      <span class="arr">→</span> order &amp; pay
+   📺 Pickup board   ➜  /pickup-board/&lt;c&gt;  <span class="arr">→</span> READY tickets only
+   📄 Tracking       ➜  /track/&lt;orderNum&gt;  <span class="arr">→</span> live status + receipt
+
+<span class="key">Manager</span>   <span class="arr">───────────────────────────────────────────────────────</span>
+   /dashboard   Orders · Kitchen · Pickup Board · Payments
+                Tables · Menu · Employees · Attendance · Payroll
+                Live Revenue + Top-Seller analytics
+
+<span class="key">Admin</span>     <span class="arr">───────────────────────────────────────────────────────</span>
+   /admin       All restaurants · Drill-down per restaurant
+                Users (suspend / reactivate / role change)
+
+<span class="key">Backend</span>   <span class="arr">───────────────────────────────────────────────────────</span>
+   Spring Boot REST  <span class="arr">▸</span>  Controller <span class="arr">→</span> Facade <span class="arr">→</span> Service <span class="arr">→</span> Repository
+   12 Flyway migrations · multi-tenant by restaurant_code
+   Immutable receipt table — ready for eSewa/Khalti webhooks</div>
+
+  <!-- ────────────────────────────────────────────────────────────── -->
+  <h2>Delivery status</h2>
+  <ul class="small">
+    <li><span class="pill done">DONE</span> Landing page · Waiter mode w/ images · Live tracking · Receipt printing</li>
+    <li><span class="pill done">DONE</span> Manager analytics · Admin drill-down · Kitchen Display System</li>
+    <li><span class="pill done">DONE</span> Pickup boards (TV + dashboard) · Daily ticket numbers · Payments + receipts</li>
+    <li><span class="pill next">NEXT</span> Email + SMS / Viber receipt delivery · Customer feedback (star rating)</li>
+  </ul>
+
+  <!-- ────────────────────────────────────────────────────────────── -->
+  <h2>Why now?</h2>
+  <p class="small">
+    Digital wallets (eSewa, Khalti) are mainstream in Nepal but most restaurants still write
+    bills by hand. The receipt table is already structured to accept signed payloads from
+    those gateways — wiring real eSewa/Khalti integration is a small additional step,
+    not a rebuild. Multi-restaurant from day one means a single deployment can serve a
+    chain or many independents — recurring SaaS revenue with low marginal cost.
+  </p>
+
+  <div class="footer">
+    <span><span class="pill tag">PROPOSAL</span> RestaurantOS · v1 · 2026</span>
+    <span class="mono">Built in Nepal 🇳🇵</span>
+  </div>
+</div>
+</body>
+</html>
