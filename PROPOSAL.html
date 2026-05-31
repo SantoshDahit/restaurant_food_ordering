@@ -182,28 +182,6 @@
   </div>
 
   <!-- ────────────────────────────────────────────────────────────── -->
-  <h2>Architecture at a glance</h2>
-  <div class="arch"><span class="key">Customer</span>  <span class="arr">───────────────────────────────────────────────────────</span>
-   📱 QR scan        ➜  /table/&lt;code&gt;      <span class="arr">→</span> order &amp; pay
-   🖥 Kiosk          ➜  /kiosk/&lt;code&gt;      <span class="arr">→</span> order &amp; pay
-   📺 Pickup board   ➜  /pickup-board/&lt;c&gt;  <span class="arr">→</span> READY tickets only
-   📄 Tracking       ➜  /track/&lt;orderNum&gt;  <span class="arr">→</span> live status + receipt
-
-<span class="key">Manager</span>   <span class="arr">───────────────────────────────────────────────────────</span>
-   /dashboard   Orders · Kitchen · Pickup Board · Payments
-                Tables · Menu · Employees · Attendance · Payroll
-                Live Revenue + Top-Seller analytics
-
-<span class="key">Admin</span>     <span class="arr">───────────────────────────────────────────────────────</span>
-   /admin       All restaurants · Drill-down per restaurant
-                Users (suspend / reactivate / role change)
-
-<span class="key">Backend</span>   <span class="arr">───────────────────────────────────────────────────────</span>
-   Spring Boot REST  <span class="arr">▸</span>  Controller <span class="arr">→</span> Facade <span class="arr">→</span> Service <span class="arr">→</span> Repository
-   12 Flyway migrations · multi-tenant by restaurant_code
-   Immutable receipt table — ready for eSewa/Khalti webhooks</div>
-
-  <!-- ────────────────────────────────────────────────────────────── -->
   <h2>Delivery status</h2>
   <ul class="small">
     <li><span class="pill done">DONE</span> Landing page · Waiter mode w/ images · Live tracking · Receipt printing</li>
