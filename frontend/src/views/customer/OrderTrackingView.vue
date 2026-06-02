@@ -4,7 +4,7 @@ import { useRoute } from 'vue-router'
 import { ordersApi } from '@/api/orders'
 import {
   UtensilsCrossed, Clock, ChefHat, BellRing, CheckCircle2,
-  Loader2, AlertTriangle, Sparkles, Receipt,
+  Loader2, AlertTriangle, Sparkles, Receipt, Plus, Wallet,
 } from 'lucide-vue-next'
 import type { OrderDetailResponse, OrdersResponse, OrderStatus } from '@/types'
 
@@ -39,6 +39,15 @@ function stepIndex(status: OrderStatus | undefined): number {
 }
 
 const currentStep = computed(() => stepIndex(order.value?.status))
+
+// Dine-in is an open tab: while it's still live the customer can add more items
+// and settle the bill. (Kiosk/takeaway are prepaid, so neither applies.)
+const isOpenTab = computed(() => {
+  const o = order.value
+  if (!o) return false
+  const dineIn = o.orderType === 'QR_ORDER' || o.orderType === 'DINE_IN'
+  return dineIn && o.status !== 'COMPLETED' && o.status !== 'CANCELLED'
+})
 
 // All active orders currently READY for pickup. We include the customer's own
 // ticket so the board matches what's shown on the in-store screens.
@@ -249,10 +258,23 @@ onBeforeUnmount(() => {
               </ul>
             </div>
 
-            <!-- Receipt action -->
-            <div class="mt-6 flex flex-col sm:flex-row gap-2">
+            <!-- Actions -->
+            <div class="mt-6 space-y-2">
+              <!-- Open-tab actions: add more / pay the bill (dine-in only) -->
+              <div v-if="isOpenTab" class="flex flex-col sm:flex-row gap-2">
+                <button @click="$router.push(`/order/${order.code}/add`)"
+                  class="flex-1 inline-flex items-center justify-center gap-2 px-5 py-3 text-sm sm:text-base font-semibold text-white bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 rounded-xl shadow-md shadow-violet-500/30 transition-all">
+                  <Plus class="w-4 h-4" />
+                  Add more items
+                </button>
+                <button @click="$router.push(`/payment?orderCode=${order.code}&restaurantCode=${order.restaurantCode}`)"
+                  class="flex-1 inline-flex items-center justify-center gap-2 px-5 py-3 text-sm sm:text-base font-semibold text-emerald-700 bg-emerald-50 ring-1 ring-emerald-200 hover:bg-emerald-100 rounded-xl transition-all">
+                  <Wallet class="w-4 h-4" />
+                  Pay bill
+                </button>
+              </div>
               <button @click="$router.push(`/receipt/${order.orderNumber}`)"
-                class="flex-1 inline-flex items-center justify-center gap-2 px-5 py-3 text-sm sm:text-base font-semibold text-white bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 rounded-xl shadow-md shadow-violet-500/30 transition-all">
+                class="w-full inline-flex items-center justify-center gap-2 px-5 py-3 text-sm sm:text-base font-medium text-slate-700 bg-white ring-1 ring-slate-200 hover:bg-slate-50 rounded-xl transition-all">
                 <Receipt class="w-4 h-4" />
                 View / print receipt
               </button>

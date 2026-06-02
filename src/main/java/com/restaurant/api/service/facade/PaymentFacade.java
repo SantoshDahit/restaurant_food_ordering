@@ -1,6 +1,8 @@
 package com.restaurant.api.service.facade;
 
 import com.restaurant.api.annotation.Facade;
+import com.restaurant.api.constant.OrderType;
+import com.restaurant.api.dto.OrdersDto;
 import com.restaurant.api.dto.PaymentDto;
 import com.restaurant.api.entity.Payment;
 import com.restaurant.api.mapper.PaymentMapper;
@@ -35,9 +37,11 @@ public class PaymentFacade {
     }
 
     /**
-     * Roll back an order whose eSewa payment failed or was cancelled: cancel the
-     * order (releasing its ticket) and mark the pending payment FAILED. Guarded
-     * so an order that genuinely completed payment is never cancelled.
+     * Handle a failed/cancelled eSewa payment. Always marks the pending payment
+     * FAILED. For prepaid channels (kiosk/takeaway) it also rolls back the order
+     * (releasing its ticket) — those must be paid before they're cooked. Dine-in
+     * (table/QR/waiter) is pay-at-end, so a failed bill payment must NOT cancel
+     * the meal the customer already had. Never touches a genuinely paid order.
      */
     @Transactional
     public void cancelUnpaidEsewaOrder(String orderCode) {
@@ -45,7 +49,11 @@ public class PaymentFacade {
             return;
         }
         paymentService.failPendingPayments(orderCode);
-        ordersFacade.cancelUnpaid(orderCode);
+
+        OrdersDto.Response order = ordersFacade.getByCode(orderCode);
+        if (order.getOrderType() == OrderType.KIOSK || order.getOrderType() == OrderType.TAKEAWAY) {
+            ordersFacade.cancelUnpaid(orderCode);
+        }
     }
 
     @Transactional(readOnly = true)

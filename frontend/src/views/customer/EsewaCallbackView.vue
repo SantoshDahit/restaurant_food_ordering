@@ -39,6 +39,8 @@ function startPath(): string {
   if (c?.source === 'qr' && c.token) return `/qr/${c.token}`
   if (c?.source === 'kiosk' && c.kioskCode) return `/kiosk/${c.kioskCode}`
   if (c?.source === 'table' && c.tableCode) return `/table/${c.tableCode}`
+  // Pay-at-end bill payments carry no source — fall back to the order's tracking page.
+  if (c?.orderNumber) return `/track/${c.orderNumber}`
   return '/'
 }
 

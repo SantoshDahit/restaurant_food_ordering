@@ -11,6 +11,7 @@ const router = createRouter({
     // ─── Customer-facing routes (no auth required) ────────────────────────
     { path: '/qr/:token', name: 'qr-ordering', component: () => import('@/views/customer/QROrderingView.vue') },
     { path: '/table/:tableCode', name: 'table-ordering', component: () => import('@/views/customer/QROrderingView.vue') },
+    { path: '/order/:orderCode/add', name: 'order-add-items', component: () => import('@/views/customer/QROrderingView.vue') },
     { path: '/kiosk/:kioskCode', name: 'kiosk', component: () => import('@/views/customer/KioskView.vue') },
     { path: '/payment', name: 'payment', component: () => import('@/views/customer/PaymentView.vue') },
     { path: '/payment/esewa/callback', name: 'esewa-callback', component: () => import('@/views/customer/EsewaCallbackView.vue') },

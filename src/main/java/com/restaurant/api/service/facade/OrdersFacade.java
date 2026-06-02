@@ -2,6 +2,7 @@ package com.restaurant.api.service.facade;
 
 import com.restaurant.api.annotation.Facade;
 import com.restaurant.api.constant.OrderStatus;
+import com.restaurant.api.constant.OrderType;
 import com.restaurant.api.constant.TableStatus;
 import com.restaurant.api.dto.OrdersDto;
 import com.restaurant.api.entity.MenuItem;
@@ -18,6 +19,7 @@ import com.restaurant.api.repository.table.RestaurantTableRepository;
 import com.restaurant.api.repository.user.UserRepository;
 import com.restaurant.api.service.OrderItemService;
 import com.restaurant.api.service.OrdersService;
+import com.restaurant.api.service.PaymentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -36,6 +38,7 @@ public class OrdersFacade {
     private final RestaurantTableRepository restaurantTableRepository;
     private final UserRepository userRepository;
     private final MenuItemRepository menuItemRepository;
+    private final PaymentService paymentService;
 
     @Transactional
     public OrdersDto.Response create(OrdersDto.CreateRequest request) {
@@ -97,9 +100,17 @@ public class OrdersFacade {
                 .filter(o -> o.getStatus() == OrderStatus.PENDING
                         || o.getStatus() == OrderStatus.CONFIRMED
                         || o.getStatus() == OrderStatus.PREPARING)
+                // Prepaid channels (kiosk/takeaway) must not reach the kitchen
+                // until payment is settled. Dine-in (table/QR/waiter) pays at
+                // the end, so it shows immediately.
+                .filter(o -> !isPrepaidChannel(o.getOrderType()) || paymentService.hasCompletedPayment(o.getCode()))
                 .sorted((a, b) -> a.getCreatedAt().compareTo(b.getCreatedAt()))
                 .map(this::buildDetail)
                 .toList();
+    }
+
+    private boolean isPrepaidChannel(OrderType type) {
+        return type == OrderType.KIOSK || type == OrderType.TAKEAWAY;
     }
 
     @Transactional(readOnly = true)

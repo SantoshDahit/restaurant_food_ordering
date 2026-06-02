@@ -11,7 +11,7 @@ import {
   UtensilsCrossed, ShoppingBag, Sparkles, Trash2, Minus, Plus,
   X, ArrowRight, Loader2, AlertTriangle, ShoppingCart,
 } from 'lucide-vue-next'
-import type { RestaurantTableResponse, MenuItemResponse, MenuCategoryResponse, PageResponse } from '@/types'
+import type { RestaurantTableResponse, MenuItemResponse, MenuCategoryResponse, PageResponse, OrderDetailResponse } from '@/types'
 
 const route = useRoute()
 const router = useRouter()
@@ -20,14 +20,19 @@ const router = useRouter()
 // sidebar on desktop).
 const cartOpen = ref(false)
 
-// Persist the cart per table/QR token so a failed/cancelled payment can resume
-// without losing items. Cleared by the payment views once payment succeeds.
+// Persist the cart per table/QR token (or order, when adding to an existing
+// tab) so it survives a round-trip. Cleared once the order is placed/appended.
 const cartStorageKey = computed(() => {
-  const id = (route.params.token as string | undefined) ?? (route.params.tableCode as string | undefined)
+  const id = (route.params.token as string | undefined)
+    ?? (route.params.tableCode as string | undefined)
+    ?? (route.params.orderCode as string | undefined)
   return id ? `qr_cart_${id}` : null
 })
 
 const table = ref<RestaurantTableResponse | null>(null)
+// When set, we're adding items to an existing open order (the table's tab)
+// rather than creating a new one.
+const appendOrder = ref<OrderDetailResponse | null>(null)
 const categories = ref<MenuCategoryResponse[]>([])
 const items = ref<MenuItemResponse[]>([])
 const cart = ref<Record<string, number>>({})
@@ -55,31 +60,61 @@ const cartCount = computed(() =>
   Object.values(cart.value).reduce((a, b) => a + b, 0)
 )
 
-// One open order per table: if the table is already occupied, block new orders.
-const tableOccupied = computed(() => table.value?.status === 'OCCUPIED')
+const isAppendMode = computed(() => appendOrder.value != null)
+const tableLabel = computed(() => appendOrder.value?.tableNumber ?? table.value?.tableNumber ?? '')
+
+async function loadMenu(rCode: string) {
+  const [cats, its] = await Promise.all([
+    api.get<PageResponse<MenuCategoryResponse>>('/menu-categories/search', { params: { restaurantCode: rCode, size: 50 } }).then(r => r.data),
+    api.get<PageResponse<MenuItemResponse>>('/menu-items/search', { params: { restaurantCode: rCode, availability: 'AVAILABLE', size: 200 } }).then(r => r.data),
+  ])
+  categories.value = cats.content
+  items.value = its.content
+  const codes = its.content.filter(i => i.fileCode).map(i => i.fileCode!)
+  await Promise.all(codes.map(async (code) => {
+    try {
+      const f = await fileApi.get(code)
+      fileUrlCache.value[code] = f.url
+    } catch { /* silent */ }
+  }))
+}
 
 async function load() {
   try {
     loading.value = true
     const token = route.params.token as string | undefined
     const tableCode = route.params.tableCode as string | undefined
+    const orderCode = route.params.orderCode as string | undefined
+
+    // Entry from the tracking page: add to a specific existing order.
+    if (orderCode) {
+      const detail = await ordersApi.getDetail(orderCode)
+      if (detail.status === 'COMPLETED' || detail.status === 'CANCELLED') {
+        toast.error('This order is already closed.')
+        router.replace(`/track/${detail.orderNumber}`)
+        return
+      }
+      appendOrder.value = detail
+      await loadMenu(detail.restaurantCode)
+      restoreCart()
+      return
+    }
+
+    // Scan/visit a table.
     table.value = token
       ? await tableApi.getByToken(token)
       : await tableApi.getByTableCode(tableCode!)
-    const rCode = table.value.restaurantCode
-    const [cats, its] = await Promise.all([
-      api.get<PageResponse<MenuCategoryResponse>>('/menu-categories/search', { params: { restaurantCode: rCode, size: 50 } }).then(r => r.data),
-      api.get<PageResponse<MenuItemResponse>>('/menu-items/search', { params: { restaurantCode: rCode, availability: 'AVAILABLE', size: 200 } }).then(r => r.data),
-    ])
-    categories.value = cats.content
-    items.value = its.content
-    const codes = its.content.filter(i => i.fileCode).map(i => i.fileCode!)
-    await Promise.all(codes.map(async (code) => {
+    await loadMenu(table.value.restaurantCode)
+
+    // Occupied table → the QR is a shared tab: add to its open order instead of
+    // creating a new one.
+    if (table.value.status === 'OCCUPIED') {
       try {
-        const f = await fileApi.get(code)
-        fileUrlCache.value[code] = f.url
-      } catch { /* silent */ }
-    }))
+        const active = await ordersApi.getActiveByRestaurant(table.value.restaurantCode)
+        const mine = active.find(o => o.tableCode === table.value!.code)
+        if (mine) appendOrder.value = await ordersApi.getDetail(mine.code)
+      } catch { /* fall back to a new order */ }
+    }
     restoreCart()
   } catch {
     toast.error('Invalid QR code or table not found')
@@ -124,34 +159,41 @@ function clearCart() {
   cart.value = {}
 }
 
+function clearStoredCart() {
+  if (cartStorageKey.value) sessionStorage.removeItem(cartStorageKey.value)
+}
+
 async function checkout() {
   if (!cartItems.value.length) {
     toast.error('Please add items to your order'); return
   }
-  if (!table.value) {
+  if (!isAppendMode.value && !table.value) {
     toast.error('Table not loaded'); return
-  }
-  if (tableOccupied.value) {
-    toast.error('This table already has an active order. Please ask staff for help.'); return
   }
   ordering.value = true
   try {
-    const order = await ordersApi.create({
-      restaurantCode: table.value.restaurantCode,
-      tableCode: table.value.code,
-      orderType: 'QR_ORDER',
-      deviceType: 'MOBILE',
-    })
-    for (const item of cartItems.value) {
-      await orderItemApi.add(order.code, { menuItemCode: item.code, quantity: item.quantity })
+    let orderNumber: string
+    if (appendOrder.value) {
+      // Add this round to the existing open tab.
+      for (const item of cartItems.value) {
+        await orderItemApi.add(appendOrder.value.code, { menuItemCode: item.code, quantity: item.quantity })
+      }
+      orderNumber = appendOrder.value.orderNumber
+    } else {
+      const order = await ordersApi.create({
+        restaurantCode: table.value!.restaurantCode,
+        tableCode: table.value!.code,
+        orderType: 'QR_ORDER',
+        deviceType: 'MOBILE',
+      })
+      for (const item of cartItems.value) {
+        await orderItemApi.add(order.code, { menuItemCode: item.code, quantity: item.quantity })
+      }
+      orderNumber = order.orderNumber
     }
-    const token = route.params.token as string | undefined
-    router.push({
-      path: '/payment',
-      query: token
-        ? { orderCode: order.code, restaurantCode: table.value.restaurantCode, source: 'qr', token }
-        : { orderCode: order.code, restaurantCode: table.value.restaurantCode, source: 'table', tableCode: route.params.tableCode as string },
-    })
+    // Dine-in pays at the end — go straight to live tracking, not payment.
+    clearStoredCart()
+    router.push(`/track/${orderNumber}`)
   } catch (e: any) {
     toast.error(e?.response?.data?.message ?? 'Failed to place order. Please try again.')
     ordering.value = false
@@ -187,7 +229,7 @@ onBeforeUnmount(() => {
   <div class="min-h-screen md:h-screen bg-gradient-to-br from-slate-50 via-white to-violet-50/40 flex flex-col md:overflow-hidden">
 
     <!-- Invalid QR / table -->
-    <div v-if="!loading && !table" class="flex-1 flex items-center justify-center px-4">
+    <div v-if="!loading && !table && !appendOrder" class="flex-1 flex items-center justify-center px-4">
       <div class="text-center max-w-sm">
         <div class="w-16 h-16 rounded-2xl bg-rose-50 ring-1 ring-rose-200 flex items-center justify-center mx-auto mb-3">
           <AlertTriangle class="w-7 h-7 text-rose-500" />
@@ -211,11 +253,11 @@ onBeforeUnmount(() => {
             </div>
             <div class="min-w-0">
               <h1 class="text-xl sm:text-2xl font-bold tracking-tight truncate">
-                Table {{ table?.tableNumber ?? '' }}
+                {{ isAppendMode ? 'Add to your order' : `Table ${tableLabel}` }}
               </h1>
               <p class="text-violet-50/90 text-xs sm:text-sm flex items-center gap-1.5">
                 <Sparkles class="w-3.5 h-3.5" />
-                Tap any item to add it to your order
+                {{ isAppendMode ? `Adding to Table ${tableLabel}'s running tab` : 'Tap any item to add it to your order' }}
               </p>
             </div>
           </div>
@@ -385,16 +427,16 @@ onBeforeUnmount(() => {
                 <span class="font-bold text-violet-600 text-xl tabular-nums">NPR {{ cartTotal.toFixed(0) }}</span>
               </div>
             </div>
-            <div v-if="tableOccupied"
-              class="flex items-start gap-2 rounded-2xl bg-amber-50 ring-1 ring-amber-200 px-3.5 py-3 text-amber-800">
-              <AlertTriangle class="w-4 h-4 mt-0.5 flex-shrink-0" />
-              <p class="text-xs leading-snug">This table already has an active order. Please ask staff for help before ordering again.</p>
+            <div v-if="isAppendMode"
+              class="flex items-start gap-2 rounded-2xl bg-violet-50 ring-1 ring-violet-200 px-3.5 py-3 text-violet-800">
+              <ShoppingBag class="w-4 h-4 mt-0.5 flex-shrink-0" />
+              <p class="text-xs leading-snug">Adding to your existing order — these items join your running tab, paid together at the end.</p>
             </div>
-            <button @click="checkout" :disabled="ordering || tableOccupied"
+            <button @click="checkout" :disabled="ordering"
               class="w-full py-3.5 bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 text-white font-bold rounded-2xl shadow-lg shadow-violet-500/30 disabled:opacity-60 disabled:cursor-not-allowed transition-all text-base flex items-center justify-center gap-2">
-              <span>{{ ordering ? 'Processing…' : tableOccupied ? 'Table has an active order' : 'Proceed to Payment' }}</span>
-              <ArrowRight v-if="!ordering && !tableOccupied" class="w-4 h-4" />
-              <Loader2 v-else-if="ordering" class="w-4 h-4 animate-spin" />
+              <span>{{ ordering ? 'Sending…' : isAppendMode ? 'Add to order' : 'Place order' }}</span>
+              <ArrowRight v-if="!ordering" class="w-4 h-4" />
+              <Loader2 v-else class="w-4 h-4 animate-spin" />
             </button>
             <button @click="clearCart"
               class="w-full py-2.5 bg-slate-50 hover:bg-slate-100 text-slate-600 font-medium rounded-xl ring-1 ring-slate-200/60 transition-colors text-sm inline-flex items-center justify-center gap-1.5">
