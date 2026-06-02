@@ -94,7 +94,9 @@ public class OrdersFacade {
     public List<OrdersDto.DetailResponse> getKitchenQueue(String restaurantCode) {
         OrdersDto.SearchRequest req = new OrdersDto.SearchRequest(restaurantCode, null, null, null);
         return ordersService.search(req, Pageable.ofSize(200)).getContent().stream()
-                .filter(o -> o.getStatus() == OrderStatus.PENDING || o.getStatus() == OrderStatus.PREPARING)
+                .filter(o -> o.getStatus() == OrderStatus.PENDING
+                        || o.getStatus() == OrderStatus.CONFIRMED
+                        || o.getStatus() == OrderStatus.PREPARING)
                 .sorted((a, b) -> a.getCreatedAt().compareTo(b.getCreatedAt()))
                 .map(this::buildDetail)
                 .toList();

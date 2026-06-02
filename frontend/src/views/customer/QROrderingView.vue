@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed, watch } from 'vue'
+import { ref, onMounted, onBeforeUnmount, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { tableApi } from '@/api/table'
 import { ordersApi } from '@/api/orders'
@@ -158,7 +158,29 @@ async function checkout() {
   }
 }
 
-onMounted(load)
+// Keep table availability live: when staff complete the active order the table
+// frees (and vice-versa), so the ordering UI enables/blocks without a reload.
+let statusTimer: ReturnType<typeof setInterval> | null = null
+
+async function refreshTableStatus() {
+  if (!table.value) return
+  const token = route.params.token as string | undefined
+  const tableCode = route.params.tableCode as string | undefined
+  try {
+    table.value = token
+      ? await tableApi.getByToken(token)
+      : await tableApi.getByTableCode(tableCode!)
+  } catch { /* keep last good status on transient errors */ }
+}
+
+onMounted(() => {
+  load()
+  statusTimer = setInterval(refreshTableStatus, 5000)
+})
+
+onBeforeUnmount(() => {
+  if (statusTimer) clearInterval(statusTimer)
+})
 </script>
 
 <template>

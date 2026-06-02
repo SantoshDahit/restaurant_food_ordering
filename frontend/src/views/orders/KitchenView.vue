@@ -8,9 +8,9 @@ import RestaurantGuard from '@/components/shared/RestaurantGuard.vue'
 import { toast } from 'vue-sonner'
 import {
   Clock4, ChefHat, BellRing, Loader2, Armchair, ShoppingBag, Smartphone, Monitor,
-  Undo2, X,
+  Undo2, X, ClipboardCheck,
 } from 'lucide-vue-next'
-import type { OrderDetailResponse, OrderType } from '@/types'
+import type { OrderDetailResponse, OrderType, OrderStatus } from '@/types'
 
 const auth = useAuthStore()
 const orders = ref<OrderDetailResponse[]>([])
@@ -21,9 +21,13 @@ const now = ref(Date.now())
 let pollTimer: ReturnType<typeof setInterval> | null = null
 let clockTimer: ReturnType<typeof setInterval> | null = null
 
-// Sorted: PENDING first, then PREPARING; within each, oldest first.
+// Kitchen flow: PENDING → CONFIRMED → PREPARING → READY (READY leaves the queue).
+const NEXT_STATUS: Record<string, OrderStatus> = { PENDING: 'CONFIRMED', CONFIRMED: 'PREPARING', PREPARING: 'READY' }
+const PREV_STATUS: Record<string, OrderStatus> = { CONFIRMED: 'PENDING', PREPARING: 'CONFIRMED' }
+
+// Sorted by stage (PENDING → CONFIRMED → PREPARING); within each, oldest first.
 const orderedQueue = computed(() => {
-  const rank = (s: string) => s === 'PENDING' ? 0 : 1
+  const rank = (s: string) => s === 'PENDING' ? 0 : s === 'CONFIRMED' ? 1 : 2
   return [...orders.value].sort((a, b) => {
     const r = rank(a.status) - rank(b.status)
     if (r !== 0) return r
@@ -33,8 +37,26 @@ const orderedQueue = computed(() => {
 
 const counts = computed(() => ({
   pending: orders.value.filter(o => o.status === 'PENDING').length,
+  confirmed: orders.value.filter(o => o.status === 'CONFIRMED').length,
   preparing: orders.value.filter(o => o.status === 'PREPARING').length,
 }))
+
+function advanceLabel(s: string): string {
+  return s === 'PENDING' ? 'Confirm order' : s === 'CONFIRMED' ? 'Start preparing' : 'Mark ready'
+}
+function advanceIcon(s: string) {
+  return s === 'PENDING' ? ClipboardCheck : s === 'CONFIRMED' ? ChefHat : BellRing
+}
+function cardRing(s: string): string {
+  return s === 'PENDING' ? 'ring-amber-300 shadow-amber-500/10'
+    : s === 'CONFIRMED' ? 'ring-sky-300 shadow-sky-500/10'
+    : 'ring-violet-300 shadow-violet-500/10'
+}
+function headerBg(s: string): string {
+  return s === 'PENDING' ? 'bg-gradient-to-r from-amber-500 to-orange-500'
+    : s === 'CONFIRMED' ? 'bg-gradient-to-r from-sky-500 to-blue-500'
+    : 'bg-gradient-to-r from-violet-500 to-fuchsia-500'
+}
 
 const TYPE_ICON: Record<OrderType, any> = {
   DINE_IN: Armchair, TAKEAWAY: ShoppingBag, QR_ORDER: Smartphone, KIOSK: Monitor,
@@ -67,12 +89,13 @@ async function refresh(initial = false) {
 }
 
 async function advance(o: OrderDetailResponse) {
-  const next = o.status === 'PENDING' ? 'PREPARING' : 'READY'
-  if (advancing.value[o.code]) return
+  const next = NEXT_STATUS[o.status]
+  if (!next || advancing.value[o.code]) return
   advancing.value = { ...advancing.value, [o.code]: true }
   try {
     await ordersApi.updateStatus(o.code, { status: next })
-    toast.success(next === 'PREPARING' ? `#${o.ticketNumber ?? o.orderNumber} → Preparing` : `#${o.ticketNumber ?? o.orderNumber} → Ready 🔔`)
+    const label = next === 'CONFIRMED' ? 'Confirmed' : next === 'PREPARING' ? 'Preparing' : 'Ready 🔔'
+    toast.success(`#${o.ticketNumber ?? o.orderNumber} → ${label}`)
     await refresh(false)
   } catch {
     toast.error('Failed to update status')
@@ -82,13 +105,12 @@ async function advance(o: OrderDetailResponse) {
 }
 
 async function revert(o: OrderDetailResponse) {
-  // PREPARING → PENDING. PENDING has no earlier state to revert to.
-  if (o.status !== 'PREPARING') return
-  if (advancing.value[o.code]) return
+  const prev = PREV_STATUS[o.status]
+  if (!prev || advancing.value[o.code]) return
   advancing.value = { ...advancing.value, [o.code]: true }
   try {
-    await ordersApi.updateStatus(o.code, { status: 'PENDING' })
-    toast.success(`#${o.ticketNumber ?? o.orderNumber} → back to Pending`)
+    await ordersApi.updateStatus(o.code, { status: prev })
+    toast.success(`#${o.ticketNumber ?? o.orderNumber} → back to ${prev === 'PENDING' ? 'Pending' : 'Confirmed'}`)
     await refresh(false)
   } catch {
     toast.error('Failed to revert status')
@@ -130,7 +152,7 @@ onBeforeUnmount(() => {
     <PageHeader title="Kitchen Display">
       <template #description>
         <span class="text-sm text-slate-500">
-          {{ counts.pending }} pending · {{ counts.preparing }} preparing · refreshes every 5 seconds
+          {{ counts.pending }} pending · {{ counts.confirmed }} confirmed · {{ counts.preparing }} preparing · refreshes every 5 seconds
         </span>
       </template>
     </PageHeader>
@@ -150,12 +172,10 @@ onBeforeUnmount(() => {
 
     <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
       <div v-for="o in orderedQueue" :key="o.code"
-        :class="['kitchen-card bg-white rounded-2xl ring-2 shadow-sm overflow-hidden flex flex-col transition-all',
-          o.status === 'PENDING' ? 'ring-amber-300 shadow-amber-500/10' : 'ring-violet-300 shadow-violet-500/10']">
+        :class="['kitchen-card bg-white rounded-2xl ring-2 shadow-sm overflow-hidden flex flex-col transition-all', cardRing(o.status)]">
 
         <!-- Card header -->
-        <div :class="['px-4 py-2.5 flex items-center justify-between gap-2 text-white',
-          o.status === 'PENDING' ? 'bg-gradient-to-r from-amber-500 to-orange-500' : 'bg-gradient-to-r from-violet-500 to-fuchsia-500']">
+        <div :class="['px-4 py-2.5 flex items-center justify-between gap-2 text-white', headerBg(o.status)]">
           <div class="flex items-center gap-2 min-w-0">
             <component :is="TYPE_ICON[o.orderType]" class="w-4 h-4 flex-shrink-0" />
             <span class="text-xs font-semibold uppercase tracking-wider truncate">
@@ -212,18 +232,18 @@ onBeforeUnmount(() => {
         <div class="m-3 mt-1 space-y-2">
           <button @click="advance(o)" :disabled="advancing[o.code]"
             :class="['w-full py-3 rounded-xl font-bold text-white shadow-md transition-all flex items-center justify-center gap-2 text-base disabled:opacity-60',
-              o.status === 'PENDING'
-                ? 'bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 shadow-violet-500/30'
-                : 'bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 shadow-emerald-500/30']">
+              o.status === 'PREPARING'
+                ? 'bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 shadow-emerald-500/30'
+                : 'bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 shadow-violet-500/30']">
             <Loader2 v-if="advancing[o.code]" class="w-5 h-5 animate-spin" />
             <template v-else>
-              <component :is="o.status === 'PENDING' ? ChefHat : BellRing" class="w-5 h-5" />
-              {{ o.status === 'PENDING' ? 'Start preparing' : 'Mark ready' }}
+              <component :is="advanceIcon(o.status)" class="w-5 h-5" />
+              {{ advanceLabel(o.status) }}
             </template>
           </button>
-          <!-- Secondary row: undo (only when PREPARING) + cancel -->
+          <!-- Secondary row: undo (when there's an earlier stage) + cancel -->
           <div class="flex gap-2">
-            <button v-if="o.status === 'PREPARING'" @click="revert(o)" :disabled="advancing[o.code]"
+            <button v-if="PREV_STATUS[o.status]" @click="revert(o)" :disabled="advancing[o.code]"
               class="flex-1 py-2 rounded-lg text-sm font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 ring-1 ring-slate-200 transition-colors disabled:opacity-60 inline-flex items-center justify-center gap-1.5">
               <Undo2 class="w-3.5 h-3.5" /> Undo
             </button>
