@@ -15,11 +15,37 @@ import org.springframework.transaction.annotation.Transactional;
 public class PaymentFacade {
     private final PaymentService paymentService;
     private final PaymentMapper paymentMapper;
+    private final OrdersFacade ordersFacade;
 
     @Transactional
     public PaymentDto.Response create(PaymentDto.CreateRequest request) {
         Payment payment = paymentService.create(request);
         return paymentMapper.toResponse(payment);
+    }
+
+    @Transactional
+    public PaymentDto.EsewaInitiateResponse initiateEsewa(PaymentDto.EsewaInitiateRequest request) {
+        return paymentService.initiateEsewa(request);
+    }
+
+    @Transactional
+    public PaymentDto.Response verifyEsewa(PaymentDto.EsewaVerifyRequest request) {
+        Payment payment = paymentService.verifyEsewa(request);
+        return paymentMapper.toResponse(payment);
+    }
+
+    /**
+     * Roll back an order whose eSewa payment failed or was cancelled: cancel the
+     * order (releasing its ticket) and mark the pending payment FAILED. Guarded
+     * so an order that genuinely completed payment is never cancelled.
+     */
+    @Transactional
+    public void cancelUnpaidEsewaOrder(String orderCode) {
+        if (paymentService.hasCompletedPayment(orderCode)) {
+            return;
+        }
+        paymentService.failPendingPayments(orderCode);
+        ordersFacade.cancelUnpaid(orderCode);
     }
 
     @Transactional(readOnly = true)

@@ -19,6 +19,24 @@ public class PaymentController {
         return paymentFacade.create(request);
     }
 
+    /** Start an eSewa payment; returns the signed form fields to POST to eSewa. */
+    @PostMapping("/esewa/initiate")
+    public PaymentDto.EsewaInitiateResponse initiateEsewa(@Valid @RequestBody PaymentDto.EsewaInitiateRequest request) {
+        return paymentFacade.initiateEsewa(request);
+    }
+
+    /** Verify eSewa's redirect-back payload and complete the payment. */
+    @PostMapping("/esewa/verify")
+    public PaymentDto.Response verifyEsewa(@Valid @RequestBody PaymentDto.EsewaVerifyRequest request) {
+        return paymentFacade.verifyEsewa(request);
+    }
+
+    /** Cancel an order whose eSewa payment failed or was cancelled at the gateway. */
+    @PostMapping("/esewa/cancel")
+    public void cancelEsewa(@Valid @RequestBody PaymentDto.EsewaCancelRequest request) {
+        paymentFacade.cancelUnpaidEsewaOrder(request.orderCode());
+    }
+
     @GetMapping("/{code}")
     public PaymentDto.Response getByCode(@PathVariable String code) {
         return paymentFacade.getByCode(code);

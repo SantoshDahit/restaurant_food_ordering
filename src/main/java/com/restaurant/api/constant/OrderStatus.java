@@ -5,6 +5,7 @@ public enum OrderStatus {
     CONFIRMED,
     PREPARING,
     READY,
-    COMPLETED,
+    SERVED,     // food delivered; customer still seated, table stays occupied
+    COMPLETED,  // order closed/paid; table is freed
     CANCELLED
 }

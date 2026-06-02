@@ -115,7 +115,8 @@ public class OrdersFacade {
         return s == OrderStatus.PENDING
                 || s == OrderStatus.CONFIRMED
                 || s == OrderStatus.PREPARING
-                || s == OrderStatus.READY;
+                || s == OrderStatus.READY
+                || s == OrderStatus.SERVED;
     }
 
     private String resolveMenuItemName(String menuItemCode) {
@@ -144,6 +145,15 @@ public class OrdersFacade {
         Orders orders = ordersService.getByCode(code);
         ordersService.delete(code);
         freeTableIfOccupied(orders.getTableCode());
+    }
+
+    /** Cancel an unpaid order (failed gateway payment) and free its table. */
+    @Transactional
+    public void cancelUnpaid(String code) {
+        Orders orders = ordersService.cancelUnpaid(code);
+        if (orders != null) {
+            freeTableIfOccupied(orders.getTableCode());
+        }
     }
 
     private void markTableOccupied(String tableCode) {

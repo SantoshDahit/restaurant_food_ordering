@@ -8,6 +8,7 @@ import lombok.Getter;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Map;
 
 public class PaymentDto {
 
@@ -20,6 +21,42 @@ public class PaymentDto {
             String transactionRef,
             String receiptNumber
     ) {}
+
+    /** Kick off an eSewa payment. The frontend supplies its own return URLs. */
+    public record EsewaInitiateRequest(
+            @NotBlank String restaurantCode,
+            @NotBlank String orderCode,
+            @NotNull BigDecimal amount,
+            @NotBlank String successUrl,
+            @NotBlank String failureUrl
+    ) {}
+
+    /** eSewa redirect-back payload (base64 JSON eSewa appends as ?data=). */
+    public record EsewaVerifyRequest(
+            @NotBlank String data
+    ) {}
+
+    /** Roll back an order whose eSewa payment failed or was cancelled. */
+    public record EsewaCancelRequest(
+            @NotBlank String orderCode
+    ) {}
+
+    /**
+     * Everything the browser needs to POST the customer over to eSewa's
+     * hosted form: the target URL plus the exact (signed) field set.
+     */
+    @Getter
+    public static class EsewaInitiateResponse {
+        private final String paymentCode;
+        private final String formUrl;
+        private final Map<String, String> fields;
+
+        public EsewaInitiateResponse(String paymentCode, String formUrl, Map<String, String> fields) {
+            this.paymentCode = paymentCode;
+            this.formUrl = formUrl;
+            this.fields = fields;
+        }
+    }
 
     public record StatusUpdateRequest(
             @NotNull PaymentStatus status,

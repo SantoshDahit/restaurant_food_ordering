@@ -18,7 +18,13 @@ const now = ref(new Date())
 let pollTimer: ReturnType<typeof setInterval> | null = null
 let clockTimer: ReturnType<typeof setInterval> | null = null
 
-const readyOrders = computed(() => orders.value.filter(o => o.status === 'READY'))
+// Today's READY tickets only — stale active orders from earlier days don't belong here.
+function isToday(iso: string): boolean {
+  const d = new Date(iso)
+  const n = new Date()
+  return d.getFullYear() === n.getFullYear() && d.getMonth() === n.getMonth() && d.getDate() === n.getDate()
+}
+const readyOrders = computed(() => orders.value.filter(o => o.status === 'READY' && isToday(o.createdAt)))
 
 async function refresh(initial = false) {
   try {

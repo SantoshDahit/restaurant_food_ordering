@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { tableApi } from '@/api/table'
 import { ordersApi } from '@/api/orders'
@@ -9,12 +9,23 @@ import api from '@/api/axios'
 import { fileApi } from '@/api/file'
 import {
   UtensilsCrossed, ShoppingBag, Sparkles, Trash2, Minus, Plus,
-  X, ArrowRight, Loader2, AlertTriangle,
+  X, ArrowRight, Loader2, AlertTriangle, ShoppingCart,
 } from 'lucide-vue-next'
 import type { RestaurantTableResponse, MenuItemResponse, MenuCategoryResponse, PageResponse } from '@/types'
 
 const route = useRoute()
 const router = useRouter()
+
+// Mobile-only: the cart opens as a bottom-sheet drawer (it's an always-visible
+// sidebar on desktop).
+const cartOpen = ref(false)
+
+// Persist the cart per table/QR token so a failed/cancelled payment can resume
+// without losing items. Cleared by the payment views once payment succeeds.
+const cartStorageKey = computed(() => {
+  const id = (route.params.token as string | undefined) ?? (route.params.tableCode as string | undefined)
+  return id ? `qr_cart_${id}` : null
+})
 
 const table = ref<RestaurantTableResponse | null>(null)
 const categories = ref<MenuCategoryResponse[]>([])
@@ -44,6 +55,9 @@ const cartCount = computed(() =>
   Object.values(cart.value).reduce((a, b) => a + b, 0)
 )
 
+// One open order per table: if the table is already occupied, block new orders.
+const tableOccupied = computed(() => table.value?.status === 'OCCUPIED')
+
 async function load() {
   try {
     loading.value = true
@@ -66,12 +80,28 @@ async function load() {
         fileUrlCache.value[code] = f.url
       } catch { /* silent */ }
     }))
+    restoreCart()
   } catch {
     toast.error('Invalid QR code or table not found')
   } finally {
     loading.value = false
   }
 }
+
+function restoreCart() {
+  if (!cartStorageKey.value) return
+  try {
+    const saved = sessionStorage.getItem(cartStorageKey.value)
+    if (saved) cart.value = JSON.parse(saved)
+  } catch { /* ignore corrupt cart */ }
+}
+
+// Mirror every cart change into sessionStorage so it survives the payment round-trip.
+watch(cart, (value) => {
+  if (!cartStorageKey.value) return
+  if (Object.keys(value).length) sessionStorage.setItem(cartStorageKey.value, JSON.stringify(value))
+  else sessionStorage.removeItem(cartStorageKey.value)
+}, { deep: true })
 
 function addToCart(code: string) {
   cart.value = { ...cart.value, [code]: (cart.value[code] || 0) + 1 }
@@ -101,6 +131,9 @@ async function checkout() {
   if (!table.value) {
     toast.error('Table not loaded'); return
   }
+  if (tableOccupied.value) {
+    toast.error('This table already has an active order. Please ask staff for help.'); return
+  }
   ordering.value = true
   try {
     const order = await ordersApi.create({
@@ -119,8 +152,8 @@ async function checkout() {
         ? { orderCode: order.code, restaurantCode: table.value.restaurantCode, source: 'qr', token }
         : { orderCode: order.code, restaurantCode: table.value.restaurantCode, source: 'table', tableCode: route.params.tableCode as string },
     })
-  } catch {
-    toast.error('Failed to place order. Please try again.')
+  } catch (e: any) {
+    toast.error(e?.response?.data?.message ?? 'Failed to place order. Please try again.')
     ordering.value = false
   }
 }
@@ -144,7 +177,7 @@ onMounted(load)
 
     <template v-else>
       <!-- Header -->
-      <header class="relative overflow-hidden bg-gradient-to-r from-violet-500 via-violet-500 to-fuchsia-500 text-white px-4 sm:px-8 py-4 sm:py-5 flex-shrink-0">
+      <header class="relative overflow-hidden bg-gradient-to-r from-violet-500 via-violet-500 to-fuchsia-500 text-white px-4 sm:px-8 py-4 sm:py-5 flex-shrink-0 sticky top-0 z-30">
         <!-- decorative -->
         <div aria-hidden="true" class="absolute -top-12 -right-12 w-48 h-48 rounded-full bg-white/10 blur-2xl" />
         <div aria-hidden="true" class="absolute -bottom-16 left-1/3 w-56 h-56 rounded-full bg-fuchsia-300/20 blur-3xl" />
@@ -164,10 +197,19 @@ onMounted(load)
               </p>
             </div>
           </div>
-          <div class="text-right flex-shrink-0 bg-white/10 backdrop-blur ring-1 ring-white/20 rounded-2xl px-3 sm:px-4 py-1.5 sm:py-2">
-            <p class="text-xl sm:text-2xl font-bold tabular-nums">NPR {{ cartTotal.toFixed(0) }}</p>
-            <p class="text-violet-50/90 text-[11px] sm:text-xs">{{ cartCount }} item{{ cartCount === 1 ? '' : 's' }}</p>
-          </div>
+          <!-- Tappable on mobile to open the cart sheet; static info on desktop (sidebar always visible) -->
+          <button @click="cartOpen = true"
+            class="relative text-right flex-shrink-0 bg-white/10 backdrop-blur ring-1 ring-white/20 rounded-2xl px-3 sm:px-4 py-1.5 sm:py-2 flex items-center gap-2 transition-colors hover:bg-white/20 md:pointer-events-none md:hover:bg-white/10">
+            <ShoppingCart class="w-5 h-5 md:hidden" />
+            <div class="leading-tight">
+              <p class="text-xl sm:text-2xl font-bold tabular-nums leading-none">NPR {{ cartTotal.toFixed(0) }}</p>
+              <p class="text-violet-50/90 text-[11px] sm:text-xs">{{ cartCount }} item{{ cartCount === 1 ? '' : 's' }}</p>
+            </div>
+            <span v-if="cartCount > 0"
+              class="md:hidden absolute -top-1.5 -right-1.5 bg-white text-violet-600 text-[11px] font-bold rounded-full min-w-5 h-5 px-1 flex items-center justify-center ring-2 ring-violet-500">
+              {{ cartCount }}
+            </span>
+          </button>
         </div>
       </header>
 
@@ -245,20 +287,32 @@ onMounted(load)
           </div>
         </div>
 
-        <!-- Right: Cart -->
-        <div class="w-full md:w-[22rem] bg-white border-t md:border-t-0 md:border-l border-slate-200/60 flex flex-col md:flex-shrink-0">
+        <!-- Mobile backdrop for the cart sheet -->
+        <div v-if="cartOpen" @click="cartOpen = false" aria-hidden="true"
+          class="md:hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40"></div>
+
+        <!-- Cart: desktop sidebar / mobile bottom-sheet -->
+        <div :class="cartOpen ? 'flex' : 'hidden'"
+          class="md:flex flex-col bg-white md:flex-shrink-0
+                 fixed inset-x-0 bottom-0 z-50 max-h-[85vh] rounded-t-3xl shadow-2xl
+                 md:static md:inset-auto md:z-auto md:max-h-none md:h-auto md:w-[22rem] md:rounded-none md:shadow-none
+                 border-t md:border-t-0 md:border-l border-slate-200/60">
           <div class="px-5 py-4 border-b border-slate-100 flex items-center gap-2.5">
             <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center shadow-md shadow-violet-500/30">
               <ShoppingBag class="w-5 h-5 text-white" />
             </div>
-            <div>
+            <div class="flex-1 min-w-0">
               <h2 class="text-base font-bold text-slate-900">Your Order</h2>
               <p class="text-xs text-slate-500">{{ cartCount }} item{{ cartCount === 1 ? '' : 's' }}</p>
             </div>
+            <button @click="cartOpen = false" aria-label="Close"
+              class="md:hidden w-9 h-9 rounded-full text-slate-400 hover:bg-slate-100 flex items-center justify-center flex-shrink-0">
+              <X class="w-5 h-5" />
+            </button>
           </div>
 
-          <!-- Cart items -->
-          <div class="md:flex-1 md:overflow-y-auto">
+          <!-- Cart items (scrolls within the sheet/sidebar) -->
+          <div class="flex-1 overflow-y-auto min-h-0">
             <div v-if="cartItems.length === 0" class="flex flex-col items-center justify-center h-full text-slate-400 py-16 px-6 text-center">
               <div class="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mb-3">
                 <ShoppingBag class="w-7 h-7 text-slate-300" />
@@ -297,8 +351,8 @@ onMounted(load)
             </div>
           </div>
 
-          <!-- Footer -->
-          <div v-if="cartItems.length > 0" class="p-4 border-t border-slate-100 space-y-3 bg-white">
+          <!-- Footer (pinned to the bottom of the sheet / sidebar) -->
+          <div v-if="cartItems.length > 0" class="flex-shrink-0 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] border-t border-slate-100 space-y-3 bg-white">
             <div class="bg-gradient-to-br from-violet-50 to-fuchsia-50 rounded-2xl p-3.5 ring-1 ring-violet-100/60">
               <div class="flex justify-between text-sm mb-1">
                 <span class="text-slate-600">Subtotal</span>
@@ -309,11 +363,16 @@ onMounted(load)
                 <span class="font-bold text-violet-600 text-xl tabular-nums">NPR {{ cartTotal.toFixed(0) }}</span>
               </div>
             </div>
-            <button @click="checkout" :disabled="ordering"
-              class="w-full py-3.5 bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 text-white font-bold rounded-2xl shadow-lg shadow-violet-500/30 disabled:opacity-60 transition-all text-base flex items-center justify-center gap-2">
-              <span>{{ ordering ? 'Processing…' : 'Proceed to Payment' }}</span>
-              <ArrowRight v-if="!ordering" class="w-4 h-4" />
-              <Loader2 v-else class="w-4 h-4 animate-spin" />
+            <div v-if="tableOccupied"
+              class="flex items-start gap-2 rounded-2xl bg-amber-50 ring-1 ring-amber-200 px-3.5 py-3 text-amber-800">
+              <AlertTriangle class="w-4 h-4 mt-0.5 flex-shrink-0" />
+              <p class="text-xs leading-snug">This table already has an active order. Please ask staff for help before ordering again.</p>
+            </div>
+            <button @click="checkout" :disabled="ordering || tableOccupied"
+              class="w-full py-3.5 bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 text-white font-bold rounded-2xl shadow-lg shadow-violet-500/30 disabled:opacity-60 disabled:cursor-not-allowed transition-all text-base flex items-center justify-center gap-2">
+              <span>{{ ordering ? 'Processing…' : tableOccupied ? 'Table has an active order' : 'Proceed to Payment' }}</span>
+              <ArrowRight v-if="!ordering && !tableOccupied" class="w-4 h-4" />
+              <Loader2 v-else-if="ordering" class="w-4 h-4 animate-spin" />
             </button>
             <button @click="clearCart"
               class="w-full py-2.5 bg-slate-50 hover:bg-slate-100 text-slate-600 font-medium rounded-xl ring-1 ring-slate-200/60 transition-colors text-sm inline-flex items-center justify-center gap-1.5">

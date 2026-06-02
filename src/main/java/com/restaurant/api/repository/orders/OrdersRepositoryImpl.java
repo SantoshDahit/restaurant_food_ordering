@@ -1,5 +1,6 @@
 package com.restaurant.api.repository.orders;
 
+import com.restaurant.api.constant.OrderStatus;
 import com.restaurant.api.dto.OrdersDto;
 import com.restaurant.api.entity.Orders;
 import lombok.RequiredArgsConstructor;
@@ -8,6 +9,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -25,6 +27,11 @@ public class OrdersRepositoryImpl implements OrdersRepository {
     @Override
     public Optional<Orders> findByOrderNumber(String orderNumber) {
         return ordersJpaRepository.findByOrderNumberAndDeletedAtIsNull(orderNumber);
+    }
+
+    @Override
+    public List<Orders> findActiveByTableCode(String tableCode, Collection<OrderStatus> activeStatuses) {
+        return ordersJpaRepository.findByTableCodeAndStatusInAndDeletedAtIsNull(tableCode, activeStatuses);
     }
 
     @Override

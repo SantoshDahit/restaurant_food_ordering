@@ -33,7 +33,7 @@ const statusBorder: Record<TableStatus, string> = {
   CLEANING: 'border-gray-400',
 }
 
-const ACTIVE_STATUSES: ReadonlySet<OrderStatus> = new Set(['PENDING', 'CONFIRMED', 'PREPARING', 'READY'])
+const ACTIVE_STATUSES: ReadonlySet<OrderStatus> = new Set(['PENDING', 'CONFIRMED', 'PREPARING', 'READY', 'SERVED'])
 
 onMounted(async () => {
   await Promise.all([loadTables(), loadActiveOrders()])

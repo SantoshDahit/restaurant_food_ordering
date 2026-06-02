@@ -1,7 +1,7 @@
 // ─── Enums ───────────────────────────────────────────────────────────────────
 
 export type UserRole = 'ADMIN' | 'MANAGER' | 'STAFF'
-export type OrderStatus = 'PENDING' | 'CONFIRMED' | 'PREPARING' | 'READY' | 'COMPLETED' | 'CANCELLED'
+export type OrderStatus = 'PENDING' | 'CONFIRMED' | 'PREPARING' | 'READY' | 'SERVED' | 'COMPLETED' | 'CANCELLED'
 export type OrderType = 'DINE_IN' | 'TAKEAWAY' | 'QR_ORDER' | 'KIOSK'
 export type PaymentMethod = 'CASH' | 'POS' | 'ESEWA' | 'KHALTI' | 'PHONEPAY' | 'IBANK'
 export type PaymentStatus = 'PENDING' | 'COMPLETED' | 'FAILED' | 'REFUNDED'
@@ -387,6 +387,20 @@ export interface PaymentCreateRequest {
 export interface PaymentStatusUpdateRequest {
   status: PaymentStatus
   refundedAmount?: number
+}
+
+export interface EsewaInitiateRequest {
+  restaurantCode: string
+  orderCode: string
+  amount: number
+  successUrl: string
+  failureUrl: string
+}
+
+export interface EsewaInitiateResponse {
+  paymentCode: string
+  formUrl: string
+  fields: Record<string, string>
 }
 
 // ─── Receipt ──────────────────────────────────────────────────────────────────

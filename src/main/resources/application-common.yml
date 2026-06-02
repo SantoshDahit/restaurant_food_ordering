@@ -45,3 +45,6 @@ app:
   cors:
     allowed-origins:
       - "*"
+
+# Payment gateway integration details are profile-specific — see
+# application-loc.yml (local sandbox) and application-dev.yml (switchable).

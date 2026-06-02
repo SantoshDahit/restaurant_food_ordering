@@ -1,5 +1,5 @@
 import api from './axios'
-import type { PaymentResponse, PaymentCreateRequest, PaymentStatusUpdateRequest, PageResponse, PaymentStatus, PaymentMethod } from '@/types'
+import type { PaymentResponse, PaymentCreateRequest, PaymentStatusUpdateRequest, PageResponse, PaymentStatus, PaymentMethod, EsewaInitiateRequest, EsewaInitiateResponse } from '@/types'
 
 export const paymentApi = {
   search: (params: { restaurantCode?: string; status?: PaymentStatus; paymentMethod?: PaymentMethod; size?: number; page?: number }) =>
@@ -16,4 +16,13 @@ export const paymentApi = {
 
   updateStatus: (code: string, data: PaymentStatusUpdateRequest) =>
     api.patch<PaymentResponse>(`/payments/${code}/status`, data).then(r => r.data),
+
+  esewaInitiate: (data: EsewaInitiateRequest) =>
+    api.post<EsewaInitiateResponse>('/payments/esewa/initiate', data).then(r => r.data),
+
+  esewaVerify: (encodedData: string) =>
+    api.post<PaymentResponse>('/payments/esewa/verify', { data: encodedData }).then(r => r.data),
+
+  esewaCancel: (orderCode: string) =>
+    api.post('/payments/esewa/cancel', { orderCode }).then(r => r.data),
 }

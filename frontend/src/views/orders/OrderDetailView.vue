@@ -25,7 +25,7 @@ const removeTarget = ref<string | null>(null)
 const removing = ref(false)
 const showAddItem = ref(false)
 
-const orderStatuses: OrderStatus[] = ['PENDING', 'CONFIRMED', 'PREPARING', 'READY', 'COMPLETED', 'CANCELLED']
+const orderStatuses: OrderStatus[] = ['PENDING', 'CONFIRMED', 'PREPARING', 'READY', 'SERVED', 'COMPLETED', 'CANCELLED']
 
 const addForm = ref({
   menuItemCode: '',

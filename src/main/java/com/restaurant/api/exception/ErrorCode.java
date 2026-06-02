@@ -43,6 +43,7 @@ public enum ErrorCode {
     ORDER_NOT_FOUND(HttpStatus.NOT_FOUND, "Order not found"),
     ORDER_CANNOT_BE_MODIFIED(HttpStatus.BAD_REQUEST, "Order cannot be modified in current status"),
     INVALID_ORDER_STATUS_TRANSITION(HttpStatus.BAD_REQUEST, "Invalid order status transition"),
+    TABLE_HAS_ACTIVE_ORDER(HttpStatus.CONFLICT, "This table already has an active order. Please ask staff for help."),
 
     // Order Item
     ORDER_ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "Order item not found"),
@@ -50,6 +51,9 @@ public enum ErrorCode {
     // Payment
     PAYMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "Payment not found"),
     ORDER_ALREADY_PAID(HttpStatus.CONFLICT, "Order has already been paid"),
+    PAYMENT_VERIFICATION_FAILED(HttpStatus.BAD_REQUEST, "Payment could not be verified with the gateway"),
+    PAYMENT_AMOUNT_MISMATCH(HttpStatus.BAD_REQUEST, "Paid amount does not match the order amount"),
+    PAYMENT_GATEWAY_ERROR(HttpStatus.BAD_GATEWAY, "Payment gateway is unavailable"),
 
     // Receipt
     RECEIPT_NOT_FOUND(HttpStatus.NOT_FOUND, "Receipt not found"),

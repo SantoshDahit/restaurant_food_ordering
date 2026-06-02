@@ -102,4 +102,14 @@ public class Orders extends BaseFullTimeEntity {
         this.status = OrderStatus.CANCELLED;
         this.softDelete();
     }
+
+    /**
+     * Cancel an order that was never paid (e.g. abandoned/failed gateway
+     * payment). Releases the daily ticket number so it isn't burned and can be
+     * reused by the next genuine order.
+     */
+    public void cancelUnpaid() {
+        cancel();
+        this.ticketNumber = null;
+    }
 }

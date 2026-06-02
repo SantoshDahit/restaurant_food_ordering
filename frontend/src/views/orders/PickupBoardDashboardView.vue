@@ -28,8 +28,17 @@ const STATUS_BADGE: Record<OrderStatus, { label: string; tint: string; icon: any
   CONFIRMED: { label: 'Confirmed', tint: 'bg-violet-50 text-violet-700 ring-violet-200',   icon: Clock },
   PREPARING: { label: 'Preparing', tint: 'bg-amber-50 text-amber-700 ring-amber-200',      icon: ChefHat },
   READY:     { label: 'Ready',     tint: 'bg-emerald-50 text-emerald-700 ring-emerald-300',icon: BellRing },
+  SERVED:    { label: 'Served',    tint: 'bg-teal-50 text-teal-700 ring-teal-200',         icon: BellRing },
   COMPLETED: { label: 'Completed', tint: 'bg-slate-50 text-slate-500 ring-slate-200',      icon: Clock },
   CANCELLED: { label: 'Cancelled', tint: 'bg-rose-50 text-rose-700 ring-rose-200',         icon: Clock },
+}
+
+// Only today's tickets; and once an order is SERVED it has left the pickup
+// workflow, so it drops off this board.
+function isToday(iso: string): boolean {
+  const d = new Date(iso)
+  const n = new Date()
+  return d.getFullYear() === n.getFullYear() && d.getMonth() === n.getMonth() && d.getDate() === n.getDate()
 }
 
 const groupedByType = computed(() => {
@@ -37,6 +46,7 @@ const groupedByType = computed(() => {
     DINE_IN: [], TAKEAWAY: [], QR_ORDER: [], KIOSK: [],
   }
   for (const o of orders.value) {
+    if (o.status === 'SERVED' || !isToday(o.createdAt)) continue
     if (buckets[o.orderType]) buckets[o.orderType].push(o)
   }
   // Within each bucket: READY first, then by createdAt asc (oldest pending at top)
@@ -51,7 +61,9 @@ const groupedByType = computed(() => {
   return buckets
 })
 
-const totalActive = computed(() => orders.value.length)
+const totalActive = computed(() =>
+  Object.values(groupedByType.value).reduce((sum, list) => sum + list.length, 0),
+)
 
 async function refresh(initial = false) {
   if (!auth.restaurantCode) return

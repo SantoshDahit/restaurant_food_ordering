@@ -73,6 +73,12 @@ public class Payment extends BaseTimeEntity {
         this.processedAt = LocalDateTime.now();
     }
 
+    /** Complete a gateway payment, recording the gateway's transaction reference. */
+    public void completeWithRef(String transactionRef) {
+        this.transactionRef = transactionRef;
+        complete();
+    }
+
     public void fail() {
         this.status = PaymentStatus.FAILED;
     }

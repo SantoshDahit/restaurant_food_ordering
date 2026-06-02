@@ -13,6 +13,7 @@ const router = createRouter({
     { path: '/table/:tableCode', name: 'table-ordering', component: () => import('@/views/customer/QROrderingView.vue') },
     { path: '/kiosk/:kioskCode', name: 'kiosk', component: () => import('@/views/customer/KioskView.vue') },
     { path: '/payment', name: 'payment', component: () => import('@/views/customer/PaymentView.vue') },
+    { path: '/payment/esewa/callback', name: 'esewa-callback', component: () => import('@/views/customer/EsewaCallbackView.vue') },
     { path: '/track/:orderNumber', name: 'order-tracking', component: () => import('@/views/customer/OrderTrackingView.vue') },
     { path: '/receipt/:orderNumber', name: 'order-receipt', component: () => import('@/views/customer/ReceiptView.vue') },
     { path: '/pickup-board/:kioskCode', name: 'pickup-board', component: () => import('@/views/customer/PickupBoardView.vue') },

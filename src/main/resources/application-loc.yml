@@ -46,6 +46,16 @@ aws:
     folder-paths:
       menu-items: menu-items/
 
+payment:
+  esewa:
+    # Local development always runs against the eSewa sandbox.
+    mode: TEST
+    test:
+      product-code: EPAYTEST
+      secret-key: 8gBm/:&EnhH.1/q
+      form-url: https://rc-epay.esewa.com.np/api/epay/main/v2/form
+      status-url: https://rc.esewa.com.np/api/epay/transaction/status/
+
 logging:
   level:
     com.restaurant.api: DEBUG

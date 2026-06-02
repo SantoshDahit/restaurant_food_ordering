@@ -9,6 +9,7 @@ const styleMap: Record<string, { chip: string; dot: string }> = {
   CONFIRMED:    { chip: 'bg-sky-50 text-sky-700 ring-sky-200',            dot: 'bg-sky-500' },
   PREPARING:    { chip: 'bg-amber-50 text-amber-700 ring-amber-200',      dot: 'bg-amber-500' },
   READY:        { chip: 'bg-green-50 text-green-700 ring-green-200',      dot: 'bg-green-500' },
+  SERVED:       { chip: 'bg-teal-50 text-teal-700 ring-teal-200',        dot: 'bg-teal-500' },
   COMPLETED:    { chip: 'bg-emerald-50 text-emerald-700 ring-emerald-200', dot: 'bg-emerald-500' },
   CANCELLED:    { chip: 'bg-rose-50 text-rose-700 ring-rose-200',         dot: 'bg-rose-500' },
   AVAILABLE:    { chip: 'bg-emerald-50 text-emerald-700 ring-emerald-200', dot: 'bg-emerald-500' },

@@ -50,6 +50,21 @@ const paymentMethods: { id: PaymentMethod; name: string; description: string; ic
 ]
 
 const finalTotal = computed(() => order.value?.totalAmount ?? 0)
+const ticketNumber = computed(() => order.value?.ticketNumber ?? null)
+
+// CASH / POS are settled at the counter — the success screen shows "pay at the
+// counter, show your receipt" rather than implying the payment is already done.
+const isCounterPayment = computed(() => selectedMethod.value === 'CASH' || selectedMethod.value === 'POS')
+
+// Cart is persisted per table/token by QROrderingView so a failed payment can
+// resume without losing items; clear it once the payment actually succeeds.
+const storedCartKey = computed(() => {
+  const id = sourceToken.value ?? sourceTableCode.value
+  return id ? `qr_cart_${id}` : null
+})
+function clearStoredCart() {
+  if (storedCartKey.value) sessionStorage.removeItem(storedCartKey.value)
+}
 
 async function loadOrder() {
   if (!orderCode.value) {
@@ -69,6 +84,10 @@ async function processPayment() {
   if (!selectedMethod.value) {
     toast.error('Please select a payment method'); return
   }
+  // eSewa goes through the real hosted gateway (redirect + verified callback).
+  if (selectedMethod.value === 'ESEWA') {
+    await payWithEsewa(); return
+  }
   step.value = 'processing'
   try {
     const result = await paymentApi.create({
@@ -78,9 +97,53 @@ async function processPayment() {
       amount: finalTotal.value,
     })
     payment.value = { code: result.code, amount: result.amount }
+    clearStoredCart()
     step.value = 'success'
   } catch {
     toast.error('Payment failed. Please try again.')
+    step.value = 'method'
+  }
+}
+
+async function payWithEsewa() {
+  step.value = 'processing'
+  try {
+    const returnUrl = `${window.location.origin}/payment/esewa/callback`
+    // Stash the context the callback needs to verify, show success, and
+    // navigate back — eSewa only round-trips a `data` blob, nothing else.
+    sessionStorage.setItem('esewa_return', JSON.stringify({
+      orderCode: orderCode.value,
+      restaurantCode: restaurantCode.value,
+      orderNumber: orderNumber.value,
+      ticketNumber: ticketNumber.value,
+      amount: finalTotal.value,
+      source: source.value ?? null,
+      token: sourceToken.value ?? null,
+      kioskCode: sourceKioskCode.value ?? null,
+      tableCode: sourceTableCode.value ?? null,
+    }))
+    const res = await paymentApi.esewaInitiate({
+      restaurantCode: restaurantCode.value,
+      orderCode: orderCode.value,
+      amount: finalTotal.value,
+      successUrl: returnUrl,
+      failureUrl: returnUrl,
+    })
+    // Build + auto-submit a hidden form so the browser navigates to eSewa.
+    const form = document.createElement('form')
+    form.method = 'POST'
+    form.action = res.formUrl
+    Object.entries(res.fields).forEach(([name, value]) => {
+      const input = document.createElement('input')
+      input.type = 'hidden'
+      input.name = name
+      input.value = value
+      form.appendChild(input)
+    })
+    document.body.appendChild(form)
+    form.submit()
+  } catch {
+    toast.error('Could not start eSewa payment. Please try again.')
     step.value = 'method'
   }
 }
@@ -106,14 +169,23 @@ onMounted(loadOrder)
     <!-- Success -->
     <div v-else-if="step === 'success'" class="max-w-md w-full bg-white rounded-3xl shadow-xl shadow-slate-900/5 ring-1 ring-slate-200/60 p-7 sm:p-8">
       <div class="text-center">
-        <div class="w-20 h-20 bg-gradient-to-br from-emerald-400 to-green-500 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-lg shadow-emerald-500/30">
-          <Check class="w-10 h-10 text-white stroke-[3]" />
+        <div :class="['w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-lg bg-gradient-to-br',
+          isCounterPayment ? 'from-violet-400 to-fuchsia-500 shadow-violet-500/30' : 'from-emerald-400 to-green-500 shadow-emerald-500/30']">
+          <component :is="isCounterPayment ? Receipt : Check" class="w-10 h-10 text-white stroke-[3]" />
         </div>
-        <h2 class="text-2xl sm:text-3xl font-bold text-slate-900 mb-1">Payment successful</h2>
-        <p class="text-slate-500 text-sm">Your order has been confirmed.</p>
+        <h2 class="text-2xl sm:text-3xl font-bold text-slate-900 mb-1">
+          {{ isCounterPayment ? 'Order placed' : 'Payment successful' }}
+        </h2>
+        <p class="text-slate-500 text-sm">
+          {{ isCounterPayment ? 'Please pay at the counter — show your receipt below.' : 'Your order has been confirmed.' }}
+        </p>
       </div>
 
       <div class="mt-6 bg-slate-50 ring-1 ring-slate-200/60 rounded-2xl p-5 space-y-3">
+        <div v-if="ticketNumber != null" class="flex justify-between items-center text-sm">
+          <span class="text-slate-500">Ticket number</span>
+          <span class="font-bold text-violet-600 text-lg tabular-nums">#{{ String(ticketNumber).padStart(3, '0') }}</span>
+        </div>
         <div class="flex justify-between text-sm">
           <span class="text-slate-500">Order number</span>
           <span class="font-mono font-semibold text-slate-900">#{{ orderNumber }}</span>
@@ -123,8 +195,8 @@ onMounted(loadOrder)
           <span class="font-medium text-slate-900">{{ paymentMethods.find(m => m.id === selectedMethod)?.name }}</span>
         </div>
         <div class="border-t border-slate-200 pt-3 flex justify-between items-end">
-          <span class="font-semibold text-slate-900">Total paid</span>
-          <span class="text-2xl font-bold text-emerald-600 tabular-nums">NPR {{ (payment?.amount ?? finalTotal).toFixed(0) }}</span>
+          <span class="font-semibold text-slate-900">{{ isCounterPayment ? 'Amount to pay' : 'Total paid' }}</span>
+          <span :class="['text-2xl font-bold tabular-nums', isCounterPayment ? 'text-violet-600' : 'text-emerald-600']">NPR {{ (payment?.amount ?? finalTotal).toFixed(0) }}</span>
         </div>
       </div>
 

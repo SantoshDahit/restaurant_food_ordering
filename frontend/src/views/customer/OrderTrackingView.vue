@@ -22,8 +22,16 @@ const STEPS = [
   { key: 'placed',    label: 'Order Placed', icon: Clock,        statuses: ['PENDING', 'CONFIRMED'] as OrderStatus[] },
   { key: 'preparing', label: 'Preparing',    icon: ChefHat,      statuses: ['PREPARING'] as OrderStatus[] },
   { key: 'ready',     label: 'Ready',        icon: BellRing,     statuses: ['READY'] as OrderStatus[] },
-  { key: 'served',    label: 'Served',       icon: CheckCircle2, statuses: ['COMPLETED'] as OrderStatus[] },
+  { key: 'served',    label: 'Served',       icon: CheckCircle2, statuses: ['SERVED', 'COMPLETED'] as OrderStatus[] },
 ]
+
+// Only today's tickets belong on the live pickup list; stale active orders
+// from previous days shouldn't clutter it.
+function isToday(iso: string): boolean {
+  const d = new Date(iso)
+  const now = new Date()
+  return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate()
+}
 
 function stepIndex(status: OrderStatus | undefined): number {
   if (!status) return -1
@@ -35,7 +43,7 @@ const currentStep = computed(() => stepIndex(order.value?.status))
 // All active orders currently READY for pickup. We include the customer's own
 // ticket so the board matches what's shown on the in-store screens.
 const readyOrders = computed(() =>
-  activeOrders.value.filter(o => o.status === 'READY'),
+  activeOrders.value.filter(o => o.status === 'READY' && isToday(o.createdAt)),
 )
 const isOwnTicket = (orderNum: string) => orderNum === orderNumber.value
 

@@ -19,7 +19,7 @@ const loading = ref(false)
 const filterStatus = ref<OrderStatus | ''>('')
 const filterType = ref<OrderType | ''>('')
 
-const orderStatuses: OrderStatus[] = ['PENDING', 'CONFIRMED', 'PREPARING', 'READY', 'COMPLETED', 'CANCELLED']
+const orderStatuses: OrderStatus[] = ['PENDING', 'CONFIRMED', 'PREPARING', 'READY', 'SERVED', 'COMPLETED', 'CANCELLED']
 const orderTypes: OrderType[] = ['DINE_IN', 'TAKEAWAY', 'QR_ORDER', 'KIOSK']
 
 onMounted(loadOrders)
