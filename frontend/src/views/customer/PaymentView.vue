@@ -1,12 +1,13 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import QRCode from 'qrcode'
 import { ordersApi } from '@/api/orders'
 import { paymentApi } from '@/api/payment'
 import { toast } from 'vue-sonner'
 import {
-  Wallet, Smartphone, Building2, CreditCard, Banknote, Check,
-  Loader2, Sparkles, ArrowRight, Mail, Receipt,
+  Wallet, Smartphone, CreditCard, Banknote, Check,
+  Loader2, Sparkles, ArrowRight, Mail, Receipt, QrCode,
 } from 'lucide-vue-next'
 import type { Component } from 'vue'
 import type { OrdersResponse, PaymentMethod } from '@/types'
@@ -35,22 +36,43 @@ function goBackToStart() {
 
 const order = ref<OrdersResponse | null>(null)
 const selectedMethod = ref<PaymentMethod | null>(null)
-const step = ref<'method' | 'processing' | 'success'>('method')
+const step = ref<'method' | 'processing' | 'fonepay' | 'success'>('method')
 const payment = ref<{ code: string; amount: number } | null>(null)
 const orderNumber = ref('')
 const loading = ref(true)
 
+// Fonepay dynamic-QR state: the rendered QR image + the PRN we poll on.
+const fonepayQrImage = ref('')
+const fonepayPrn = ref('')
+let fonepayPoll: ReturnType<typeof setInterval> | null = null
+
 const paymentMethods: { id: PaymentMethod; name: string; description: string; icon: Component; gradient: string }[] = [
+  { id: 'FONEPAY',  name: 'Scan & Pay (QR)', description: 'eSewa, Khalti & bank apps', icon: QrCode, gradient: 'from-rose-500 to-red-500' },
   { id: 'ESEWA',    name: 'eSewa',     description: 'Digital wallet',  icon: Wallet,     gradient: 'from-emerald-500 to-green-500' },
   { id: 'KHALTI',   name: 'Khalti',    description: 'Digital wallet',  icon: Smartphone, gradient: 'from-purple-500 to-fuchsia-500' },
-  { id: 'PHONEPAY', name: 'PhonePay',  description: 'UPI payment',     icon: Smartphone, gradient: 'from-indigo-500 to-blue-500' },
-  { id: 'IBANK',    name: 'iBank',     description: 'Internet banking',icon: Building2,  gradient: 'from-sky-500 to-blue-500' },
   { id: 'POS',      name: 'POS Machine', description: 'Card payment',  icon: CreditCard, gradient: 'from-violet-500 to-fuchsia-500' },
   { id: 'CASH',     name: 'Cash',      description: 'Pay at counter',  icon: Banknote,   gradient: 'from-slate-500 to-slate-600' },
 ]
 
 const finalTotal = computed(() => order.value?.totalAmount ?? 0)
 const ticketNumber = computed(() => order.value?.ticketNumber ?? null)
+
+// Methods depend on whose device this is:
+//  • Shared restaurant device — kiosk terminal, or a table tablet launched with
+//    ?shared=1 (flagged per-tab in sessionStorage): no personal-login wallets (a
+//    customer can't log into their own eSewa/Khalti on a public screen) — show
+//    scan-to-pay (Fonepay, payable by any wallet/bank app) + cash/POS.
+//  • Customer's OWN phone (QR sticker, or scanning the table QR): the opposite —
+//    hide Fonepay (you can't scan a QR on the phone you're paying from); show
+//    one-tap eSewa/Khalti + cash/POS.
+const isSharedDevice = computed(() =>
+  source.value === 'kiosk'
+  || sessionStorage.getItem('sharedDevice') === 'true')
+
+const visibleMethods = computed(() =>
+  isSharedDevice.value
+    ? paymentMethods.filter(m => m.id !== 'ESEWA' && m.id !== 'KHALTI')
+    : paymentMethods.filter(m => m.id !== 'FONEPAY'))
 
 // CASH / POS are settled at the counter — the success screen shows "pay at the
 // counter, show your receipt" rather than implying the payment is already done.
@@ -87,6 +109,10 @@ async function processPayment() {
   // eSewa goes through the real hosted gateway (redirect + verified callback).
   if (selectedMethod.value === 'ESEWA') {
     await payWithEsewa(); return
+  }
+  // Fonepay shows a dynamic QR in-page; we poll until Fonepay settles it.
+  if (selectedMethod.value === 'FONEPAY') {
+    await payWithFonepay(); return
   }
   step.value = 'processing'
   try {
@@ -148,7 +174,68 @@ async function payWithEsewa() {
   }
 }
 
+async function payWithFonepay() {
+  step.value = 'processing'
+  try {
+    const res = await paymentApi.fonepayInitiate({
+      restaurantCode: restaurantCode.value,
+      orderCode: orderCode.value,
+    })
+    payment.value = { code: res.paymentCode, amount: res.amount }
+    fonepayPrn.value = res.prn
+    // Render Fonepay's qrMessage string into a scannable QR image.
+    fonepayQrImage.value = await QRCode.toDataURL(res.qrMessage, { width: 320, margin: 2 })
+    step.value = 'fonepay'
+    startFonepayPolling()
+  } catch {
+    toast.error('Could not start Fonepay payment. Please try again.')
+    step.value = 'method'
+  }
+}
+
+// Poll the settled status every 3s until Fonepay confirms (or the customer
+// cancels). Fonepay's dynamic QR is valid for a few minutes, so we cap polling.
+function startFonepayPolling() {
+  stopFonepayPolling()
+  let elapsed = 0
+  const intervalMs = 3000
+  const timeoutMs = 5 * 60 * 1000
+  fonepayPoll = setInterval(async () => {
+    elapsed += intervalMs
+    if (elapsed >= timeoutMs) {
+      stopFonepayPolling()
+      toast.error('QR expired. Please try again.')
+      step.value = 'method'
+      return
+    }
+    try {
+      const result = await paymentApi.fonepayVerify(fonepayPrn.value)
+      if (result.status === 'COMPLETED') {
+        stopFonepayPolling()
+        payment.value = { code: result.code, amount: result.amount }
+        clearStoredCart()
+        step.value = 'success'
+      }
+    } catch {
+      // Transient gateway/network hiccup — keep polling.
+    }
+  }, intervalMs)
+}
+
+function stopFonepayPolling() {
+  if (fonepayPoll) {
+    clearInterval(fonepayPoll)
+    fonepayPoll = null
+  }
+}
+
+function cancelFonepay() {
+  stopFonepayPolling()
+  step.value = 'method'
+}
+
 onMounted(loadOrder)
+onUnmounted(stopFonepayPolling)
 </script>
 
 <template>
@@ -164,6 +251,38 @@ onMounted(loadOrder)
       <Loader2 class="w-16 h-16 text-violet-500 mx-auto mb-5 animate-spin" />
       <h2 class="text-2xl font-bold text-slate-900 mb-1">Processing payment…</h2>
       <p class="text-slate-500">Hang tight, this should only take a moment.</p>
+    </div>
+
+    <!-- Fonepay dynamic QR -->
+    <div v-else-if="step === 'fonepay'" class="max-w-md w-full bg-white rounded-3xl shadow-xl shadow-slate-900/5 ring-1 ring-slate-200/60 p-7 sm:p-8">
+      <div class="text-center">
+        <div class="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg bg-gradient-to-br from-rose-500 to-red-500 shadow-rose-500/30">
+          <QrCode class="w-7 h-7 text-white" />
+        </div>
+        <h2 class="text-2xl font-bold text-slate-900 mb-1">Scan to pay</h2>
+        <p class="text-slate-500 text-sm">Open <span class="font-medium text-slate-700">eSewa, Khalti</span> or any mobile-banking app and scan this QR — the exact amount is already filled in.</p>
+      </div>
+
+      <div class="mt-6 flex justify-center">
+        <div class="p-4 bg-white rounded-2xl ring-1 ring-slate-200/60 shadow-sm">
+          <img v-if="fonepayQrImage" :src="fonepayQrImage" alt="Fonepay QR code" class="w-60 h-60" />
+        </div>
+      </div>
+
+      <div class="mt-6 bg-slate-50 ring-1 ring-slate-200/60 rounded-2xl p-5 flex items-end justify-between">
+        <span class="font-semibold text-slate-900">Amount</span>
+        <span class="text-2xl font-bold text-rose-600 tabular-nums">NPR {{ finalTotal.toFixed(0) }}</span>
+      </div>
+
+      <div class="mt-4 flex items-center justify-center gap-2 text-slate-500 text-sm">
+        <Loader2 class="w-4 h-4 animate-spin" />
+        Waiting for payment confirmation…
+      </div>
+
+      <button @click="cancelFonepay"
+        class="mt-6 w-full py-2.5 bg-white hover:bg-slate-50 text-slate-700 font-medium rounded-xl ring-1 ring-slate-200/60 transition-colors">
+        Cancel
+      </button>
     </div>
 
     <!-- Success -->
@@ -264,7 +383,7 @@ onMounted(loadOrder)
       <div class="bg-white rounded-2xl ring-1 ring-slate-200/60 shadow-sm p-5 mb-4">
         <h2 class="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">Payment method</h2>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          <button v-for="method in paymentMethods" :key="method.id"
+          <button v-for="method in visibleMethods" :key="method.id"
             @click="selectedMethod = method.id"
             :class="selectedMethod === method.id
               ? 'ring-2 ring-violet-500 bg-violet-50/50 shadow-sm'

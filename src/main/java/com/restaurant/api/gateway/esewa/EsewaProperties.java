@@ -62,15 +62,19 @@ public class EsewaProperties {
         return active().getStatusUrl();
     }
 
-    /** Fail fast at startup if the selected mode is missing any credential. */
+    /**
+     * Fail fast at startup if the selected mode is missing the environment URLs.
+     * Merchant secrets (product-code, secret-key) are NOT validated here — they
+     * are now per-restaurant (see RestaurantEsewa), so only the global form/status
+     * URLs must be present.
+     */
     @PostConstruct
     void validate() {
         Credentials c = active();
-        if (isBlank(c.getProductCode()) || isBlank(c.getSecretKey())
-                || isBlank(c.getFormUrl()) || isBlank(c.getStatusUrl())) {
+        if (isBlank(c.getFormUrl()) || isBlank(c.getStatusUrl())) {
             throw new IllegalStateException(
                     "eSewa " + mode + " configuration is incomplete — "
-                            + "product-code, secret-key, form-url and status-url are all required.");
+                            + "form-url and status-url are required.");
         }
     }
 

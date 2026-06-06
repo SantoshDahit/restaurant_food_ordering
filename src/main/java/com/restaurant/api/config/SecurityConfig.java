@@ -67,6 +67,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/v1/payments/esewa/initiate").permitAll()
                         .requestMatchers(HttpMethod.POST, "/v1/payments/esewa/verify").permitAll()
                         .requestMatchers(HttpMethod.POST, "/v1/payments/esewa/cancel").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/v1/payments/fonepay/initiate").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/v1/payments/fonepay/verify").permitAll()
                         .requestMatchers(HttpMethod.GET, "/v1/payments/by-order/*").permitAll()
                         .requestMatchers(HttpMethod.GET, "/v1/receipts/by-order/*").permitAll()
                         .requestMatchers(HttpMethod.GET, "/v1/receipts/*").permitAll()

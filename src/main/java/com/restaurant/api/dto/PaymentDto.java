@@ -41,6 +41,36 @@ public class PaymentDto {
             @NotBlank String orderCode
     ) {}
 
+    /** Start a Fonepay dynamic-QR payment for an order. */
+    public record FonepayInitiateRequest(
+            @NotBlank String restaurantCode,
+            @NotBlank String orderCode
+    ) {}
+
+    /** Poll the settled status of a Fonepay payment by its PRN (= payment code). */
+    public record FonepayVerifyRequest(
+            @NotBlank String prn
+    ) {}
+
+    /** The QR the frontend renders, plus the PRN to poll for completion. */
+    @Getter
+    public static class FonepayInitiateResponse {
+        private final String paymentCode;
+        private final String prn;
+        private final String qrMessage;
+        private final String websocketUrl;
+        private final BigDecimal amount;
+
+        public FonepayInitiateResponse(String paymentCode, String prn, String qrMessage,
+                                       String websocketUrl, BigDecimal amount) {
+            this.paymentCode = paymentCode;
+            this.prn = prn;
+            this.qrMessage = qrMessage;
+            this.websocketUrl = websocketUrl;
+            this.amount = amount;
+        }
+    }
+
     /**
      * Everything the browser needs to POST the customer over to eSewa's
      * hosted form: the target URL plus the exact (signed) field set.

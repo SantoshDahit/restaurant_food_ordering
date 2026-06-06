@@ -40,9 +40,9 @@ public class EsewaClient {
             .build();
 
     /** Query eSewa for the settled status of a transaction. Never throws. */
-    public StatusResult checkStatus(String transactionUuid, String totalAmount) {
+    public StatusResult checkStatus(String productCode, String transactionUuid, String totalAmount) {
         String url = properties.getStatusUrl()
-                + "?product_code=" + enc(properties.getProductCode())
+                + "?product_code=" + enc(productCode)
                 + "&total_amount=" + enc(totalAmount)
                 + "&transaction_uuid=" + enc(transactionUuid);
         try {

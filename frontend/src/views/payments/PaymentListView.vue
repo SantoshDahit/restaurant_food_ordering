@@ -20,7 +20,7 @@ const loading = ref(false)
 const showCreateDialog = ref(false)
 const creating = ref(false)
 
-const paymentMethods: PaymentMethod[] = ['CASH', 'POS', 'ESEWA', 'KHALTI', 'PHONEPAY', 'IBANK']
+const paymentMethods: PaymentMethod[] = ['CASH', 'POS', 'ESEWA', 'KHALTI', 'FONEPAY']
 const paymentStatuses: PaymentStatus[] = ['PENDING', 'COMPLETED', 'FAILED', 'REFUNDED']
 
 const form = ref({

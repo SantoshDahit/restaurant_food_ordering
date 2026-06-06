@@ -3,6 +3,7 @@ package com.restaurant.api.dto;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 
@@ -33,7 +34,24 @@ public class RestaurantDto {
             String name
     ) {}
 
+    /** Plaintext Fonepay credentials submitted from the restaurant's admin settings. */
+    public record FonepayCredentialsRequest(
+            @NotBlank String merchantCode,
+            @NotBlank String username,
+            @NotBlank String password,
+            @NotBlank String secretKey,
+            boolean enabled
+    ) {}
+
+    /** Plaintext eSewa credentials submitted from the restaurant's admin settings. */
+    public record EsewaCredentialsRequest(
+            @NotBlank String productCode,
+            @NotBlank String secretKey,
+            boolean enabled
+    ) {}
+
     @Getter
+    @Setter
     public static class Response {
         private String code;
         private String kioskCode;
@@ -46,6 +64,11 @@ public class RestaurantDto {
         private String currency;
         private String fileCode;
         private Boolean isActive;
+        // Payment config flags only — credentials/secrets are NEVER exposed here.
+        private Boolean fonepayEnabled;
+        private Boolean fonepayConfigured;
+        private Boolean esewaEnabled;
+        private Boolean esewaConfigured;
         private LocalDateTime createdAt;
         private LocalDateTime updatedAt;
     }

@@ -30,12 +30,22 @@ const notes = ref('')
 const loading = ref(true)
 const submitting = ref(false)
 const updatingStatus = ref(false)
+// When true, the menu/cart is open to ADD items to the existing viewingOrder
+// (open-tab top-up) rather than to create a brand-new order.
+const appendMode = ref(false)
 const fileUrlCache = ref<Record<string, string>>({})
 const submittedOrder = ref<{ orderNumber: string; ticketNumber?: number | null; tableNumber: string } | null>(null)
 
 let pollTimer: ReturnType<typeof setInterval> | null = null
 
 const restaurantCode = computed(() => auth.restaurantCode)
+
+const headerSubtitle = computed(() => {
+  if (appendMode.value && selectedTable.value) return `Adding items — Table ${selectedTable.value.tableNumber}`
+  if (viewingOrder.value) return `Order for Table ${selectedTable.value?.tableNumber}`
+  if (selectedTable.value) return `Taking order for Table ${selectedTable.value.tableNumber}`
+  return 'Select a table to start'
+})
 
 const filteredItems = computed(() => {
   if (activeCategory.value === 'All') return items.value
@@ -156,6 +166,52 @@ function backToTables() {
   viewingOrder.value = null
   cart.value = {}
   notes.value = ''
+  appendMode.value = false
+}
+
+// Open the menu to add more items to the order already on this table.
+function startAddingItems() {
+  if (!viewingOrder.value) return
+  cart.value = {}
+  notes.value = ''
+  appendMode.value = true
+}
+
+// Leave add-items mode and return to the order's status view.
+function cancelAppend() {
+  appendMode.value = false
+  cart.value = {}
+  notes.value = ''
+}
+
+async function addItemsToExistingOrder() {
+  if (!viewingOrder.value) return
+  if (!cartItems.value.length) {
+    toast.error('Please add items to the order')
+    return
+  }
+  submitting.value = true
+  try {
+    for (const item of cartItems.value) {
+      await orderItemApi.add(viewingOrder.value.code, { menuItemCode: item.code, quantity: item.quantity })
+    }
+    toast.success('Items added to the order')
+    cart.value = {}
+    notes.value = ''
+    appendMode.value = false
+    viewingOrder.value = await ordersApi.getDetail(viewingOrder.value.code)
+    await refreshLive()
+  } catch (e: any) {
+    toast.error(e?.response?.data?.message ?? 'Failed to add items')
+  } finally {
+    submitting.value = false
+  }
+}
+
+// Cart's primary action: append to the open order, or create a new one.
+function submitCart() {
+  if (appendMode.value) addItemsToExistingOrder()
+  else submitOrder()
 }
 
 async function updateOrderStatus(status: 'SERVED' | 'COMPLETED') {
@@ -253,9 +309,7 @@ onBeforeUnmount(() => {
       <div class="flex items-center justify-between gap-2">
         <div class="min-w-0">
           <h1 class="text-lg sm:text-2xl font-bold text-gray-900 truncate">Waiter Mode</h1>
-          <p class="text-xs sm:text-sm text-gray-500 truncate">
-            {{ viewingOrder ? `Order for Table ${selectedTable?.tableNumber}` : selectedTable ? `Taking order for Table ${selectedTable.tableNumber}` : 'Select a table to start' }}
-          </p>
+          <p class="text-xs sm:text-sm text-gray-500 truncate">{{ headerSubtitle }}</p>
         </div>
         <button @click="router.push('/dashboard')"
           class="px-3 sm:px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 text-xs sm:text-sm font-medium flex-shrink-0">
@@ -296,7 +350,7 @@ onBeforeUnmount(() => {
         </div>
 
         <!-- Existing-order view (occupied table) -->
-        <div v-else-if="viewingOrder" class="flex-1 flex flex-col md:overflow-hidden p-3 sm:p-4">
+        <div v-else-if="viewingOrder && !appendMode" class="flex-1 flex flex-col md:overflow-hidden p-3 sm:p-4">
           <div class="flex items-center justify-between gap-2 mb-3">
             <h2 class="text-lg sm:text-xl font-semibold text-gray-900 truncate">Table {{ selectedTable?.tableNumber }} — Order</h2>
             <button @click="backToTables"
@@ -342,10 +396,12 @@ onBeforeUnmount(() => {
         <!-- Menu Selection (new order) -->
         <div v-else class="flex-1 flex flex-col md:overflow-hidden p-3 sm:p-4">
           <div class="flex items-center justify-between gap-2 mb-3">
-            <h2 class="text-lg sm:text-xl font-semibold text-gray-900 truncate">Menu Items</h2>
-            <button @click="backToTables"
+            <h2 class="text-lg sm:text-xl font-semibold text-gray-900 truncate">
+              {{ appendMode ? 'Add Items' : 'Menu Items' }}
+            </h2>
+            <button @click="appendMode ? cancelAppend() : backToTables()"
               class="px-3 sm:px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 text-xs sm:text-sm flex-shrink-0">
-              Change Table
+              {{ appendMode ? 'Cancel' : 'Change Table' }}
             </button>
           </div>
 
@@ -393,7 +449,7 @@ onBeforeUnmount(() => {
       <div class="w-full md:w-80 bg-white border-t md:border-t-0 md:border-l border-gray-200 flex flex-col md:flex-shrink-0">
 
         <!-- View-order: status + actions -->
-        <template v-if="viewingOrder">
+        <template v-if="viewingOrder && !appendMode">
           <div class="p-4 border-b">
             <h2 class="text-lg font-semibold text-gray-900">Order Status</h2>
             <p class="text-sm text-gray-500">Table {{ selectedTable?.tableNumber }}</p>
@@ -412,6 +468,13 @@ onBeforeUnmount(() => {
             </p>
           </div>
           <div class="p-4 border-t space-y-2">
+            <button @click="startAddingItems"
+              class="w-full py-3 bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 text-white font-semibold rounded-xl shadow-md shadow-violet-500/30 transition-all flex items-center justify-center gap-2">
+              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+              </svg>
+              Add items
+            </button>
             <button v-if="canMarkServed" @click="updateOrderStatus('SERVED')" :disabled="updatingStatus"
               class="w-full py-3 bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 text-white font-semibold rounded-xl shadow-md shadow-teal-500/30 transition-all disabled:opacity-60 flex items-center justify-center gap-2">
               <Loader2 v-if="updatingStatus" class="w-5 h-5 animate-spin" />
@@ -488,7 +551,7 @@ onBeforeUnmount(() => {
           </div>
 
           <div v-if="cartItems.length > 0" class="p-4 border-t space-y-3">
-            <textarea v-model="notes" placeholder="Order notes (allergies, special requests...)"
+            <textarea v-if="!appendMode" v-model="notes" placeholder="Order notes (allergies, special requests...)"
               class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 text-gray-900 resize-none text-sm"
               rows="2"></textarea>
 
@@ -503,12 +566,12 @@ onBeforeUnmount(() => {
               </div>
             </div>
 
-            <button @click="submitOrder" :disabled="submitting"
+            <button @click="submitCart" :disabled="submitting"
               class="w-full py-3 bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 text-white font-medium rounded-xl shadow-md shadow-violet-500/30 transition-all disabled:opacity-60 flex items-center justify-center gap-2">
               <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
               </svg>
-              {{ submitting ? 'Submitting...' : 'Submit Order' }}
+              {{ submitting ? (appendMode ? 'Adding…' : 'Submitting...') : (appendMode ? 'Add to Order' : 'Submit Order') }}
             </button>
 
             <button @click="() => { cart = {}; notes = '' }"

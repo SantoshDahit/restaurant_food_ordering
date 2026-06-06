@@ -47,6 +47,22 @@ public class RestaurantController {
         return restaurantFacade.update(code, request);
     }
 
+    /** Save this restaurant's Fonepay merchant credentials (encrypted at rest). Authenticated only. */
+    @PatchMapping("/{code}/fonepay-credentials")
+    public RestaurantDto.Response updateFonepayCredentials(
+            @PathVariable String code,
+            @Valid @RequestBody RestaurantDto.FonepayCredentialsRequest request) {
+        return restaurantFacade.updateFonepayCredentials(code, request);
+    }
+
+    /** Save this restaurant's eSewa merchant credentials (encrypted at rest). Authenticated only. */
+    @PatchMapping("/{code}/esewa-credentials")
+    public RestaurantDto.Response updateEsewaCredentials(
+            @PathVariable String code,
+            @Valid @RequestBody RestaurantDto.EsewaCredentialsRequest request) {
+        return restaurantFacade.updateEsewaCredentials(code, request);
+    }
+
     @DeleteMapping("/{code}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable String code) {

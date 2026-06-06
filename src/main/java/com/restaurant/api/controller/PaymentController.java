@@ -37,6 +37,18 @@ public class PaymentController {
         paymentFacade.cancelUnpaidEsewaOrder(request.orderCode());
     }
 
+    /** Start a Fonepay dynamic-QR payment; returns the qrMessage for the frontend to render. */
+    @PostMapping("/fonepay/initiate")
+    public PaymentDto.FonepayInitiateResponse initiateFonepay(@Valid @RequestBody PaymentDto.FonepayInitiateRequest request) {
+        return paymentFacade.initiateFonepay(request);
+    }
+
+    /** Poll the settled status of a Fonepay payment by PRN. */
+    @PostMapping("/fonepay/verify")
+    public PaymentDto.Response verifyFonepay(@Valid @RequestBody PaymentDto.FonepayVerifyRequest request) {
+        return paymentFacade.verifyFonepay(request);
+    }
+
     @GetMapping("/{code}")
     public PaymentDto.Response getByCode(@PathVariable String code) {
         return paymentFacade.getByCode(code);

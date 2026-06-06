@@ -5,17 +5,24 @@ import QRCode from 'qrcode'
 import { useAuthStore } from '@/stores/auth'
 import { tableApi } from '@/api/table'
 import { ordersApi } from '@/api/orders'
+import { paymentApi } from '@/api/payment'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import StatusBadge from '@/components/shared/StatusBadge.vue'
 import ConfirmDialog from '@/components/shared/ConfirmDialog.vue'
 import RestaurantGuard from '@/components/shared/RestaurantGuard.vue'
 import { toast } from 'vue-sonner'
-import type { RestaurantTableResponse, TableStatus, OrdersResponse, OrderStatus } from '@/types'
+import type { RestaurantTableResponse, TableStatus, OrdersResponse, OrderStatus, PaymentResponse, PaymentStatus } from '@/types'
+
+const ORDER_STATUSES: OrderStatus[] = ['PENDING', 'CONFIRMED', 'PREPARING', 'READY', 'SERVED', 'COMPLETED', 'CANCELLED']
+const PAYMENT_STATUSES: PaymentStatus[] = ['PENDING', 'COMPLETED', 'FAILED', 'REFUNDED']
 
 const auth = useAuthStore()
 const router = useRouter()
 const tables = ref<RestaurantTableResponse[]>([])
 const activeOrderByTable = ref<Record<string, OrdersResponse>>({})
+const paymentByOrder = ref<Record<string, PaymentResponse | null>>({})
+const updatingOrder = ref<string | null>(null)
+const updatingPayment = ref<string | null>(null)
 const loading = ref(false)
 const showFormDialog = ref(false)
 const deleteTarget = ref<string | null>(null)
@@ -64,8 +71,63 @@ async function loadActiveOrders() {
       if (!map[order.tableCode]) map[order.tableCode] = order
     }
     activeOrderByTable.value = map
+
+    // Pull each active order's payment (if any) so the card can show + update
+    // its payment status. Independent calls; failures leave the entry undefined.
+    const payments = await Promise.all(
+      Object.values(map).map(o => paymentApi.getByOrder(o.code).catch(() => null)))
+    const payMap: Record<string, PaymentResponse | null> = {}
+    Object.values(map).forEach((o, i) => { payMap[o.code] = payments[i] })
+    paymentByOrder.value = payMap
   } catch {
     // Non-fatal: tables still render without the active-order panel.
+  }
+}
+
+async function updateOrderStatus(orderCode: string, status: OrderStatus) {
+  updatingOrder.value = orderCode
+  try {
+    await ordersApi.updateStatus(orderCode, { status })
+    toast.success(`Order set to ${status}`)
+    await loadActiveOrders()
+  } catch (e: any) {
+    toast.error(e?.response?.data?.message || 'Could not update order status')
+  } finally {
+    updatingOrder.value = null
+  }
+}
+
+async function updatePaymentStatus(paymentCode: string, status: PaymentStatus) {
+  updatingPayment.value = paymentCode
+  try {
+    await paymentApi.updateStatus(paymentCode, { status })
+    toast.success(`Payment set to ${status}`)
+    await loadActiveOrders()
+  } catch (e: any) {
+    toast.error(e?.response?.data?.message || 'Could not update payment status')
+  } finally {
+    updatingPayment.value = null
+  }
+}
+
+// Record a cash payment at the counter for an order that has none yet, and mark
+// it paid — the common "customer paid cash at the till" case.
+async function markCashPaid(order: OrdersResponse) {
+  updatingPayment.value = order.code
+  try {
+    const payment = await paymentApi.create({
+      restaurantCode: order.restaurantCode,
+      orderCode: order.code,
+      paymentMethod: 'CASH',
+      amount: order.totalAmount,
+    })
+    await paymentApi.updateStatus(payment.code, { status: 'COMPLETED' })
+    toast.success('Marked paid (cash)')
+    await loadActiveOrders()
+  } catch (e: any) {
+    toast.error(e?.response?.data?.message || 'Could not record payment')
+  } finally {
+    updatingPayment.value = null
   }
 }
 
@@ -111,6 +173,14 @@ function tableUrl(tableCode: string) {
   return `${window.location.origin}/table/${tableCode}`
 }
 
+// Open this table's ordering view in a new tab, so staff keep the dashboard open.
+// The ?shared=1 flag marks it as a shared restaurant tablet (vs a customer who
+// SCANS the table QR on their own phone) so the payment screen shows scan-to-pay
+// (Fonepay) + cash/POS instead of personal-login wallets.
+function launchTableMode(tableCode: string) {
+  window.open(`${tableUrl(tableCode)}?shared=1`, '_blank')
+}
+
 function downloadQr() {
   if (!qrModal.value) return
   const a = document.createElement('a')
@@ -150,11 +220,6 @@ async function copyUrl() {
   if (!qrModal.value) return
   const ok = await copyToClipboard(tableUrl(qrModal.value.table.tableCode))
   ok ? toast.success('URL copied!') : toast.error('Copy failed — long-press to copy manually')
-}
-
-async function copyCode(tableCode: string) {
-  const ok = await copyToClipboard(tableCode)
-  ok ? toast.success('Table code copied!') : toast.error('Copy failed — long-press to copy manually')
 }
 
 async function confirmDelete() {
@@ -200,28 +265,59 @@ async function confirmDelete() {
           <StatusBadge :status="table.status" />
         </div>
 
-        <!-- Short table code (copy-able, used by Launch → Table Ordering & QR) -->
-        <button @click="copyCode(table.tableCode)"
-          class="w-full mb-3 group flex items-center gap-2 bg-slate-50 hover:bg-violet-50 ring-1 ring-slate-200 hover:ring-violet-200 rounded-lg px-2 py-1.5 transition-colors">
-          <svg class="w-3.5 h-3.5 text-slate-400 group-hover:text-violet-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+        <!-- Launch this table's ordering view in a new tab -->
+        <button @click="launchTableMode(table.tableCode)"
+          class="w-full mb-3 inline-flex items-center justify-center gap-2 px-3 py-2 bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 text-white text-sm font-semibold rounded-lg shadow-sm shadow-violet-500/30 transition-all">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
           </svg>
-          <span class="text-sm font-mono font-semibold text-slate-700 group-hover:text-violet-600 tracking-wider">{{ table.tableCode }}</span>
+          Launch table mode
         </button>
 
-        <!-- Active order panel -->
-        <button
-          v-if="activeOrderByTable[table.code]"
-          @click="openOrder(activeOrderByTable[table.code].code)"
-          class="w-full mb-3 text-left bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg p-2 transition-colors">
-          <div class="flex items-center justify-between mb-1">
-            <span class="text-xs font-semibold text-blue-700">{{ activeOrderByTable[table.code].orderNumber }}</span>
-            <StatusBadge :status="activeOrderByTable[table.code].status" />
+        <!-- Active order: info + quick order/payment status controls -->
+        <div v-if="activeOrderByTable[table.code]"
+          class="w-full mb-3 bg-blue-50 border border-blue-200 rounded-lg p-2 space-y-2">
+          <button @click="openOrder(activeOrderByTable[table.code].code)" class="w-full text-left">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-xs font-semibold text-blue-700">{{ activeOrderByTable[table.code].orderNumber }}</span>
+              <StatusBadge :status="activeOrderByTable[table.code].status" />
+            </div>
+            <div class="text-xs text-gray-600">
+              Total <span class="font-semibold text-gray-900">{{ activeOrderByTable[table.code].totalAmount.toFixed(2) }}</span>
+            </div>
+          </button>
+
+          <!-- Order status -->
+          <div>
+            <label class="block text-[10px] font-medium text-slate-500 uppercase tracking-wide mb-0.5">Order status</label>
+            <select
+              :value="activeOrderByTable[table.code].status"
+              :disabled="updatingOrder === activeOrderByTable[table.code].code"
+              @change="updateOrderStatus(activeOrderByTable[table.code].code, ($event.target as HTMLSelectElement).value as OrderStatus)"
+              class="w-full text-xs rounded-md border border-slate-200 bg-white px-2 py-1 focus:outline-none focus:ring-2 focus:ring-violet-500/40 disabled:opacity-50">
+              <option v-for="s in ORDER_STATUSES" :key="s" :value="s">{{ s }}</option>
+            </select>
           </div>
-          <div class="text-xs text-gray-600">
-            Total <span class="font-semibold text-gray-900">{{ activeOrderByTable[table.code].totalAmount.toFixed(2) }}</span>
+
+          <!-- Payment status -->
+          <div>
+            <label class="block text-[10px] font-medium text-slate-500 uppercase tracking-wide mb-0.5">Payment</label>
+            <select v-if="paymentByOrder[activeOrderByTable[table.code].code]"
+              :value="paymentByOrder[activeOrderByTable[table.code].code]!.status"
+              :disabled="updatingPayment === paymentByOrder[activeOrderByTable[table.code].code]!.code"
+              @change="updatePaymentStatus(paymentByOrder[activeOrderByTable[table.code].code]!.code, ($event.target as HTMLSelectElement).value as PaymentStatus)"
+              class="w-full text-xs rounded-md border border-slate-200 bg-white px-2 py-1 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 disabled:opacity-50">
+              <option v-for="s in PAYMENT_STATUSES" :key="s" :value="s">{{ s }}</option>
+            </select>
+            <button v-else
+              @click="markCashPaid(activeOrderByTable[table.code])"
+              :disabled="updatingPayment === activeOrderByTable[table.code].code"
+              class="w-full text-xs px-2 py-1 bg-emerald-50 ring-1 ring-emerald-200 text-emerald-700 rounded-md hover:bg-emerald-100 transition-colors disabled:opacity-50">
+              Mark paid (cash)
+            </button>
           </div>
-        </button>
+        </div>
 
         <!-- QR preview thumbnail (always available, points at /table/<code>) -->
         <div class="mb-3">

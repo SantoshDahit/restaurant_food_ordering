@@ -55,6 +55,10 @@ payment:
       secret-key: 8gBm/:&EnhH.1/q
       form-url: https://rc-epay.esewa.com.np/api/epay/main/v2/form
       status-url: https://rc.esewa.com.np/api/epay/transaction/status/
+  fonepay:
+    # Local development hits the Fonepay UAT environment. Credentials are
+    # per-restaurant (encrypted); only the environment is global.
+    mode: TEST
 
 logging:
   level:

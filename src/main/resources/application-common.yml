@@ -41,6 +41,13 @@ jwt:
   access-token-expiry: 3600000      # 1 hour in milliseconds
   refresh-token-expiry: 604800000   # 7 days in milliseconds
 
+security:
+  # AES-256 master key (base64, 32 bytes) for encrypting per-tenant payment
+  # secrets at rest. MUST be overridden from a secrets manager in production —
+  # the default is for local development only. Changing it makes existing
+  # encrypted credentials undecryptable.
+  credential-encryption-key: ${CREDENTIAL_ENCRYPTION_KEY:JlAvfx6nkpzfPP5+wKUdLfWFHavAiBAr1jmpBYAvB74=}
+
 app:
   cors:
     allowed-origins:

@@ -55,6 +55,9 @@ payment:
       secret-key: ${ESEWA_SECRET_KEY:}
       form-url: https://epay.esewa.com.np/api/epay/main/v2/form
       status-url: https://epay.esewa.com.np/api/epay/transaction/status/
+  fonepay:
+    # Per-restaurant credentials (encrypted); flip to PRODUCTION on the live deploy.
+    mode: ${FONEPAY_MODE:TEST}
 
 logging:
   level:

@@ -5,6 +5,5 @@ public enum PaymentMethod {
     POS,
     ESEWA,
     KHALTI,
-    PHONEPAY,
-    IBANK
+    FONEPAY     // interoperable Fonepay dynamic-QR rail (any wallet/bank app)
 }

@@ -1,5 +1,5 @@
 import api from './axios'
-import type { PaymentResponse, PaymentCreateRequest, PaymentStatusUpdateRequest, PageResponse, PaymentStatus, PaymentMethod, EsewaInitiateRequest, EsewaInitiateResponse } from '@/types'
+import type { PaymentResponse, PaymentCreateRequest, PaymentStatusUpdateRequest, PageResponse, PaymentStatus, PaymentMethod, EsewaInitiateRequest, EsewaInitiateResponse, FonepayInitiateRequest, FonepayInitiateResponse } from '@/types'
 
 export const paymentApi = {
   search: (params: { restaurantCode?: string; status?: PaymentStatus; paymentMethod?: PaymentMethod; size?: number; page?: number }) =>
@@ -25,4 +25,11 @@ export const paymentApi = {
 
   esewaCancel: (orderCode: string) =>
     api.post('/payments/esewa/cancel', { orderCode }).then(r => r.data),
+
+  fonepayInitiate: (data: FonepayInitiateRequest) =>
+    api.post<FonepayInitiateResponse>('/payments/fonepay/initiate', data).then(r => r.data),
+
+  // Poll the settled status by PRN; the payment is COMPLETED once Fonepay confirms.
+  fonepayVerify: (prn: string) =>
+    api.post<PaymentResponse>('/payments/fonepay/verify', { prn }).then(r => r.data),
 }

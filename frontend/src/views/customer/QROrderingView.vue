@@ -106,6 +106,17 @@ async function load() {
       : await tableApi.getByTableCode(tableCode!)
     await loadMenu(table.value.restaurantCode)
 
+    // Mark this tab as a shared restaurant tablet ONLY when launched with
+    // ?shared=1 (the dashboard "Launch table mode" button). A customer who scans
+    // the table QR (or a QR sticker) has no such flag, so they're treated as
+    // being on their own phone. sessionStorage is per-tab, so it never leaks to
+    // a customer's device. The payment screen reads this to pick methods.
+    if (route.query.shared) {
+      sessionStorage.setItem('sharedDevice', 'true')
+    } else {
+      sessionStorage.removeItem('sharedDevice')
+    }
+
     // Occupied table → the QR is a shared tab: add to its open order instead of
     // creating a new one.
     if (table.value.status === 'OCCUPIED') {

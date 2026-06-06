@@ -36,6 +36,16 @@ public class PaymentFacade {
         return paymentMapper.toResponse(payment);
     }
 
+    @Transactional
+    public PaymentDto.FonepayInitiateResponse initiateFonepay(PaymentDto.FonepayInitiateRequest request) {
+        return paymentService.initiateFonepay(request);
+    }
+
+    @Transactional
+    public PaymentDto.Response verifyFonepay(PaymentDto.FonepayVerifyRequest request) {
+        return paymentMapper.toResponse(paymentService.verifyFonepay(request.prn()));
+    }
+
     /**
      * Handle a failed/cancelled eSewa payment. Always marks the pending payment
      * FAILED. For prepaid channels (kiosk/takeaway) it also rolls back the order

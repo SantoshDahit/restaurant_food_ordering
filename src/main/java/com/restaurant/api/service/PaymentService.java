@@ -7,9 +7,14 @@ import com.restaurant.api.entity.Orders;
 import com.restaurant.api.entity.Payment;
 import com.restaurant.api.exception.ApiException;
 import com.restaurant.api.exception.ErrorCode;
+import com.restaurant.api.gateway.esewa.EsewaCredentials;
 import com.restaurant.api.gateway.esewa.EsewaFormData;
 import com.restaurant.api.gateway.esewa.EsewaGateway;
 import com.restaurant.api.gateway.esewa.EsewaVerification;
+import com.restaurant.api.gateway.fonepay.FonepayCredentials;
+import com.restaurant.api.gateway.fonepay.FonepayGateway;
+import com.restaurant.api.gateway.fonepay.FonepayQr;
+import com.restaurant.api.gateway.fonepay.FonepayVerification;
 import com.restaurant.api.repository.payment.PaymentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -24,6 +29,9 @@ public class PaymentService {
     private final OrdersService ordersService;
     private final ReceiptService receiptService;
     private final EsewaGateway esewaGateway;
+    private final FonepayGateway fonepayGateway;
+    private final RestaurantFonepayService restaurantFonepayService;
+    private final RestaurantEsewaService restaurantEsewaService;
 
     @Transactional(readOnly = true)
     public Payment getByCode(String code) {
@@ -56,7 +64,7 @@ public class PaymentService {
                 request.transactionRef(),
                 request.receiptNumber()
         );
-        // Digital methods (eSewa, Khalti, PhonePay, iBank) confirm at the gateway
+        // Digital methods (eSewa, Khalti) confirm at the gateway
         // so we mark them COMPLETED immediately. CASH and POS stay PENDING — the
         // cashier confirms manually after physically receiving the payment.
         if (isAutoCompleteMethod(request.paymentMethod())) {
@@ -86,6 +94,7 @@ public class PaymentService {
     @Transactional
     public PaymentDto.EsewaInitiateResponse initiateEsewa(PaymentDto.EsewaInitiateRequest request) {
         ordersService.getByCode(request.orderCode()); // 404 early if the order is bogus
+        EsewaCredentials creds = restaurantEsewaService.getDecrypted(request.restaurantCode());
 
         Payment payment = new Payment(
                 request.restaurantCode(),
@@ -99,7 +108,7 @@ public class PaymentService {
         Payment saved = paymentRepository.save(payment);
 
         EsewaFormData form = esewaGateway.initiate(
-                saved.getCode(), saved.getAmount(), request.successUrl(), request.failureUrl());
+                creds, saved.getCode(), saved.getAmount(), request.successUrl(), request.failureUrl());
         return new PaymentDto.EsewaInitiateResponse(saved.getCode(), form.formUrl(), form.fields());
     }
 
@@ -110,14 +119,19 @@ public class PaymentService {
      */
     @Transactional
     public Payment verifyEsewa(PaymentDto.EsewaVerifyRequest request) {
-        EsewaVerification verification = esewaGateway.verify(request.data());
-
-        Payment payment = paymentRepository.findByCode(verification.transactionUuid())
+        // Read the transaction uuid (= our payment code) from the signed payload
+        // without trusting it yet, so we can resolve which restaurant's eSewa
+        // credentials to verify the signature with.
+        String paymentCode = esewaGateway.peekTransactionUuid(request.data());
+        Payment payment = paymentRepository.findByCode(paymentCode)
                 .orElseThrow(() -> new ApiException(ErrorCode.PAYMENT_NOT_FOUND));
 
         if (payment.getStatus() == PaymentStatus.COMPLETED) {
             return payment;
         }
+
+        EsewaCredentials creds = restaurantEsewaService.getDecrypted(payment.getRestaurantCode());
+        EsewaVerification verification = esewaGateway.verify(creds, request.data());
         if (!verification.success()) {
             payment.fail();
             return paymentRepository.save(payment);
@@ -131,6 +145,52 @@ public class PaymentService {
 
         Orders order = ordersService.getByCode(saved.getOrderCode());
         receiptService.issue(saved, order);
+        return saved;
+    }
+
+    /**
+     * Start a Fonepay dynamic-QR payment: create a PENDING FONEPAY payment using
+     * the restaurant's own (encrypted) merchant credentials, ask Fonepay for a
+     * QR, and return the qrMessage for the frontend to render. The payment code
+     * doubles as the PRN (merchant transaction reference).
+     */
+    @Transactional
+    public PaymentDto.FonepayInitiateResponse initiateFonepay(PaymentDto.FonepayInitiateRequest request) {
+        Orders order = ordersService.getByCode(request.orderCode());
+        FonepayCredentials creds = restaurantFonepayService.getDecrypted(request.restaurantCode());
+
+        // Charge the order's authoritative total — never a client-supplied amount.
+        Payment payment = new Payment(
+                request.restaurantCode(), request.orderCode(), null,
+                PaymentMethod.FONEPAY, order.getTotalAmount(), null, null);
+        Payment saved = paymentRepository.save(payment);
+
+        String prn = saved.getCode();
+        FonepayQr qr = fonepayGateway.generateQr(
+                creds, order.getTotalAmount(), prn, order.getOrderNumber(), "Order");
+        return new PaymentDto.FonepayInitiateResponse(
+                saved.getCode(), prn, qr.qrMessage(), qr.websocketUrl(), order.getTotalAmount());
+    }
+
+    /**
+     * Reconcile a Fonepay payment by PRN against Fonepay's status API (the tenant
+     * is resolved from the stored payment, not from the request). Idempotent;
+     * leaves the payment PENDING until Fonepay reports it settled.
+     */
+    @Transactional
+    public Payment verifyFonepay(String prn) {
+        Payment payment = getByCode(prn);
+        if (payment.getStatus() == PaymentStatus.COMPLETED) {
+            return payment;
+        }
+        FonepayCredentials creds = restaurantFonepayService.getDecrypted(payment.getRestaurantCode());
+        FonepayVerification verification = fonepayGateway.verify(creds, prn);
+        if (!verification.success()) {
+            return payment; // not settled yet — caller keeps polling
+        }
+        payment.completeWithRef(verification.traceId());
+        Payment saved = paymentRepository.save(payment);
+        receiptService.issue(saved, ordersService.getByCode(saved.getOrderCode()));
         return saved;
     }
 

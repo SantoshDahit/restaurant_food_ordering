@@ -54,6 +54,8 @@ public enum ErrorCode {
     PAYMENT_VERIFICATION_FAILED(HttpStatus.BAD_REQUEST, "Payment could not be verified with the gateway"),
     PAYMENT_AMOUNT_MISMATCH(HttpStatus.BAD_REQUEST, "Paid amount does not match the order amount"),
     PAYMENT_GATEWAY_ERROR(HttpStatus.BAD_GATEWAY, "Payment gateway is unavailable"),
+    FONEPAY_NOT_CONFIGURED(HttpStatus.BAD_REQUEST, "Fonepay is not configured for this restaurant"),
+    ESEWA_NOT_CONFIGURED(HttpStatus.BAD_REQUEST, "eSewa is not configured for this restaurant"),
 
     // Receipt
     RECEIPT_NOT_FOUND(HttpStatus.NOT_FOUND, "Receipt not found"),

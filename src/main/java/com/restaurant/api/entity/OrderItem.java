@@ -70,6 +70,13 @@ public class OrderItem {
         this.notes = notes;
     }
 
+    /** Add to the ordered quantity (e.g. the same item added again to an open tab). */
+    public void increaseQuantity(int delta) {
+        this.quantity += delta;
+        this.totalPrice = this.unitPrice.multiply(BigDecimal.valueOf(this.quantity))
+                .subtract(this.discountAmount);
+    }
+
     public void update(Integer quantity, String spiceLevel, String notes) {
         if (quantity != null) {
             this.quantity = quantity;

@@ -3,7 +3,7 @@
 export type UserRole = 'ADMIN' | 'MANAGER' | 'STAFF'
 export type OrderStatus = 'PENDING' | 'CONFIRMED' | 'PREPARING' | 'READY' | 'SERVED' | 'COMPLETED' | 'CANCELLED'
 export type OrderType = 'DINE_IN' | 'TAKEAWAY' | 'QR_ORDER' | 'KIOSK'
-export type PaymentMethod = 'CASH' | 'POS' | 'ESEWA' | 'KHALTI' | 'PHONEPAY' | 'IBANK'
+export type PaymentMethod = 'CASH' | 'POS' | 'ESEWA' | 'KHALTI' | 'FONEPAY'
 export type PaymentStatus = 'PENDING' | 'COMPLETED' | 'FAILED' | 'REFUNDED'
 export type ItemAvailability = 'AVAILABLE' | 'OUT_OF_STOCK' | 'HIDDEN'
 export type MenuCategoryType = 'VEG' | 'NON_VEG' | 'DRINKS' | 'SPECIALS' | 'DESSERTS' | 'APPETIZERS' | 'SIDES'
@@ -127,8 +127,29 @@ export interface RestaurantResponse {
   currency: string
   fileCode?: string
   isActive: boolean
+  // Payment-config flags (secret-free); set by the backend, never the raw creds.
+  fonepayEnabled?: boolean
+  fonepayConfigured?: boolean
+  esewaEnabled?: boolean
+  esewaConfigured?: boolean
   createdAt: string
   updateAt?: string
+}
+
+/** Plaintext Fonepay merchant credentials submitted from admin settings (encrypted server-side). */
+export interface FonepayCredentialsRequest {
+  merchantCode: string
+  username: string
+  password: string
+  secretKey: string
+  enabled: boolean
+}
+
+/** Plaintext eSewa merchant credentials submitted from admin settings (encrypted server-side). */
+export interface EsewaCredentialsRequest {
+  productCode: string
+  secretKey: string
+  enabled: boolean
 }
 
 export interface RestaurantCreateRequest {
@@ -401,6 +422,23 @@ export interface EsewaInitiateResponse {
   paymentCode: string
   formUrl: string
   fields: Record<string, string>
+}
+
+export interface FonepayInitiateRequest {
+  restaurantCode: string
+  orderCode: string
+}
+
+export interface FonepayInitiateResponse {
+  paymentCode: string
+  prn: string
+  qrMessage: string
+  websocketUrl?: string | null
+  amount: number
+}
+
+export interface FonepayVerifyRequest {
+  prn: string
 }
 
 // ─── Receipt ──────────────────────────────────────────────────────────────────
