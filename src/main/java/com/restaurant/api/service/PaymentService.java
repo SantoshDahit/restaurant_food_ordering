@@ -41,7 +41,7 @@ public class PaymentService {
 
     @Transactional(readOnly = true)
     public java.util.Optional<Payment> findByOrderCode(String orderCode) {
-        return paymentRepository.findByOrderCode(orderCode);
+        return paymentRepository.findCurrentByOrderCode(orderCode);
     }
 
     @Transactional(readOnly = true)
@@ -196,20 +196,16 @@ public class PaymentService {
 
     @Transactional(readOnly = true)
     public boolean hasCompletedPayment(String orderCode) {
-        return paymentRepository.findByOrderCode(orderCode)
-                .map(p -> p.getStatus() == PaymentStatus.COMPLETED)
-                .orElse(false);
+        return paymentRepository.hasCompletedForOrder(orderCode);
     }
 
-    /** Mark a still-pending payment for this order as FAILED (e.g. gateway cancel). */
+    /** Mark every still-pending payment for this order as FAILED (e.g. gateway cancel). */
     @Transactional
     public void failPendingPayments(String orderCode) {
-        paymentRepository.findByOrderCode(orderCode).ifPresent(p -> {
-            if (p.getStatus() == PaymentStatus.PENDING) {
-                p.fail();
-                paymentRepository.save(p);
-            }
-        });
+        for (Payment p : paymentRepository.findPendingByOrderCode(orderCode)) {
+            p.fail();
+            paymentRepository.save(p);
+        }
     }
 
     @Transactional

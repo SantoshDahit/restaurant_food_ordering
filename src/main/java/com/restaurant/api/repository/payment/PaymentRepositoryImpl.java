@@ -1,5 +1,6 @@
 package com.restaurant.api.repository.payment;
 
+import com.restaurant.api.constant.PaymentStatus;
 import com.restaurant.api.dto.PaymentDto;
 import com.restaurant.api.entity.Payment;
 import lombok.RequiredArgsConstructor;
@@ -22,8 +23,21 @@ public class PaymentRepositoryImpl implements PaymentRepository {
     }
 
     @Override
-    public Optional<Payment> findByOrderCode(String orderCode) {
-        return paymentJpaRepository.findByOrderCode(orderCode);
+    public Optional<Payment> findCurrentByOrderCode(String orderCode) {
+        // Prefer a settled payment for display; otherwise the most recent attempt.
+        return paymentJpaRepository
+                .findFirstByOrderCodeAndStatusOrderByCreatedAtDesc(orderCode, PaymentStatus.COMPLETED)
+                .or(() -> paymentJpaRepository.findFirstByOrderCodeOrderByCreatedAtDesc(orderCode));
+    }
+
+    @Override
+    public boolean hasCompletedForOrder(String orderCode) {
+        return paymentJpaRepository.existsByOrderCodeAndStatus(orderCode, PaymentStatus.COMPLETED);
+    }
+
+    @Override
+    public List<Payment> findPendingByOrderCode(String orderCode) {
+        return paymentJpaRepository.findByOrderCodeAndStatus(orderCode, PaymentStatus.PENDING);
     }
 
     @Override

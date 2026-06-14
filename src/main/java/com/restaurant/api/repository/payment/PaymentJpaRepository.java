@@ -13,8 +13,14 @@ import java.util.Optional;
 
 public interface PaymentJpaRepository extends JpaRepository<Payment, String> {
     Optional<Payment> findByCode(String code);
-    Optional<Payment> findByOrderCode(String orderCode);
     boolean existsByOrderCode(String orderCode);
+
+    // An order can have several payment rows (retries / multiple attempts), so
+    // any per-order lookup must tolerate >1 row — never a single-result query.
+    boolean existsByOrderCodeAndStatus(String orderCode, PaymentStatus status);
+    List<Payment> findByOrderCodeAndStatus(String orderCode, PaymentStatus status);
+    Optional<Payment> findFirstByOrderCodeAndStatusOrderByCreatedAtDesc(String orderCode, PaymentStatus status);
+    Optional<Payment> findFirstByOrderCodeOrderByCreatedAtDesc(String orderCode);
 
     @Query("""
         SELECT p FROM Payment p
