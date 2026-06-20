@@ -227,44 +227,44 @@ onMounted(async () => {
     <PageHeader title="Menu Items" description="Manage menu items">
       <template #actions>
         <button @click="openAdd"
-          class="px-4 py-2 bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 text-white text-sm rounded-xl shadow-md shadow-violet-500/30 transition-all">
+          class="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground text-sm rounded-xl shadow-soft transition-all">
           + Add Item
         </button>
       </template>
     </PageHeader>
 
-    <div v-if="loading" class="text-center py-12 text-slate-400">Loading...</div>
+    <div v-if="loading" class="text-center py-12 text-muted-foreground">Loading...</div>
 
     <!-- Category filter tabs (mirrors kiosk/table modes) -->
     <div v-else-if="items.length" class="mb-4 relative">
       <div class="flex gap-2 overflow-x-auto pb-1">
         <button @click="activeCategory = 'All'"
           :class="activeCategory === 'All'
-            ? 'bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white shadow-md shadow-violet-500/30'
-            : 'bg-white text-slate-700 ring-1 ring-slate-200 hover:ring-slate-300'"
+            ? 'bg-primary text-primary-foreground shadow-soft'
+            : 'bg-card text-foreground ring-1 ring-border hover:ring-border'"
           class="px-4 py-2 rounded-xl font-semibold whitespace-nowrap text-sm transition-all flex items-center gap-1.5 flex-shrink-0">
           All <span class="text-[10px] font-normal opacity-80 tabular-nums">({{ categoryCounts.All }})</span>
         </button>
         <button v-for="cat in categories" :key="cat.code" @click="activeCategory = cat.code"
           :class="activeCategory === cat.code
-            ? 'bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white shadow-md shadow-violet-500/30'
-            : 'bg-white text-slate-700 ring-1 ring-slate-200 hover:ring-slate-300'"
+            ? 'bg-primary text-primary-foreground shadow-soft'
+            : 'bg-card text-foreground ring-1 ring-border hover:ring-border'"
           class="px-4 py-2 rounded-xl font-semibold whitespace-nowrap text-sm transition-all flex items-center gap-1.5 flex-shrink-0">
           {{ cat.name }} <span class="text-[10px] font-normal opacity-80 tabular-nums">({{ categoryCounts[cat.code] || 0 }})</span>
         </button>
         <button v-if="categoryCounts.Uncategorised > 0" @click="activeCategory = 'Uncategorised'"
           :class="activeCategory === 'Uncategorised'
-            ? 'bg-gradient-to-r from-slate-500 to-slate-600 text-white shadow-md'
-            : 'bg-white text-slate-500 ring-1 ring-slate-200 hover:ring-slate-300'"
+            ? 'bg-muted text-foreground shadow-soft'
+            : 'bg-card text-muted-foreground ring-1 ring-border hover:ring-border'"
           class="px-4 py-2 rounded-xl font-semibold whitespace-nowrap text-sm transition-all flex items-center gap-1.5 flex-shrink-0">
           Uncategorised <span class="text-[10px] font-normal opacity-80 tabular-nums">({{ categoryCounts.Uncategorised }})</span>
         </button>
       </div>
     </div>
 
-    <div v-if="!loading" class="bg-white rounded-2xl shadow-sm ring-1 ring-slate-200/60 overflow-x-auto">
+    <div v-if="!loading" class="bg-card rounded-2xl shadow-card ring-1 ring-border overflow-x-auto">
       <table class="w-full text-sm min-w-[860px]">
-        <thead class="bg-slate-50/60 text-slate-500 uppercase text-[11px] tracking-wide">
+        <thead class="bg-muted text-muted-foreground uppercase text-[11px] tracking-wide">
           <tr>
             <th class="px-4 py-3 text-left w-16">Image</th>
             <th class="px-4 py-3 text-left">Name</th>
@@ -272,36 +272,36 @@ onMounted(async () => {
             <th class="px-4 py-3 text-right">Price</th>
             <th class="px-4 py-3 text-center">Veg</th>
             <th class="px-4 py-3 text-left">Availability</th>
-            <th class="px-4 py-3 text-right sticky right-0 bg-slate-50/60 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.08)]">Actions</th>
+            <th class="px-4 py-3 text-right sticky right-0 bg-muted shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.08)]">Actions</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-slate-100">
-          <tr v-for="item in filteredItems" :key="item.code" class="hover:bg-slate-50/60 transition-colors">
+        <tbody class="divide-y divide-border">
+          <tr v-for="item in filteredItems" :key="item.code" class="hover:bg-accent transition-colors">
             <td class="px-4 py-2">
               <img
                 v-if="item.fileCode && fileUrlCache[item.fileCode]"
                 :src="fileUrlCache[item.fileCode]"
                 :alt="item.name"
-                class="w-12 h-12 object-cover rounded-lg border border-gray-100"
+                class="w-12 h-12 object-cover rounded-lg border border-border"
               />
-              <div v-else class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center text-gray-300">
+              <div v-else class="w-12 h-12 bg-muted rounded-lg flex items-center justify-center text-muted-foreground">
                 <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                     d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
               </div>
             </td>
-            <td class="px-4 py-3 font-medium text-gray-900">{{ item.name }}</td>
-            <td class="px-4 py-3 text-slate-500">{{ getCategoryName(item.categoryCode || '') }}</td>
+            <td class="px-4 py-3 font-medium text-foreground">{{ item.name }}</td>
+            <td class="px-4 py-3 text-muted-foreground">{{ getCategoryName(item.categoryCode || '') }}</td>
             <td class="px-4 py-3 text-right">NPR {{ item.price.toFixed(0) }}</td>
             <td class="px-4 py-3 text-center">{{ item.isVeg ? '🌱' : '🍖' }}</td>
             <td class="px-4 py-3"><StatusBadge :status="item.availability" /></td>
-            <td class="px-4 py-3 text-right sticky right-0 bg-white shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.08)]">
+            <td class="px-4 py-3 text-right sticky right-0 bg-card shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.08)]">
               <div class="flex justify-end gap-2">
                 <button @click="openEdit(item)"
-                  class="text-xs px-2.5 py-1 bg-slate-50 ring-1 ring-slate-200 text-slate-700 rounded-lg hover:bg-slate-100 transition-colors">Edit</button>
+                  class="text-xs px-2.5 py-1 bg-muted ring-1 ring-border text-foreground rounded-lg hover:bg-accent transition-colors">Edit</button>
                 <button @click="deleteTarget = item.code"
-                  class="text-xs px-2.5 py-1 bg-rose-50 ring-1 ring-rose-200 text-rose-600 rounded-lg hover:bg-rose-100 transition-colors">Delete</button>
+                  class="text-xs px-2.5 py-1 bg-destructive/10 ring-1 ring-destructive/20 text-destructive rounded-lg hover:bg-destructive/20 transition-colors">Delete</button>
               </div>
             </td>
           </tr>
@@ -322,25 +322,25 @@ onMounted(async () => {
     <Teleport to="body">
       <div v-if="showFormDialog" class="fixed inset-0 z-50 flex items-center justify-center">
         <div class="absolute inset-0 bg-black/50" @click="showFormDialog = false" />
-        <div class="relative bg-white rounded-2xl shadow-xl ring-1 ring-slate-200/60 p-6 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
+        <div class="relative bg-card rounded-2xl shadow-lifted ring-1 ring-border p-6 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
           <h3 class="text-lg font-semibold mb-4">{{ editTarget ? 'Edit Item' : 'Add Item' }}</h3>
           <form @submit.prevent="save" class="space-y-3">
 
             <!-- Image Upload -->
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Image</label>
+              <label class="block text-sm font-medium text-foreground mb-1">Image</label>
               <div class="flex items-center gap-3">
-                <div class="w-20 h-20 rounded-xl border-2 border-dashed border-gray-200 overflow-hidden flex-shrink-0 flex items-center justify-center bg-gray-50">
+                <div class="w-20 h-20 rounded-xl border-2 border-dashed border-border overflow-hidden flex-shrink-0 flex items-center justify-center bg-muted">
                   <img v-if="imagePreview" :src="imagePreview" class="w-full h-full object-cover" />
                   <img v-else-if="currentFileCode && fileUrlCache[currentFileCode]"
                     :src="fileUrlCache[currentFileCode]" class="w-full h-full object-cover" />
-                  <svg v-else class="w-8 h-8 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg v-else class="w-8 h-8 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                       d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
                 </div>
                 <div class="flex-1 space-y-1.5">
-                  <label class="flex items-center justify-center gap-2 px-3 py-2 bg-gray-100 rounded-lg cursor-pointer hover:bg-gray-200 text-sm text-gray-700 w-full">
+                  <label class="flex items-center justify-center gap-2 px-3 py-2 bg-muted rounded-lg cursor-pointer hover:bg-accent text-sm text-foreground w-full">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
@@ -349,7 +349,7 @@ onMounted(async () => {
                     <input type="file" accept="image/*" class="hidden" @change="onImageSelected" />
                   </label>
                   <button v-if="imagePreview || currentFileCode" type="button" @click="clearImage"
-                    class="w-full px-3 py-1.5 text-xs text-red-600 bg-red-50 rounded-lg hover:bg-red-100">
+                    class="w-full px-3 py-1.5 text-xs text-destructive bg-destructive/10 rounded-lg hover:bg-destructive/20">
                     Remove Image
                   </button>
                 </div>
@@ -357,52 +357,52 @@ onMounted(async () => {
             </div>
 
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Name *</label>
+              <label class="block text-sm font-medium text-foreground mb-1">Name *</label>
               <input v-model="form.name" required
-                class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40 focus:border-violet-300 transition-all" />
+                class="w-full px-3 py-2 bg-card border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring/20 focus:border-primary/30 transition-all" />
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+              <label class="block text-sm font-medium text-foreground mb-1">Description</label>
               <textarea v-model="form.description" rows="2"
-                class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40 focus:border-violet-300 transition-all" />
+                class="w-full px-3 py-2 bg-card border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring/20 focus:border-primary/30 transition-all" />
             </div>
             <div class="grid grid-cols-2 gap-3">
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Price *</label>
+                <label class="block text-sm font-medium text-foreground mb-1">Price *</label>
                 <input v-model.number="form.price" type="number" min="0" step="0.01"
-                  class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40 focus:border-violet-300 transition-all" />
+                  class="w-full px-3 py-2 bg-card border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring/20 focus:border-primary/30 transition-all" />
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Discount %</label>
+                <label class="block text-sm font-medium text-foreground mb-1">Discount %</label>
                 <input v-model.number="form.discountPercent" type="number" min="0" max="100"
-                  class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40 focus:border-violet-300 transition-all" />
+                  class="w-full px-3 py-2 bg-card border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring/20 focus:border-primary/30 transition-all" />
               </div>
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+              <label class="block text-sm font-medium text-foreground mb-1">Category</label>
               <select v-model="form.categoryCode"
-                class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40 focus:border-violet-300 transition-all">
+                class="w-full px-3 py-2 bg-card border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring/20 focus:border-primary/30 transition-all">
                 <option value="">— None —</option>
                 <option v-for="c in categories" :key="c.code" :value="c.code">{{ c.name }}</option>
               </select>
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Availability</label>
+              <label class="block text-sm font-medium text-foreground mb-1">Availability</label>
               <select v-model="form.availability"
-                class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40 focus:border-violet-300 transition-all">
+                class="w-full px-3 py-2 bg-card border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring/20 focus:border-primary/30 transition-all">
                 <option v-for="a in availabilities" :key="a" :value="a">{{ a }}</option>
               </select>
             </div>
             <div class="grid grid-cols-2 gap-3">
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Prep Time (min)</label>
+                <label class="block text-sm font-medium text-foreground mb-1">Prep Time (min)</label>
                 <input v-model.number="form.prepTimeMinutes" type="number" min="0"
-                  class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40 focus:border-violet-300 transition-all" />
+                  class="w-full px-3 py-2 bg-card border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring/20 focus:border-primary/30 transition-all" />
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Sort Order</label>
+                <label class="block text-sm font-medium text-foreground mb-1">Sort Order</label>
                 <input v-model.number="form.sortOrder" type="number" min="0"
-                  class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40 focus:border-violet-300 transition-all" />
+                  class="w-full px-3 py-2 bg-card border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring/20 focus:border-primary/30 transition-all" />
               </div>
             </div>
             <div class="flex gap-4">
@@ -417,9 +417,9 @@ onMounted(async () => {
             </div>
             <div class="flex justify-end gap-3 pt-2">
               <button type="button" @click="showFormDialog = false"
-                class="px-4 py-2 text-sm bg-white ring-1 ring-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 transition-colors">Cancel</button>
+                class="px-4 py-2 text-sm bg-card ring-1 ring-border text-foreground rounded-xl hover:bg-accent transition-colors">Cancel</button>
               <button type="submit" :disabled="uploadingImage"
-                class="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-60">
+                class="px-4 py-2 text-sm bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-60">
                 {{ uploadingImage ? 'Uploading...' : 'Save' }}
               </button>
             </div>

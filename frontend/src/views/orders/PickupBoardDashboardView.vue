@@ -17,20 +17,20 @@ let pollTimer: ReturnType<typeof setInterval> | null = null
 
 // ── Layout groups: one column per orderType ──────────────────────────────────
 const TYPE_COLUMNS: Array<{ key: OrderType; label: string; icon: any; tint: string }> = [
-  { key: 'DINE_IN',  label: 'Dine-in',    icon: Armchair,   tint: 'from-violet-500 to-fuchsia-500' },
-  { key: 'QR_ORDER', label: 'Table order', icon: Smartphone, tint: 'from-sky-500 to-blue-500' },
-  { key: 'KIOSK',    label: 'Kiosk',      icon: Monitor,    tint: 'from-emerald-500 to-teal-500' },
-  { key: 'TAKEAWAY', label: 'Takeaway',   icon: ShoppingBag, tint: 'from-amber-500 to-orange-500' },
+  { key: 'DINE_IN',  label: 'Dine-in',    icon: Armchair,   tint: 'bg-primary' },
+  { key: 'QR_ORDER', label: 'Table order', icon: Smartphone, tint: 'bg-info' },
+  { key: 'KIOSK',    label: 'Kiosk',      icon: Monitor,    tint: 'bg-success' },
+  { key: 'TAKEAWAY', label: 'Takeaway',   icon: ShoppingBag, tint: 'bg-warning' },
 ]
 
 const STATUS_BADGE: Record<OrderStatus, { label: string; tint: string; icon: any }> = {
-  PENDING:   { label: 'Pending',   tint: 'bg-slate-100 text-slate-700 ring-slate-200',     icon: Clock },
-  CONFIRMED: { label: 'Confirmed', tint: 'bg-violet-50 text-violet-700 ring-violet-200',   icon: Clock },
-  PREPARING: { label: 'Preparing', tint: 'bg-amber-50 text-amber-700 ring-amber-200',      icon: ChefHat },
-  READY:     { label: 'Ready',     tint: 'bg-emerald-50 text-emerald-700 ring-emerald-300',icon: BellRing },
-  SERVED:    { label: 'Served',    tint: 'bg-teal-50 text-teal-700 ring-teal-200',         icon: BellRing },
-  COMPLETED: { label: 'Completed', tint: 'bg-slate-50 text-slate-500 ring-slate-200',      icon: Clock },
-  CANCELLED: { label: 'Cancelled', tint: 'bg-rose-50 text-rose-700 ring-rose-200',         icon: Clock },
+  PENDING:   { label: 'Pending',   tint: 'bg-muted text-foreground ring-border',                 icon: Clock },
+  CONFIRMED: { label: 'Confirmed', tint: 'bg-accent text-primary ring-primary/30',               icon: Clock },
+  PREPARING: { label: 'Preparing', tint: 'bg-warning/10 text-warning ring-warning/20',           icon: ChefHat },
+  READY:     { label: 'Ready',     tint: 'bg-success/10 text-success ring-success/20',           icon: BellRing },
+  SERVED:    { label: 'Served',    tint: 'bg-info/10 text-info ring-info/20',                     icon: BellRing },
+  COMPLETED: { label: 'Completed', tint: 'bg-muted text-muted-foreground ring-border',           icon: Clock },
+  CANCELLED: { label: 'Cancelled', tint: 'bg-destructive/10 text-destructive ring-destructive/20',icon: Clock },
 }
 
 // Only today's tickets; and once an order is SERVED it has left the pickup
@@ -89,14 +89,14 @@ onBeforeUnmount(() => {
     <PageHeader title="Pickup Board" :description="`Live tickets across every order type — ${totalActive} active`" />
 
     <div v-if="loading" class="flex items-center justify-center py-24">
-      <Loader2 class="w-10 h-10 text-violet-500 animate-spin" />
+      <Loader2 class="w-10 h-10 text-primary animate-spin" />
     </div>
 
     <div v-else class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
       <div v-for="col in TYPE_COLUMNS" :key="col.key"
-        class="bg-white rounded-2xl ring-1 ring-slate-200/60 shadow-sm overflow-hidden flex flex-col">
+        class="bg-card rounded-2xl ring-1 ring-border shadow-sm overflow-hidden flex flex-col">
         <!-- Column header -->
-        <div :class="['px-4 py-3 text-white flex items-center justify-between gap-2 bg-gradient-to-r', col.tint]">
+        <div :class="['px-4 py-3 text-primary-foreground flex items-center justify-between gap-2', col.tint]">
           <div class="flex items-center gap-2 min-w-0">
             <component :is="col.icon" class="w-5 h-5 flex-shrink-0" />
             <span class="font-semibold text-sm sm:text-base truncate">{{ col.label }}</span>
@@ -109,7 +109,7 @@ onBeforeUnmount(() => {
         <!-- Tickets -->
         <div class="flex-1 p-3 min-h-[14rem]">
           <p v-if="groupedByType[col.key].length === 0"
-            class="text-center text-xs text-slate-400 py-10">
+            class="text-center text-xs text-muted-foreground py-10">
             Nothing active.
           </p>
 
@@ -119,16 +119,16 @@ onBeforeUnmount(() => {
                 :to="{ name: 'order-detail', params: { code: o.code } }"
                 :class="['block rounded-xl ring-1 px-3 py-2.5 text-center transition-all hover:shadow-md hover:-translate-y-0.5',
                   o.status === 'READY'
-                    ? 'bg-emerald-50/70 ring-emerald-300'
+                    ? 'bg-success/10 ring-success/30'
                     : o.status === 'PREPARING'
-                      ? 'bg-amber-50/60 ring-amber-200'
-                      : 'bg-slate-50 ring-slate-200']">
+                      ? 'bg-warning/10 ring-warning/20'
+                      : 'bg-muted ring-border']">
                 <p v-if="o.ticketNumber != null"
                   :class="['text-2xl sm:text-3xl font-extrabold tabular-nums leading-none',
-                    o.status === 'READY' ? 'text-emerald-700' : 'text-slate-900']">
+                    o.status === 'READY' ? 'text-success' : 'text-foreground']">
                   {{ String(o.ticketNumber).padStart(3, '0') }}
                 </p>
-                <p v-else class="text-sm font-mono font-semibold text-slate-900 tabular-nums truncate">
+                <p v-else class="text-sm font-mono font-semibold text-foreground tabular-nums truncate">
                   #{{ o.orderNumber }}
                 </p>
                 <div class="mt-1.5 flex items-center justify-center gap-1">
@@ -139,7 +139,7 @@ onBeforeUnmount(() => {
                     {{ STATUS_BADGE[o.status].label }}
                   </span>
                 </div>
-                <p class="text-[10px] text-slate-400 mt-1 tabular-nums">NPR {{ o.totalAmount.toFixed(0) }}</p>
+                <p class="text-[10px] text-muted-foreground mt-1 tabular-nums">NPR {{ o.totalAmount.toFixed(0) }}</p>
               </router-link>
             </li>
           </ul>
@@ -147,7 +147,7 @@ onBeforeUnmount(() => {
       </div>
     </div>
 
-    <p class="text-center text-[11px] text-slate-400 mt-4">
+    <p class="text-center text-[11px] text-muted-foreground mt-4">
       Refreshes every 3 seconds · Click any ticket to open the order
     </p>
   </RestaurantGuard>

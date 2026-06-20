@@ -47,11 +47,11 @@ const fonepayPrn = ref('')
 let fonepayPoll: ReturnType<typeof setInterval> | null = null
 
 const paymentMethods: { id: PaymentMethod; name: string; description: string; icon: Component; gradient: string }[] = [
-  { id: 'FONEPAY',  name: 'Scan & Pay (QR)', description: 'eSewa, Khalti & bank apps', icon: QrCode, gradient: 'from-rose-500 to-red-500' },
-  { id: 'ESEWA',    name: 'eSewa',     description: 'Digital wallet',  icon: Wallet,     gradient: 'from-emerald-500 to-green-500' },
-  { id: 'KHALTI',   name: 'Khalti',    description: 'Digital wallet',  icon: Smartphone, gradient: 'from-purple-500 to-fuchsia-500' },
-  { id: 'POS',      name: 'POS Machine', description: 'Card payment',  icon: CreditCard, gradient: 'from-violet-500 to-fuchsia-500' },
-  { id: 'CASH',     name: 'Cash',      description: 'Pay at counter',  icon: Banknote,   gradient: 'from-slate-500 to-slate-600' },
+  { id: 'FONEPAY',  name: 'Scan & Pay (QR)', description: 'eSewa, Khalti & bank apps', icon: QrCode, gradient: 'bg-destructive' },
+  { id: 'ESEWA',    name: 'eSewa',     description: 'Digital wallet',  icon: Wallet,     gradient: 'bg-success' },
+  { id: 'KHALTI',   name: 'Khalti',    description: 'Digital wallet',  icon: Smartphone, gradient: 'bg-info' },
+  { id: 'POS',      name: 'POS Machine', description: 'Card payment',  icon: CreditCard, gradient: 'bg-primary' },
+  { id: 'CASH',     name: 'Cash',      description: 'Pay at counter',  icon: Banknote,   gradient: 'bg-muted-foreground' },
 ]
 
 const finalTotal = computed(() => order.value?.totalAmount ?? 0)
@@ -239,117 +239,117 @@ onUnmounted(stopFonepayPolling)
 </script>
 
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-violet-50/30 flex items-center justify-center p-4">
+  <div class="min-h-screen bg-background flex items-center justify-center p-4">
     <!-- Loading -->
     <div v-if="loading" class="text-center">
-      <Loader2 class="w-12 h-12 text-violet-500 mx-auto mb-3 animate-spin" />
-      <p class="text-slate-500">Loading order details…</p>
+      <Loader2 class="w-12 h-12 text-primary mx-auto mb-3 animate-spin" />
+      <p class="text-muted-foreground">Loading order details…</p>
     </div>
 
     <!-- Processing -->
     <div v-else-if="step === 'processing'" class="text-center">
-      <Loader2 class="w-16 h-16 text-violet-500 mx-auto mb-5 animate-spin" />
-      <h2 class="text-2xl font-bold text-slate-900 mb-1">Processing payment…</h2>
-      <p class="text-slate-500">Hang tight, this should only take a moment.</p>
+      <Loader2 class="w-16 h-16 text-primary mx-auto mb-5 animate-spin" />
+      <h2 class="text-2xl font-bold text-foreground mb-1">Processing payment…</h2>
+      <p class="text-muted-foreground">Hang tight, this should only take a moment.</p>
     </div>
 
     <!-- Fonepay dynamic QR -->
-    <div v-else-if="step === 'fonepay'" class="max-w-md w-full bg-white rounded-3xl shadow-xl shadow-slate-900/5 ring-1 ring-slate-200/60 p-7 sm:p-8">
+    <div v-else-if="step === 'fonepay'" class="max-w-md w-full bg-card rounded-3xl shadow-lifted ring-1 ring-border p-7 sm:p-8">
       <div class="text-center">
-        <div class="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg bg-gradient-to-br from-rose-500 to-red-500 shadow-rose-500/30">
-          <QrCode class="w-7 h-7 text-white" />
+        <div class="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-soft bg-destructive">
+          <QrCode class="w-7 h-7 text-destructive-foreground" />
         </div>
-        <h2 class="text-2xl font-bold text-slate-900 mb-1">Scan to pay</h2>
-        <p class="text-slate-500 text-sm">Open <span class="font-medium text-slate-700">eSewa, Khalti</span> or any mobile-banking app and scan this QR — the exact amount is already filled in.</p>
+        <h2 class="text-2xl font-bold text-foreground mb-1">Scan to pay</h2>
+        <p class="text-muted-foreground text-sm">Open <span class="font-medium text-foreground">eSewa, Khalti</span> or any mobile-banking app and scan this QR — the exact amount is already filled in.</p>
       </div>
 
       <div class="mt-6 flex justify-center">
-        <div class="p-4 bg-white rounded-2xl ring-1 ring-slate-200/60 shadow-sm">
+        <div class="p-4 bg-card rounded-2xl ring-1 ring-border shadow-soft">
           <img v-if="fonepayQrImage" :src="fonepayQrImage" alt="Fonepay QR code" class="w-60 h-60" />
         </div>
       </div>
 
-      <div class="mt-6 bg-slate-50 ring-1 ring-slate-200/60 rounded-2xl p-5 flex items-end justify-between">
-        <span class="font-semibold text-slate-900">Amount</span>
-        <span class="text-2xl font-bold text-rose-600 tabular-nums">NPR {{ finalTotal.toFixed(0) }}</span>
+      <div class="mt-6 bg-muted ring-1 ring-border rounded-2xl p-5 flex items-end justify-between">
+        <span class="font-semibold text-foreground">Amount</span>
+        <span class="text-2xl font-bold text-destructive tabular-nums">NPR {{ finalTotal.toFixed(0) }}</span>
       </div>
 
-      <div class="mt-4 flex items-center justify-center gap-2 text-slate-500 text-sm">
+      <div class="mt-4 flex items-center justify-center gap-2 text-muted-foreground text-sm">
         <Loader2 class="w-4 h-4 animate-spin" />
         Waiting for payment confirmation…
       </div>
 
       <button @click="cancelFonepay"
-        class="mt-6 w-full py-2.5 bg-white hover:bg-slate-50 text-slate-700 font-medium rounded-xl ring-1 ring-slate-200/60 transition-colors">
+        class="mt-6 w-full py-2.5 bg-card hover:bg-accent text-foreground font-medium rounded-xl ring-1 ring-border transition-colors">
         Cancel
       </button>
     </div>
 
     <!-- Success -->
-    <div v-else-if="step === 'success'" class="max-w-md w-full bg-white rounded-3xl shadow-xl shadow-slate-900/5 ring-1 ring-slate-200/60 p-7 sm:p-8">
+    <div v-else-if="step === 'success'" class="max-w-md w-full bg-card rounded-3xl shadow-lifted ring-1 ring-border p-7 sm:p-8">
       <div class="text-center">
-        <div :class="['w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-lg bg-gradient-to-br',
-          isCounterPayment ? 'from-violet-400 to-fuchsia-500 shadow-violet-500/30' : 'from-emerald-400 to-green-500 shadow-emerald-500/30']">
-          <component :is="isCounterPayment ? Receipt : Check" class="w-10 h-10 text-white stroke-[3]" />
+        <div :class="['w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-soft',
+          isCounterPayment ? 'bg-primary' : 'bg-success']">
+          <component :is="isCounterPayment ? Receipt : Check" :class="['w-10 h-10 stroke-[3]', isCounterPayment ? 'text-primary-foreground' : 'text-success-foreground']" />
         </div>
-        <h2 class="text-2xl sm:text-3xl font-bold text-slate-900 mb-1">
+        <h2 class="text-2xl sm:text-3xl font-bold text-foreground mb-1">
           {{ isCounterPayment ? 'Order placed' : 'Payment successful' }}
         </h2>
-        <p class="text-slate-500 text-sm">
+        <p class="text-muted-foreground text-sm">
           {{ isCounterPayment ? 'Please pay at the counter — show your receipt below.' : 'Your order has been confirmed.' }}
         </p>
       </div>
 
-      <div class="mt-6 bg-slate-50 ring-1 ring-slate-200/60 rounded-2xl p-5 space-y-3">
+      <div class="mt-6 bg-muted ring-1 ring-border rounded-2xl p-5 space-y-3">
         <div v-if="ticketNumber != null" class="flex justify-between items-center text-sm">
-          <span class="text-slate-500">Ticket number</span>
-          <span class="font-bold text-violet-600 text-lg tabular-nums">#{{ String(ticketNumber).padStart(3, '0') }}</span>
+          <span class="text-muted-foreground">Ticket number</span>
+          <span class="font-bold text-primary text-lg tabular-nums">#{{ String(ticketNumber).padStart(3, '0') }}</span>
         </div>
         <div class="flex justify-between text-sm">
-          <span class="text-slate-500">Order number</span>
-          <span class="font-mono font-semibold text-slate-900">#{{ orderNumber }}</span>
+          <span class="text-muted-foreground">Order number</span>
+          <span class="font-mono font-semibold text-foreground">#{{ orderNumber }}</span>
         </div>
         <div class="flex justify-between text-sm">
-          <span class="text-slate-500">Payment method</span>
-          <span class="font-medium text-slate-900">{{ paymentMethods.find(m => m.id === selectedMethod)?.name }}</span>
+          <span class="text-muted-foreground">Payment method</span>
+          <span class="font-medium text-foreground">{{ paymentMethods.find(m => m.id === selectedMethod)?.name }}</span>
         </div>
-        <div class="border-t border-slate-200 pt-3 flex justify-between items-end">
-          <span class="font-semibold text-slate-900">{{ isCounterPayment ? 'Amount to pay' : 'Total paid' }}</span>
-          <span :class="['text-2xl font-bold tabular-nums', isCounterPayment ? 'text-violet-600' : 'text-emerald-600']">NPR {{ (payment?.amount ?? finalTotal).toFixed(0) }}</span>
+        <div class="border-t border-border pt-3 flex justify-between items-end">
+          <span class="font-semibold text-foreground">{{ isCounterPayment ? 'Amount to pay' : 'Total paid' }}</span>
+          <span :class="['text-2xl font-bold tabular-nums', isCounterPayment ? 'text-primary' : 'text-success']">NPR {{ (payment?.amount ?? finalTotal).toFixed(0) }}</span>
         </div>
       </div>
 
-      <div class="mt-4 bg-gradient-to-br from-violet-50 to-fuchsia-50 ring-1 ring-violet-100/60 rounded-2xl p-4 flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center flex-shrink-0">
-          <Sparkles class="w-5 h-5 text-white" />
+      <div class="mt-4 bg-accent ring-1 ring-primary/30 rounded-2xl p-4 flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-primary flex items-center justify-center flex-shrink-0">
+          <Sparkles class="w-5 h-5 text-primary-foreground" />
         </div>
         <div class="min-w-0">
-          <p class="text-xs font-semibold text-violet-700 uppercase tracking-wide">Points earned</p>
-          <p class="text-xl font-bold text-violet-600 tabular-nums">+{{ Math.floor(finalTotal) }}</p>
+          <p class="text-xs font-semibold text-primary uppercase tracking-wide">Points earned</p>
+          <p class="text-xl font-bold text-primary tabular-nums">+{{ Math.floor(finalTotal) }}</p>
         </div>
       </div>
 
-      <p class="text-center text-sm text-slate-500 mt-4">
-        Estimated preparation time: <span class="font-medium text-slate-700">15–20 minutes</span>
+      <p class="text-center text-sm text-muted-foreground mt-4">
+        Estimated preparation time: <span class="font-medium text-foreground">15–20 minutes</span>
       </p>
 
       <div class="mt-6 space-y-2">
         <button @click="router.push(`/track/${orderNumber}`)"
-          class="w-full py-3 bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 text-white font-semibold rounded-xl shadow-md shadow-violet-500/30 transition-all flex items-center justify-center gap-1.5">
+          class="w-full py-3 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-xl shadow-soft transition-all flex items-center justify-center gap-1.5">
           Track your order
           <ArrowRight class="w-4 h-4" />
         </button>
         <button @click="router.push(`/receipt/${orderNumber}`)"
-          class="w-full py-2.5 bg-white hover:bg-slate-50 text-slate-700 font-medium rounded-xl ring-1 ring-slate-200/60 transition-colors flex items-center justify-center gap-1.5">
+          class="w-full py-2.5 bg-card hover:bg-accent text-foreground font-medium rounded-xl ring-1 ring-border transition-colors flex items-center justify-center gap-1.5">
           <Receipt class="w-4 h-4" />
           View / print receipt
         </button>
         <button @click="goBackToStart"
-          class="w-full py-2.5 bg-white hover:bg-slate-50 text-slate-700 font-medium rounded-xl ring-1 ring-slate-200/60 transition-colors flex items-center justify-center gap-1.5">
+          class="w-full py-2.5 bg-card hover:bg-accent text-foreground font-medium rounded-xl ring-1 ring-border transition-colors flex items-center justify-center gap-1.5">
           Back to start
         </button>
         <button @click="toast.success('Receipt sent to your email')"
-          class="w-full py-2.5 bg-slate-50 hover:bg-slate-100 text-slate-700 font-medium rounded-xl ring-1 ring-slate-200/60 transition-colors flex items-center justify-center gap-1.5">
+          class="w-full py-2.5 bg-muted hover:bg-accent text-foreground font-medium rounded-xl ring-1 ring-border transition-colors flex items-center justify-center gap-1.5">
           <Mail class="w-4 h-4" />
           Email receipt
         </button>
@@ -360,46 +360,46 @@ onUnmounted(stopFonepayPolling)
     <div v-else class="max-w-2xl w-full">
       <!-- Title -->
       <div class="text-center mb-6">
-        <div class="inline-flex w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-500 items-center justify-center shadow-lg shadow-violet-500/30 mb-3">
-          <Receipt class="w-6 h-6 text-white" />
+        <div class="inline-flex w-12 h-12 rounded-2xl bg-primary items-center justify-center shadow-soft mb-3">
+          <Receipt class="w-6 h-6 text-primary-foreground" />
         </div>
-        <h1 class="text-2xl font-bold text-slate-900">Complete your payment</h1>
-        <p class="text-sm text-slate-500 mt-1">Choose how you'd like to pay.</p>
+        <h1 class="text-2xl font-bold text-foreground">Complete your payment</h1>
+        <p class="text-sm text-muted-foreground mt-1">Choose how you'd like to pay.</p>
       </div>
 
       <!-- Order summary -->
-      <div class="bg-white rounded-2xl ring-1 ring-slate-200/60 shadow-sm p-5 mb-4">
+      <div class="bg-card rounded-2xl ring-1 ring-border shadow-soft p-5 mb-4">
         <div class="flex items-center justify-between mb-3">
-          <h2 class="text-sm font-semibold text-slate-500 uppercase tracking-wide">Order summary</h2>
-          <span class="text-xs font-mono text-slate-400">#{{ orderNumber }}</span>
+          <h2 class="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Order summary</h2>
+          <span class="text-xs font-mono text-muted-foreground">#{{ orderNumber }}</span>
         </div>
         <div class="flex items-end justify-between">
-          <span class="text-slate-600">Total amount</span>
-          <span class="text-3xl font-bold text-violet-600 tabular-nums">NPR {{ finalTotal.toFixed(0) }}</span>
+          <span class="text-muted-foreground">Total amount</span>
+          <span class="text-3xl font-bold text-primary tabular-nums">NPR {{ finalTotal.toFixed(0) }}</span>
         </div>
       </div>
 
       <!-- Methods -->
-      <div class="bg-white rounded-2xl ring-1 ring-slate-200/60 shadow-sm p-5 mb-4">
-        <h2 class="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">Payment method</h2>
+      <div class="bg-card rounded-2xl ring-1 ring-border shadow-soft p-5 mb-4">
+        <h2 class="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Payment method</h2>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <button v-for="method in visibleMethods" :key="method.id"
             @click="selectedMethod = method.id"
             :class="selectedMethod === method.id
-              ? 'ring-2 ring-violet-500 bg-violet-50/50 shadow-sm'
-              : 'ring-1 ring-slate-200 hover:ring-slate-300 bg-white'"
+              ? 'ring-2 ring-primary bg-accent shadow-soft'
+              : 'ring-1 ring-border hover:ring-primary/30 bg-card'"
             class="p-3.5 rounded-2xl transition-all text-left">
             <div class="flex items-center gap-3">
-              <div :class="['w-10 h-10 rounded-xl flex items-center justify-center text-white flex-shrink-0 bg-gradient-to-br', method.gradient]">
+              <div :class="['w-10 h-10 rounded-xl flex items-center justify-center text-primary-foreground flex-shrink-0', method.gradient]">
                 <component :is="method.icon" class="w-5 h-5" />
               </div>
               <div class="flex-1 min-w-0">
-                <h3 class="font-semibold text-slate-900 text-sm leading-tight">{{ method.name }}</h3>
-                <p class="text-[11px] text-slate-500 truncate">{{ method.description }}</p>
+                <h3 class="font-semibold text-foreground text-sm leading-tight">{{ method.name }}</h3>
+                <p class="text-[11px] text-muted-foreground truncate">{{ method.description }}</p>
               </div>
               <div v-if="selectedMethod === method.id"
-                class="w-6 h-6 bg-violet-500 rounded-full flex items-center justify-center flex-shrink-0 shadow-sm">
-                <Check class="w-3.5 h-3.5 text-white stroke-[3]" />
+                class="w-6 h-6 bg-primary rounded-full flex items-center justify-center flex-shrink-0 shadow-soft">
+                <Check class="w-3.5 h-3.5 text-primary-foreground stroke-[3]" />
               </div>
             </div>
           </button>
@@ -409,9 +409,9 @@ onUnmounted(stopFonepayPolling)
       <!-- Pay -->
       <button @click="processPayment" :disabled="!selectedMethod"
         :class="selectedMethod
-          ? 'bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 shadow-lg shadow-violet-500/30 active:scale-[0.99]'
-          : 'bg-slate-200 text-slate-400 cursor-not-allowed'"
-        class="w-full py-4 text-white font-bold rounded-2xl transition-all text-base flex items-center justify-center gap-2">
+          ? 'bg-primary hover:bg-primary/90 shadow-soft active:scale-[0.99]'
+          : 'bg-muted text-muted-foreground cursor-not-allowed'"
+        class="w-full py-4 text-primary-foreground font-bold rounded-2xl transition-all text-base flex items-center justify-center gap-2">
         {{ selectedMethod ? `Pay NPR ${finalTotal.toFixed(0)}` : 'Select a payment method' }}
         <ArrowRight v-if="selectedMethod" class="w-5 h-5" />
       </button>

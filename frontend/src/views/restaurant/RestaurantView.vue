@@ -181,17 +181,17 @@ async function saveEsewa() {
       <template #actions>
         <template v-if="restaurant && !editing">
           <button @click="editing = true"
-            class="px-4 py-2 bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 text-white text-sm rounded-xl shadow-md shadow-violet-500/30 transition-all">
+            class="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground text-sm rounded-xl shadow-soft transition-all">
             Edit
           </button>
         </template>
         <template v-else-if="editing">
           <button @click="editing = false"
-            class="px-4 py-2 text-sm bg-white ring-1 ring-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 transition-colors">
+            class="px-4 py-2 text-sm bg-card ring-1 ring-border text-foreground rounded-xl hover:bg-accent transition-colors">
             Cancel
           </button>
           <button @click="save" :disabled="loading"
-            class="px-4 py-2 bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 text-white text-sm rounded-xl shadow-md shadow-violet-500/30 transition-all disabled:opacity-50">
+            class="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground text-sm rounded-xl shadow-soft transition-all disabled:opacity-50">
             {{ loading ? 'Saving...' : 'Save' }}
           </button>
         </template>
@@ -199,184 +199,184 @@ async function saveEsewa() {
     </PageHeader>
 
     <!-- Loading -->
-    <div v-if="loading" class="text-center py-12 text-slate-400">Loading...</div>
+    <div v-if="loading" class="text-center py-12 text-muted-foreground">Loading...</div>
 
     <!-- Restaurant not found → Create form -->
-    <div v-else-if="notFound" class="bg-white rounded-xl shadow-sm border border-violet-200 p-6 max-w-2xl">
-      <div class="mb-5 p-4 bg-violet-50 rounded-lg border border-violet-100">
-        <p class="text-sm font-medium text-violet-800">No restaurant found</p>
-        <p class="text-xs text-violet-600 mt-1">Create your restaurant profile below to get started.</p>
+    <div v-else-if="notFound" class="bg-card rounded-xl shadow-soft border border-primary/30 p-6 max-w-2xl">
+      <div class="mb-5 p-4 bg-accent rounded-lg border border-primary/30">
+        <p class="text-sm font-medium text-foreground">No restaurant found</p>
+        <p class="text-xs text-primary mt-1">Create your restaurant profile below to get started.</p>
       </div>
 
       <form @submit.prevent="create" class="space-y-4">
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Restaurant Name *</label>
+          <label class="block text-sm font-medium text-foreground mb-1">Restaurant Name *</label>
           <input v-model="createForm.name" required placeholder="My Restaurant"
-            class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40 focus:border-violet-300 transition-all" />
+            class="w-full px-3 py-2 bg-card border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring/20 focus:border-primary/30 transition-all" />
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Business Number *</label>
+          <label class="block text-sm font-medium text-foreground mb-1">Business Number *</label>
           <input v-model="createForm.businessNumber" required placeholder="e.g. 123456789"
-            class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40 focus:border-violet-300 transition-all" />
+            class="w-full px-3 py-2 bg-card border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring/20 focus:border-primary/30 transition-all" />
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Address *</label>
+          <label class="block text-sm font-medium text-foreground mb-1">Address *</label>
           <input v-model="createForm.address" required placeholder="123 Main St"
-            class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40 focus:border-violet-300 transition-all" />
+            class="w-full px-3 py-2 bg-card border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring/20 focus:border-primary/30 transition-all" />
         </div>
         <div class="grid grid-cols-2 gap-4">
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+            <label class="block text-sm font-medium text-foreground mb-1">Phone</label>
             <input v-model="createForm.phone" placeholder="Optional"
-              class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40 focus:border-violet-300 transition-all" />
+              class="w-full px-3 py-2 bg-card border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring/20 focus:border-primary/30 transition-all" />
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Currency</label>
+            <label class="block text-sm font-medium text-foreground mb-1">Currency</label>
             <input v-model="createForm.currency" placeholder="NPR"
-              class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40 focus:border-violet-300 transition-all" />
+              class="w-full px-3 py-2 bg-card border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring/20 focus:border-primary/30 transition-all" />
           </div>
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+          <label class="block text-sm font-medium text-foreground mb-1">Email</label>
           <input v-model="createForm.email" type="email" placeholder="info@restaurant.com"
-            class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40 focus:border-violet-300 transition-all" />
+            class="w-full px-3 py-2 bg-card border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring/20 focus:border-primary/30 transition-all" />
         </div>
         <button type="submit" :disabled="creating"
-          class="w-full py-2.5 bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 text-white rounded-xl text-sm font-medium shadow-md shadow-violet-500/30 transition-all disabled:opacity-50 transition-colors">
+          class="w-full py-2.5 bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl text-sm font-medium shadow-soft transition-all disabled:opacity-50 transition-colors">
           {{ creating ? 'Creating...' : 'Create Restaurant' }}
         </button>
       </form>
     </div>
 
     <!-- Restaurant found → View / Edit -->
-    <div v-else-if="restaurant" class="bg-white rounded-2xl shadow-sm ring-1 ring-slate-200/60 p-6 max-w-2xl">
+    <div v-else-if="restaurant" class="bg-card rounded-2xl shadow-soft ring-1 ring-border p-6 max-w-2xl">
       <div v-if="!editing" class="space-y-4">
         <div class="flex gap-4">
-          <span class="w-36 text-sm text-gray-500 flex-shrink-0">Kiosk Code</span>
-          <span class="text-sm font-mono font-semibold tracking-wider px-2 py-0.5 rounded bg-teal-50 text-teal-700 border border-teal-200">{{ restaurant.kioskCode }}</span>
+          <span class="w-36 text-sm text-muted-foreground flex-shrink-0">Kiosk Code</span>
+          <span class="text-sm font-mono font-semibold tracking-wider px-2 py-0.5 rounded bg-info/10 text-info border border-info/20">{{ restaurant.kioskCode }}</span>
         </div>
         <div class="flex gap-4">
-          <span class="w-36 text-sm text-gray-500 flex-shrink-0">Name</span>
-          <span class="text-sm font-medium text-gray-900">{{ restaurant.name }}</span>
+          <span class="w-36 text-sm text-muted-foreground flex-shrink-0">Name</span>
+          <span class="text-sm font-medium text-foreground">{{ restaurant.name }}</span>
         </div>
         <div class="flex gap-4">
-          <span class="w-36 text-sm text-gray-500 flex-shrink-0">Address</span>
-          <span class="text-sm font-medium text-gray-900">{{ restaurant.address || '—' }}</span>
+          <span class="w-36 text-sm text-muted-foreground flex-shrink-0">Address</span>
+          <span class="text-sm font-medium text-foreground">{{ restaurant.address || '—' }}</span>
         </div>
         <div class="flex gap-4">
-          <span class="w-36 text-sm text-gray-500 flex-shrink-0">Business Number</span>
-          <span class="text-sm font-medium text-gray-900">{{ restaurant.businessNumber || '—' }}</span>
+          <span class="w-36 text-sm text-muted-foreground flex-shrink-0">Business Number</span>
+          <span class="text-sm font-medium text-foreground">{{ restaurant.businessNumber || '—' }}</span>
         </div>
         <div class="flex gap-4">
-          <span class="w-36 text-sm text-gray-500 flex-shrink-0">Phone</span>
-          <span class="text-sm font-medium text-gray-900">{{ restaurant.phone || '—' }}</span>
+          <span class="w-36 text-sm text-muted-foreground flex-shrink-0">Phone</span>
+          <span class="text-sm font-medium text-foreground">{{ restaurant.phone || '—' }}</span>
         </div>
         <div class="flex gap-4">
-          <span class="w-36 text-sm text-gray-500 flex-shrink-0">Email</span>
-          <span class="text-sm font-medium text-gray-900">{{ restaurant.email || '—' }}</span>
+          <span class="w-36 text-sm text-muted-foreground flex-shrink-0">Email</span>
+          <span class="text-sm font-medium text-foreground">{{ restaurant.email || '—' }}</span>
         </div>
         <div class="flex gap-4">
-          <span class="w-36 text-sm text-gray-500 flex-shrink-0">Currency</span>
-          <span class="text-sm font-medium text-gray-900">{{ restaurant.currency || '—' }}</span>
+          <span class="w-36 text-sm text-muted-foreground flex-shrink-0">Currency</span>
+          <span class="text-sm font-medium text-foreground">{{ restaurant.currency || '—' }}</span>
         </div>
       </div>
 
       <form v-else @submit.prevent="save" class="space-y-4">
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Name</label>
+          <label class="block text-sm font-medium text-foreground mb-1">Name</label>
           <input v-model="form.name"
-            class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40 focus:border-violet-300 transition-all" />
+            class="w-full px-3 py-2 bg-card border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring/20 focus:border-primary/30 transition-all" />
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Address</label>
+          <label class="block text-sm font-medium text-foreground mb-1">Address</label>
           <input v-model="form.address"
-            class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40 focus:border-violet-300 transition-all" />
+            class="w-full px-3 py-2 bg-card border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring/20 focus:border-primary/30 transition-all" />
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Business Number</label>
+          <label class="block text-sm font-medium text-foreground mb-1">Business Number</label>
           <input v-model="form.businessNumber" placeholder="e.g. 123456789"
-            class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40 focus:border-violet-300 transition-all" />
+            class="w-full px-3 py-2 bg-card border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring/20 focus:border-primary/30 transition-all" />
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+          <label class="block text-sm font-medium text-foreground mb-1">Phone</label>
           <input v-model="form.phone"
-            class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40 focus:border-violet-300 transition-all" />
+            class="w-full px-3 py-2 bg-card border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring/20 focus:border-primary/30 transition-all" />
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+          <label class="block text-sm font-medium text-foreground mb-1">Email</label>
           <input v-model="form.email" type="email"
-            class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40 focus:border-violet-300 transition-all" />
+            class="w-full px-3 py-2 bg-card border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring/20 focus:border-primary/30 transition-all" />
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Currency</label>
+          <label class="block text-sm font-medium text-foreground mb-1">Currency</label>
           <input v-model="form.currency"
-            class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40 focus:border-violet-300 transition-all" />
+            class="w-full px-3 py-2 bg-card border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring/20 focus:border-primary/30 transition-all" />
         </div>
       </form>
     </div>
 
     <!-- Fonepay (Scan & Pay) credentials -->
-    <div v-if="restaurant && !editing" class="mt-6 bg-white rounded-2xl shadow-sm ring-1 ring-slate-200/60 p-6 max-w-2xl">
+    <div v-if="restaurant && !editing" class="mt-6 bg-card rounded-2xl shadow-soft ring-1 ring-border p-6 max-w-2xl">
       <div class="flex items-start justify-between gap-4">
         <div>
-          <h2 class="text-base font-semibold text-slate-900">Fonepay (Scan &amp; Pay)</h2>
-          <p class="text-sm text-slate-500 mt-0.5">Accept payments via Fonepay dynamic QR — funds settle to your own merchant account.</p>
+          <h2 class="text-base font-semibold text-foreground">Fonepay (Scan &amp; Pay)</h2>
+          <p class="text-sm text-muted-foreground mt-0.5">Accept payments via Fonepay dynamic QR — funds settle to your own merchant account.</p>
           <div class="flex items-center gap-2 mt-3">
             <span v-if="restaurant.fonepayConfigured"
-              class="text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">Configured</span>
+              class="text-xs font-medium px-2 py-0.5 rounded-full bg-success/10 text-success border border-success/20">Configured</span>
             <span v-else
-              class="text-xs font-medium px-2 py-0.5 rounded-full bg-slate-50 text-slate-500 border border-slate-200">Not configured</span>
+              class="text-xs font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground border border-border">Not configured</span>
             <span v-if="restaurant.fonepayConfigured"
               :class="restaurant.fonepayEnabled
-                ? 'bg-violet-50 text-violet-700 border-violet-200'
-                : 'bg-amber-50 text-amber-700 border-amber-200'"
+                ? 'bg-accent text-primary border-primary/30'
+                : 'bg-warning/10 text-warning border-warning/20'"
               class="text-xs font-medium px-2 py-0.5 rounded-full border">
               {{ restaurant.fonepayEnabled ? 'Enabled' : 'Disabled' }}
             </span>
           </div>
         </div>
         <button v-if="!editingFonepay" @click="startEditFonepay"
-          class="px-4 py-2 bg-gradient-to-r from-rose-500 to-red-500 hover:from-rose-600 hover:to-red-600 text-white text-sm rounded-xl shadow-md shadow-rose-500/30 transition-all flex-shrink-0">
+          class="px-4 py-2 bg-destructive hover:bg-destructive/90 text-destructive-foreground text-sm rounded-xl shadow-soft transition-all flex-shrink-0">
           {{ restaurant.fonepayConfigured ? 'Update' : 'Configure' }}
         </button>
       </div>
 
       <form v-if="editingFonepay" @submit.prevent="saveFonepay" class="space-y-4 mt-5">
-        <p v-if="restaurant.fonepayConfigured" class="text-xs text-amber-600 bg-amber-50 border border-amber-100 rounded-lg p-2.5">
+        <p v-if="restaurant.fonepayConfigured" class="text-xs text-warning bg-warning/10 border border-warning/20 rounded-lg p-2.5">
           For security, stored credentials are never shown. Re-enter all fields to replace them.
         </p>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Merchant Code *</label>
+          <label class="block text-sm font-medium text-foreground mb-1">Merchant Code *</label>
           <input v-model="fonepayForm.merchantCode" autocomplete="off" placeholder="e.g. 1234"
-            class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/40 focus:border-rose-300 transition-all" />
+            class="w-full px-3 py-2 bg-card border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring/20 focus:border-primary/30 transition-all" />
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">API Username *</label>
+          <label class="block text-sm font-medium text-foreground mb-1">API Username *</label>
           <input v-model="fonepayForm.username" autocomplete="off"
-            class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/40 focus:border-rose-300 transition-all" />
+            class="w-full px-3 py-2 bg-card border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring/20 focus:border-primary/30 transition-all" />
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">API Password *</label>
+          <label class="block text-sm font-medium text-foreground mb-1">API Password *</label>
           <input v-model="fonepayForm.password" type="password" autocomplete="new-password"
-            class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/40 focus:border-rose-300 transition-all" />
+            class="w-full px-3 py-2 bg-card border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring/20 focus:border-primary/30 transition-all" />
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Secret Key *</label>
+          <label class="block text-sm font-medium text-foreground mb-1">Secret Key *</label>
           <input v-model="fonepayForm.secretKey" type="password" autocomplete="new-password"
-            class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/40 focus:border-rose-300 transition-all" />
+            class="w-full px-3 py-2 bg-card border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring/20 focus:border-primary/30 transition-all" />
         </div>
-        <label class="flex items-center gap-2 text-sm text-slate-700">
+        <label class="flex items-center gap-2 text-sm text-foreground">
           <input v-model="fonepayForm.enabled" type="checkbox"
-            class="w-4 h-4 rounded border-slate-300 text-rose-500 focus:ring-rose-500/40" />
+            class="w-4 h-4 rounded border-border text-destructive focus:ring-ring/20" />
           Enable Fonepay for customers
         </label>
         <div class="flex gap-2 pt-1">
           <button type="button" @click="editingFonepay = false"
-            class="px-4 py-2 text-sm bg-white ring-1 ring-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 transition-colors">
+            class="px-4 py-2 text-sm bg-card ring-1 ring-border text-foreground rounded-xl hover:bg-accent transition-colors">
             Cancel
           </button>
           <button type="submit" :disabled="savingFonepay"
-            class="px-4 py-2 bg-gradient-to-r from-rose-500 to-red-500 hover:from-rose-600 hover:to-red-600 text-white text-sm rounded-xl shadow-md shadow-rose-500/30 transition-all disabled:opacity-50">
+            class="px-4 py-2 bg-destructive hover:bg-destructive/90 text-destructive-foreground text-sm rounded-xl shadow-soft transition-all disabled:opacity-50">
             {{ savingFonepay ? 'Saving…' : 'Save credentials' }}
           </button>
         </div>
@@ -384,57 +384,57 @@ async function saveEsewa() {
     </div>
 
     <!-- eSewa credentials -->
-    <div v-if="restaurant && !editing" class="mt-6 bg-white rounded-2xl shadow-sm ring-1 ring-slate-200/60 p-6 max-w-2xl">
+    <div v-if="restaurant && !editing" class="mt-6 bg-card rounded-2xl shadow-soft ring-1 ring-border p-6 max-w-2xl">
       <div class="flex items-start justify-between gap-4">
         <div>
-          <h2 class="text-base font-semibold text-slate-900">eSewa</h2>
-          <p class="text-sm text-slate-500 mt-0.5">Accept eSewa payments — funds settle to your own eSewa merchant account.</p>
+          <h2 class="text-base font-semibold text-foreground">eSewa</h2>
+          <p class="text-sm text-muted-foreground mt-0.5">Accept eSewa payments — funds settle to your own eSewa merchant account.</p>
           <div class="flex items-center gap-2 mt-3">
             <span v-if="restaurant.esewaConfigured"
-              class="text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">Configured</span>
+              class="text-xs font-medium px-2 py-0.5 rounded-full bg-success/10 text-success border border-success/20">Configured</span>
             <span v-else
-              class="text-xs font-medium px-2 py-0.5 rounded-full bg-slate-50 text-slate-500 border border-slate-200">Not configured</span>
+              class="text-xs font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground border border-border">Not configured</span>
             <span v-if="restaurant.esewaConfigured"
               :class="restaurant.esewaEnabled
-                ? 'bg-violet-50 text-violet-700 border-violet-200'
-                : 'bg-amber-50 text-amber-700 border-amber-200'"
+                ? 'bg-accent text-primary border-primary/30'
+                : 'bg-warning/10 text-warning border-warning/20'"
               class="text-xs font-medium px-2 py-0.5 rounded-full border">
               {{ restaurant.esewaEnabled ? 'Enabled' : 'Disabled' }}
             </span>
           </div>
         </div>
         <button v-if="!editingEsewa" @click="startEditEsewa"
-          class="px-4 py-2 bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 text-white text-sm rounded-xl shadow-md shadow-emerald-500/30 transition-all flex-shrink-0">
+          class="px-4 py-2 bg-success hover:bg-success/90 text-success-foreground text-sm rounded-xl shadow-soft transition-all flex-shrink-0">
           {{ restaurant.esewaConfigured ? 'Update' : 'Configure' }}
         </button>
       </div>
 
       <form v-if="editingEsewa" @submit.prevent="saveEsewa" class="space-y-4 mt-5">
-        <p v-if="restaurant.esewaConfigured" class="text-xs text-amber-600 bg-amber-50 border border-amber-100 rounded-lg p-2.5">
+        <p v-if="restaurant.esewaConfigured" class="text-xs text-warning bg-warning/10 border border-warning/20 rounded-lg p-2.5">
           For security, stored credentials are never shown. Re-enter all fields to replace them.
         </p>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Product / Merchant Code *</label>
+          <label class="block text-sm font-medium text-foreground mb-1">Product / Merchant Code *</label>
           <input v-model="esewaForm.productCode" autocomplete="off" placeholder="e.g. EPAYTEST"
-            class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-300 transition-all" />
+            class="w-full px-3 py-2 bg-card border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring/20 focus:border-primary/30 transition-all" />
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Secret Key *</label>
+          <label class="block text-sm font-medium text-foreground mb-1">Secret Key *</label>
           <input v-model="esewaForm.secretKey" type="password" autocomplete="new-password"
-            class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-300 transition-all" />
+            class="w-full px-3 py-2 bg-card border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring/20 focus:border-primary/30 transition-all" />
         </div>
-        <label class="flex items-center gap-2 text-sm text-slate-700">
+        <label class="flex items-center gap-2 text-sm text-foreground">
           <input v-model="esewaForm.enabled" type="checkbox"
-            class="w-4 h-4 rounded border-slate-300 text-emerald-500 focus:ring-emerald-500/40" />
+            class="w-4 h-4 rounded border-border text-success focus:ring-ring/20" />
           Enable eSewa for customers
         </label>
         <div class="flex gap-2 pt-1">
           <button type="button" @click="editingEsewa = false"
-            class="px-4 py-2 text-sm bg-white ring-1 ring-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 transition-colors">
+            class="px-4 py-2 text-sm bg-card ring-1 ring-border text-foreground rounded-xl hover:bg-accent transition-colors">
             Cancel
           </button>
           <button type="submit" :disabled="savingEsewa"
-            class="px-4 py-2 bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 text-white text-sm rounded-xl shadow-md shadow-emerald-500/30 transition-all disabled:opacity-50">
+            class="px-4 py-2 bg-success hover:bg-success/90 text-success-foreground text-sm rounded-xl shadow-soft transition-all disabled:opacity-50">
             {{ savingEsewa ? 'Saving…' : 'Save credentials' }}
           </button>
         </div>

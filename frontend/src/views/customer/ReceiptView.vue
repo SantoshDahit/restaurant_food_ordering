@@ -59,10 +59,10 @@ async function load() {
 const paymentStatus = computed(() => payment.value?.status ?? receipt.value?.paymentStatus ?? null)
 const paymentStatusTint = computed(() => {
   const s = paymentStatus.value
-  if (s === 'COMPLETED') return 'bg-emerald-50 text-emerald-700 ring-emerald-200'
-  if (s === 'PENDING')   return 'bg-amber-50 text-amber-700 ring-amber-200'
-  if (s === 'FAILED' || s === 'REFUNDED') return 'bg-rose-50 text-rose-700 ring-rose-200'
-  return 'bg-slate-50 text-slate-600 ring-slate-200'
+  if (s === 'COMPLETED') return 'bg-success/10 text-success ring-success/20'
+  if (s === 'PENDING')   return 'bg-warning/10 text-warning ring-warning/20'
+  if (s === 'FAILED' || s === 'REFUNDED') return 'bg-destructive/10 text-destructive ring-destructive/20'
+  return 'bg-muted text-muted-foreground ring-border'
 })
 
 function print() {
@@ -120,17 +120,17 @@ onMounted(load)
 </script>
 
 <template>
-  <div class="min-h-screen bg-slate-100 receipt-page">
+  <div class="min-h-screen bg-muted receipt-page">
 
     <!-- Toolbar (hidden on print) -->
-    <div class="no-print bg-white border-b border-slate-200/60 sticky top-0 z-10">
+    <div class="no-print bg-card border-b border-border sticky top-0 z-10">
       <div class="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between gap-2">
         <button @click="$router.push(backTarget)"
-          class="inline-flex items-center gap-1.5 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-lg transition-colors">
+          class="inline-flex items-center gap-1.5 px-3 py-2 text-sm text-foreground hover:bg-accent rounded-lg transition-colors">
           <ArrowLeft class="w-4 h-4" /> {{ backLabel }}
         </button>
         <button @click="print" :disabled="!order"
-          class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 rounded-xl shadow-md shadow-violet-500/30 transition-all disabled:opacity-60">
+          class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-primary-foreground bg-primary hover:bg-primary/90 rounded-xl shadow-soft transition-all disabled:opacity-60">
           <Printer class="w-4 h-4" /> Print receipt
         </button>
       </div>
@@ -139,70 +139,70 @@ onMounted(load)
     <!-- Loading -->
     <div v-if="loading" class="no-print flex items-center justify-center py-24">
       <div class="text-center">
-        <Loader2 class="w-10 h-10 text-violet-500 mx-auto mb-3 animate-spin" />
-        <p class="text-slate-500 text-sm">Loading receipt…</p>
+        <Loader2 class="w-10 h-10 text-primary mx-auto mb-3 animate-spin" />
+        <p class="text-muted-foreground text-sm">Loading receipt…</p>
       </div>
     </div>
 
     <!-- Not found -->
     <div v-else-if="notFound" class="no-print flex items-center justify-center py-24 px-4">
       <div class="text-center max-w-sm">
-        <div class="w-14 h-14 rounded-2xl bg-rose-50 ring-1 ring-rose-200 flex items-center justify-center mx-auto mb-3">
-          <AlertTriangle class="w-6 h-6 text-rose-500" />
+        <div class="w-14 h-14 rounded-2xl bg-destructive/10 ring-1 ring-destructive/20 flex items-center justify-center mx-auto mb-3">
+          <AlertTriangle class="w-6 h-6 text-destructive" />
         </div>
-        <p class="text-slate-900 font-semibold">Order not found</p>
-        <p class="text-sm text-slate-500 mt-1">Check the receipt link and try again.</p>
+        <p class="text-foreground font-semibold">Order not found</p>
+        <p class="text-sm text-muted-foreground mt-1">Check the receipt link and try again.</p>
       </div>
     </div>
 
     <!-- Receipt -->
     <div v-else-if="order" class="max-w-3xl mx-auto px-4 py-6">
-      <div class="receipt mx-auto bg-white text-slate-900 shadow-md print:shadow-none">
+      <div class="receipt mx-auto bg-card text-foreground shadow-soft print:shadow-none">
         <div class="px-6 py-5 receipt-inner">
 
           <!-- Restaurant header -->
           <div class="text-center">
             <h1 class="text-xl font-bold uppercase tracking-wide">{{ restaurantName }}</h1>
-            <p v-if="receipt?.restaurantAddress" class="text-[11px] text-slate-600 mt-0.5">{{ receipt.restaurantAddress }}</p>
-            <p v-if="receipt?.restaurantPhone" class="text-[11px] text-slate-600">Tel: {{ receipt.restaurantPhone }}</p>
-            <p v-if="receipt?.restaurantBusinessNumber" class="text-[11px] text-slate-600">VAT/PAN: {{ receipt.restaurantBusinessNumber }}</p>
-            <p class="text-[11px] text-slate-500 mt-1">Sales receipt</p>
+            <p v-if="receipt?.restaurantAddress" class="text-[11px] text-muted-foreground mt-0.5">{{ receipt.restaurantAddress }}</p>
+            <p v-if="receipt?.restaurantPhone" class="text-[11px] text-muted-foreground">Tel: {{ receipt.restaurantPhone }}</p>
+            <p v-if="receipt?.restaurantBusinessNumber" class="text-[11px] text-muted-foreground">VAT/PAN: {{ receipt.restaurantBusinessNumber }}</p>
+            <p class="text-[11px] text-muted-foreground mt-1">Sales receipt</p>
           </div>
 
-          <div class="my-3 border-t border-dashed border-slate-300" />
+          <div class="my-3 border-t border-dashed border-border" />
 
           <!-- Big 3-digit ticket -->
           <div class="text-center my-2">
-            <p class="text-[10px] uppercase tracking-widest text-slate-500">Ticket number</p>
+            <p class="text-[10px] uppercase tracking-widest text-muted-foreground">Ticket number</p>
             <p class="text-6xl font-extrabold leading-none mt-1 tabular-nums">{{ ticket }}</p>
-            <p v-if="receipt" class="text-[10px] text-slate-400 mt-1">resets daily</p>
+            <p v-if="receipt" class="text-[10px] text-muted-foreground mt-1">resets daily</p>
           </div>
 
-          <div class="my-3 border-t border-dashed border-slate-300" />
+          <div class="my-3 border-t border-dashed border-border" />
 
           <!-- Meta -->
           <div class="grid grid-cols-2 gap-y-1 text-xs">
-            <span class="text-slate-500">Order #</span>
+            <span class="text-muted-foreground">Order #</span>
             <span class="text-right font-semibold font-mono tabular-nums">{{ displayOrderNumber }}</span>
 
-            <span class="text-slate-500">Type</span>
+            <span class="text-muted-foreground">Type</span>
             <span class="text-right">{{ orderType }}</span>
 
             <template v-if="displayTableNumber">
-              <span class="text-slate-500">Table</span>
+              <span class="text-muted-foreground">Table</span>
               <span class="text-right">{{ displayTableNumber }}</span>
             </template>
 
-            <span class="text-slate-500">Date</span>
+            <span class="text-muted-foreground">Date</span>
             <span class="text-right">{{ formattedDate }}</span>
           </div>
 
-          <div class="my-3 border-t border-dashed border-slate-300" />
+          <div class="my-3 border-t border-dashed border-border" />
 
           <!-- Items -->
           <table class="w-full text-xs">
             <thead>
-              <tr class="text-slate-500 border-b border-slate-200">
+              <tr class="text-muted-foreground border-b border-border">
                 <th class="text-left py-1 font-semibold">Item</th>
                 <th class="text-right py-1 font-semibold w-10">Qty</th>
                 <th class="text-right py-1 font-semibold w-16">Price</th>
@@ -217,39 +217,39 @@ onMounted(load)
                 <td class="py-1 text-right tabular-nums">{{ Number(item.totalPrice).toFixed(0) }}</td>
               </tr>
               <tr v-if="!items.length">
-                <td colspan="4" class="py-3 text-center text-slate-400">No items</td>
+                <td colspan="4" class="py-3 text-center text-muted-foreground">No items</td>
               </tr>
             </tbody>
           </table>
 
-          <div class="my-3 border-t border-dashed border-slate-300" />
+          <div class="my-3 border-t border-dashed border-border" />
 
           <!-- Totals -->
           <div class="grid grid-cols-2 gap-y-1 text-xs">
-            <span class="text-slate-500">Subtotal</span>
+            <span class="text-muted-foreground">Subtotal</span>
             <span class="text-right tabular-nums">NPR {{ subtotal.toFixed(2) }}</span>
 
             <template v-if="discount > 0">
-              <span class="text-slate-500">Discount</span>
+              <span class="text-muted-foreground">Discount</span>
               <span class="text-right tabular-nums">- NPR {{ discount.toFixed(2) }}</span>
             </template>
 
             <template v-if="tax > 0">
-              <span class="text-slate-500">Tax</span>
+              <span class="text-muted-foreground">Tax</span>
               <span class="text-right tabular-nums">NPR {{ tax.toFixed(2) }}</span>
             </template>
           </div>
 
-          <div class="mt-2 pt-2 border-t border-slate-400 flex items-center justify-between">
+          <div class="mt-2 pt-2 border-t border-border flex items-center justify-between">
             <span class="text-sm font-bold uppercase">Total</span>
             <span class="text-lg font-extrabold tabular-nums">NPR {{ total.toFixed(2) }}</span>
           </div>
 
           <!-- Payment -->
-          <div v-if="receipt" class="mt-3 pt-2 border-t border-dashed border-slate-300 grid grid-cols-2 gap-y-1.5 text-xs">
-            <span class="text-slate-500">Paid via</span>
+          <div v-if="receipt" class="mt-3 pt-2 border-t border-dashed border-border grid grid-cols-2 gap-y-1.5 text-xs">
+            <span class="text-muted-foreground">Paid via</span>
             <span class="text-right font-semibold">{{ receipt.paymentMethod }}</span>
-            <span class="text-slate-500">Status</span>
+            <span class="text-muted-foreground">Status</span>
             <span class="text-right">
               <span :class="['inline-flex items-center gap-1 px-2 py-0.5 rounded ring-1 font-bold uppercase tracking-wider text-[10px]', paymentStatusTint]">
                 <span class="w-1.5 h-1.5 rounded-full bg-current" />
@@ -257,25 +257,25 @@ onMounted(load)
               </span>
             </span>
             <template v-if="receipt.gatewayProvider">
-              <span class="text-slate-500">Gateway</span>
+              <span class="text-muted-foreground">Gateway</span>
               <span class="text-right">{{ receipt.gatewayProvider }}</span>
             </template>
             <template v-if="receipt.gatewayTransactionId">
-              <span class="text-slate-500">Txn ID</span>
+              <span class="text-muted-foreground">Txn ID</span>
               <span class="text-right font-mono tabular-nums truncate">{{ receipt.gatewayTransactionId }}</span>
             </template>
           </div>
-          <p v-else class="mt-3 text-center text-[11px] italic text-slate-500">
+          <p v-else class="mt-3 text-center text-[11px] italic text-muted-foreground">
             Payment not yet recorded
           </p>
 
-          <div class="my-4 border-t border-dashed border-slate-300" />
+          <div class="my-4 border-t border-dashed border-border" />
 
           <!-- Footer -->
-          <div class="text-center text-[11px] text-slate-500 leading-relaxed">
-            <p class="font-semibold text-slate-700">Thank you!</p>
+          <div class="text-center text-[11px] text-muted-foreground leading-relaxed">
+            <p class="font-semibold text-foreground">Thank you!</p>
             <p>Please keep this receipt for your records.</p>
-            <p v-if="receipt" class="text-[9px] mt-1 font-mono text-slate-400">{{ receipt.code }}</p>
+            <p v-if="receipt" class="text-[9px] mt-1 font-mono text-muted-foreground">{{ receipt.code }}</p>
           </div>
         </div>
       </div>

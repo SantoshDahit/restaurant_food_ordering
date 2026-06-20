@@ -1,3 +1,153 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ============================================================================
+   Design tokens — "Emerald & Brass" (premium · modern)
+   Emerald = primary (CTAs, prices, active, focus)
+   Dark emerald-charcoal = structural sidebar (via the `sage` token key)
+   Brass/gold = accent (warning + dashboard stat/highlight tiles)
+   Ivory canvas, crisp white cards. HSL triplets -> tailwind.config.js.
+   ========================================================================== */
+@layer base {
+  :root {
+    /* Surfaces — warm ivory */
+    --background: 44 30% 96%;        /* #F7F5EF  ivory                 */
+    --foreground: 150 18% 11%;       /* #16201B  deep green-charcoal   */
+    --card: 0 0% 100%;
+    --card-foreground: 150 18% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 150 18% 11%;
+
+    /* Neutrals */
+    --muted: 46 19% 92%;
+    --muted-foreground: 150 6% 41%;
+    --secondary: 44 18% 90%;
+    --secondary-foreground: 150 14% 18%;
+    --accent: 150 35% 92%;           /* soft emerald tint              */
+    --accent-foreground: 156 60% 22%;
+
+    /* Brand 1 — emerald (action) */
+    --primary: 156 80% 33%;          /* #0FA06B  vivid emerald          */
+    --primary-foreground: 0 0% 100%;
+
+    /* Brand 2 — dark emerald-charcoal (structural; token key `sage`) */
+    --sage: 150 28% 12%;             /* #16271F  premium dark sidebar   */
+    --sage-foreground: 150 25% 93%;
+
+    /* Semantic — brass accent + harmonized rest */
+    --warning: 40 61% 50%;           /* #CC9633  brass / gold (brand 3) */
+    --warning-foreground: 44 45% 12%;
+    --success: 168 82% 30%;          /* #0E8C73  teal-green (≠ primary)  */
+    --success-foreground: 0 0% 100%;
+    --info: 211 62% 47%;             /* #2D74C0  blue                   */
+    --info-foreground: 0 0% 100%;
+    --destructive: 2 64% 51%;        /* #D33A34  red                    */
+    --destructive-foreground: 0 0% 100%;
+
+    /* Lines & focus */
+    --border: 44 20% 88%;
+    --input: 44 20% 88%;
+    --ring: 156 80% 33%;
+
+    --radius: 0.85rem;
+  }
+
+  .dark {
+    --background: 150 14% 8%;
+    --foreground: 150 18% 92%;
+    --card: 150 12% 11%;
+    --card-foreground: 150 18% 92%;
+    --popover: 150 12% 11%;
+    --popover-foreground: 150 18% 92%;
+
+    --muted: 150 8% 16%;
+    --muted-foreground: 150 8% 60%;
+    --secondary: 150 8% 18%;
+    --secondary-foreground: 150 18% 92%;
+    --accent: 156 30% 18%;
+    --accent-foreground: 152 50% 78%;
+
+    --primary: 156 70% 45%;
+    --primary-foreground: 150 30% 8%;
+
+    --sage: 150 18% 14%;
+    --sage-foreground: 150 20% 90%;
+
+    --warning: 40 70% 56%;
+    --warning-foreground: 44 45% 10%;
+    --success: 168 60% 44%;
+    --success-foreground: 150 30% 8%;
+    --info: 211 65% 60%;
+    --info-foreground: 150 30% 8%;
+    --destructive: 2 70% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 150 8% 20%;
+    --input: 150 8% 20%;
+    --ring: 156 70% 45%;
+  }
+}
+
+@layer base {
+  * {
+    border-color: hsl(var(--border));
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-family: theme('fontFamily.sans');
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  }
+
+  h1, h2, h3, h4 {
+    font-family: theme('fontFamily.serif');
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  ::selection {
+    background-color: hsl(var(--primary) / 0.18);
+  }
+
+  :focus-visible {
+    outline: 2px solid hsl(var(--ring) / 0.55);
+    outline-offset: 2px;
+  }
+}
+
+@layer utilities {
+  /* Premium hairline scrollbar */
+  .scrollbar-fine {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--border)) transparent;
+  }
+  .scrollbar-fine::-webkit-scrollbar { height: 6px; width: 6px; }
+  .scrollbar-fine::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--border));
+    border-radius: 9999px;
+  }
+  .scrollbar-fine::-webkit-scrollbar-track { background: transparent; }
+
+  /* Hide scrollbar for horizontal chip rows */
+  .no-scrollbar { scrollbar-width: none; }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+
+  .tabular-nums { font-variant-numeric: tabular-nums; }
+
+  /* Emerald gradient text for hero headings (inlined so it always generates) */
+  .text-gradient-brand {
+    background-image: linear-gradient(135deg, hsl(156 78% 36%) 0%, hsl(168 80% 26%) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+}

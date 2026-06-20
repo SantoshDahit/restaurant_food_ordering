@@ -47,20 +47,20 @@ function open(code: string) {
   <PageHeader title="Restaurants" :description="`${restaurants.length} on the platform`" />
 
   <!-- Search -->
-  <div class="bg-white rounded-2xl ring-1 ring-slate-200/60 shadow-sm p-3 sm:p-4 mb-4">
+  <div class="bg-card rounded-2xl ring-1 ring-border shadow-soft p-3 sm:p-4 mb-4">
     <div class="relative">
-      <Search class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+      <Search class="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
       <input
         v-model="query"
         placeholder="Search by name, kiosk code, email or address…"
-        class="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-400 focus:bg-white transition-all"
+        class="w-full pl-9 pr-3 py-2 bg-muted border border-border rounded-xl text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/20 focus:border-primary/30 focus:bg-card transition-all"
       />
     </div>
   </div>
 
-  <div v-if="loading" class="text-center py-16 text-slate-400">Loading restaurants…</div>
+  <div v-if="loading" class="text-center py-16 text-muted-foreground">Loading restaurants…</div>
 
-  <div v-else-if="!filtered.length" class="bg-white rounded-2xl ring-1 ring-slate-200/60 shadow-sm">
+  <div v-else-if="!filtered.length" class="bg-card rounded-2xl ring-1 ring-border shadow-soft">
     <EmptyState
       :icon="Store"
       title="No restaurants found"
@@ -73,29 +73,29 @@ function open(code: string) {
       v-for="r in filtered"
       :key="r.code"
       @click="open(r.code)"
-      class="group text-left bg-white rounded-2xl ring-1 ring-slate-200/60 shadow-sm hover:shadow-md hover:ring-amber-200 transition-all p-4"
+      class="group text-left bg-card rounded-2xl ring-1 ring-border shadow-soft hover:shadow-card hover:ring-warning/30 transition-all p-4"
     >
       <div class="flex items-start gap-3">
-        <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white flex-shrink-0 shadow-sm shadow-amber-500/30">
+        <div class="w-11 h-11 rounded-xl bg-warning flex items-center justify-center text-warning-foreground flex-shrink-0 shadow-soft">
           <Store class="w-5 h-5" />
         </div>
         <div class="min-w-0 flex-1">
           <div class="flex items-center justify-between gap-2">
-            <h3 class="font-semibold text-slate-900 truncate">{{ r.name }}</h3>
-            <ChevronRight class="w-4 h-4 text-slate-300 group-hover:text-amber-500 transition-colors flex-shrink-0" />
+            <h3 class="font-semibold text-foreground truncate">{{ r.name }}</h3>
+            <ChevronRight class="w-4 h-4 text-muted-foreground group-hover:text-warning transition-colors flex-shrink-0" />
           </div>
-          <p class="text-xs text-slate-500 truncate">{{ r.address || '—' }}</p>
+          <p class="text-xs text-muted-foreground truncate">{{ r.address || '—' }}</p>
           <div class="flex items-center gap-2 mt-2">
-            <span class="inline-flex items-center gap-1 text-[11px] font-mono px-2 py-0.5 rounded-md bg-teal-50 text-teal-700 ring-1 ring-teal-200/60">
+            <span class="inline-flex items-center gap-1 text-[11px] font-mono px-2 py-0.5 rounded-md bg-info/10 text-info ring-1 ring-info/20">
               {{ r.kioskCode }}
             </span>
             <span :class="[
               'inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-md ring-1',
               r.isActive
-                ? 'bg-emerald-50 text-emerald-700 ring-emerald-200/60'
-                : 'bg-slate-100 text-slate-500 ring-slate-200/60'
+                ? 'bg-success/10 text-success ring-success/20'
+                : 'bg-muted text-muted-foreground ring-border'
             ]">
-              <Circle :class="['w-2 h-2', r.isActive ? 'fill-emerald-500 text-emerald-500' : 'fill-slate-400 text-slate-400']" />
+              <Circle :class="['w-2 h-2', r.isActive ? 'fill-success text-success' : 'fill-muted-foreground text-muted-foreground']" />
               {{ r.isActive ? 'Active' : 'Inactive' }}
             </span>
           </div>

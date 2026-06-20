@@ -108,29 +108,29 @@ async function setStatus(day: number, status: AttendanceStatus) {
     <!-- Controls -->
     <div class="flex flex-wrap gap-3 mb-6">
       <select v-model="selectedEmployee"
-        class="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40 focus:border-violet-300 transition-all">
+        class="px-3 py-2 bg-card border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring/20 focus:border-primary/30 transition-all">
         <option value="">Select Employee</option>
         <option v-for="emp in employees" :key="emp.code" :value="emp.code">{{ emp.fullName }}</option>
       </select>
       <select v-model.number="selectedYear"
-        class="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40 focus:border-violet-300 transition-all">
+        class="px-3 py-2 bg-card border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring/20 focus:border-primary/30 transition-all">
         <option v-for="y in years" :key="y" :value="y">{{ y }}</option>
       </select>
       <select v-model.number="selectedMonth"
-        class="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40 focus:border-violet-300 transition-all">
+        class="px-3 py-2 bg-card border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring/20 focus:border-primary/30 transition-all">
         <option v-for="m in months" :key="m.v" :value="m.v">{{ m.l }}</option>
       </select>
     </div>
 
-    <div v-if="!selectedEmployee" class="text-center py-12 text-slate-400">
+    <div v-if="!selectedEmployee" class="text-center py-12 text-muted-foreground">
       Select an employee to view attendance
     </div>
 
-    <div v-else-if="loading" class="text-center py-12 text-slate-400">Loading...</div>
+    <div v-else-if="loading" class="text-center py-12 text-muted-foreground">Loading...</div>
 
-    <div v-else class="bg-white rounded-2xl shadow-sm ring-1 ring-slate-200/60 overflow-x-auto">
+    <div v-else class="bg-card rounded-2xl shadow-card ring-1 ring-border overflow-x-auto">
       <table class="w-full text-sm min-w-[900px]">
-        <thead class="bg-slate-50/60 text-slate-500 uppercase text-[11px] tracking-wide">
+        <thead class="bg-muted text-muted-foreground uppercase text-[11px] tracking-wide">
           <tr>
             <th class="px-4 py-3 text-left">Day</th>
             <th class="px-4 py-3 text-left">Date</th>
@@ -141,22 +141,22 @@ async function setStatus(day: number, status: AttendanceStatus) {
             <th class="px-4 py-3 text-center">Set Status</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-slate-100">
-          <tr v-for="day in dayNumbers" :key="day" class="hover:bg-slate-50/60 transition-colors">
-            <td class="px-4 py-2 font-medium text-slate-700">{{ day }}</td>
-            <td class="px-4 py-2 text-slate-500">{{ getDateStr(day) }}</td>
+        <tbody class="divide-y divide-border">
+          <tr v-for="day in dayNumbers" :key="day" class="hover:bg-accent transition-colors">
+            <td class="px-4 py-2 font-medium text-foreground">{{ day }}</td>
+            <td class="px-4 py-2 text-muted-foreground">{{ getDateStr(day) }}</td>
             <td class="px-4 py-2">
               <StatusBadge v-if="getAttendanceForDay(day)" :status="getAttendanceForDay(day)!.status" />
-              <span v-else class="text-xs text-gray-400">—</span>
+              <span v-else class="text-xs text-muted-foreground">—</span>
             </td>
-            <td class="px-4 py-2 text-gray-500 text-xs">{{ getAttendanceForDay(day)?.checkInTime || '—' }}</td>
-            <td class="px-4 py-2 text-gray-500 text-xs">{{ getAttendanceForDay(day)?.checkOutTime || '—' }}</td>
-            <td class="px-4 py-2 text-right text-slate-500">{{ getAttendanceForDay(day)?.workedHours ?? '—' }}</td>
+            <td class="px-4 py-2 text-muted-foreground text-xs">{{ getAttendanceForDay(day)?.checkInTime || '—' }}</td>
+            <td class="px-4 py-2 text-muted-foreground text-xs">{{ getAttendanceForDay(day)?.checkOutTime || '—' }}</td>
+            <td class="px-4 py-2 text-right text-muted-foreground">{{ getAttendanceForDay(day)?.workedHours ?? '—' }}</td>
             <td class="px-4 py-2 text-center">
               <select
                 :value="getAttendanceForDay(day)?.status || ''"
                 @change="setStatus(day, ($event.target as HTMLSelectElement).value as AttendanceStatus)"
-                class="text-xs px-2 py-1 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500/40 focus:border-violet-300">
+                class="text-xs px-2 py-1 bg-card border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/20 focus:border-primary/30">
                 <option value="">— Set —</option>
                 <option v-for="s in attendanceStatuses" :key="s" :value="s">{{ s }}</option>
               </select>

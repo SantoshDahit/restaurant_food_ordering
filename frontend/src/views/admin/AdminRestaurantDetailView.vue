@@ -74,40 +74,40 @@ const maxTopQty = computed(() => (overview.value?.topItems ?? []).reduce((m, t) 
 
 <template>
   <button @click="router.back()"
-    class="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700 mb-4">
+    class="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-4">
     <ArrowLeft class="w-4 h-4" />
     Back to restaurants
   </button>
 
-  <div v-if="loading" class="text-center py-16 text-slate-400">Loading…</div>
+  <div v-if="loading" class="text-center py-16 text-muted-foreground">Loading…</div>
 
   <template v-else-if="restaurant">
     <!-- Header -->
-    <div class="bg-white rounded-2xl ring-1 ring-slate-200/60 shadow-sm p-5 sm:p-6 mb-4">
+    <div class="bg-card rounded-2xl ring-1 ring-border shadow-soft p-5 sm:p-6 mb-4">
       <div class="flex items-start gap-4">
-        <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white shadow-lg shadow-amber-500/30 flex-shrink-0">
+        <div class="w-14 h-14 rounded-2xl bg-warning flex items-center justify-center text-warning-foreground shadow-soft flex-shrink-0">
           <Store class="w-6 h-6" />
         </div>
         <div class="min-w-0 flex-1">
           <div class="flex items-center gap-2 flex-wrap">
-            <h2 class="text-xl sm:text-2xl font-bold text-slate-900">{{ restaurant.name }}</h2>
+            <h2 class="text-xl sm:text-2xl font-bold text-foreground">{{ restaurant.name }}</h2>
             <span :class="[
               'inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-md ring-1',
               restaurant.isActive
-                ? 'bg-emerald-50 text-emerald-700 ring-emerald-200/60'
-                : 'bg-slate-100 text-slate-500 ring-slate-200/60'
+                ? 'bg-success/10 text-success ring-success/20'
+                : 'bg-muted text-muted-foreground ring-border'
             ]">
-              <Circle :class="['w-2 h-2', restaurant.isActive ? 'fill-emerald-500 text-emerald-500' : 'fill-slate-400 text-slate-400']" />
+              <Circle :class="['w-2 h-2', restaurant.isActive ? 'fill-success text-success' : 'fill-muted-foreground text-muted-foreground']" />
               {{ restaurant.isActive ? 'Active' : 'Inactive' }}
             </span>
           </div>
-          <div class="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-sm text-slate-600">
-            <div class="flex items-center gap-2"><MapPin class="w-4 h-4 text-slate-400" /> {{ restaurant.address || '—' }}</div>
-            <div class="flex items-center gap-2"><Phone class="w-4 h-4 text-slate-400" /> {{ restaurant.phone || '—' }}</div>
-            <div class="flex items-center gap-2"><Mail class="w-4 h-4 text-slate-400" /> {{ restaurant.email || '—' }}</div>
+          <div class="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-sm text-muted-foreground">
+            <div class="flex items-center gap-2"><MapPin class="w-4 h-4 text-muted-foreground" /> {{ restaurant.address || '—' }}</div>
+            <div class="flex items-center gap-2"><Phone class="w-4 h-4 text-muted-foreground" /> {{ restaurant.phone || '—' }}</div>
+            <div class="flex items-center gap-2"><Mail class="w-4 h-4 text-muted-foreground" /> {{ restaurant.email || '—' }}</div>
             <div class="flex items-center gap-2">
-              <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-teal-50 text-teal-700 ring-1 ring-teal-200/60">{{ restaurant.kioskCode }}</span>
-              <span class="text-xs text-slate-400">kiosk code</span>
+              <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-info/10 text-info ring-1 ring-info/20">{{ restaurant.kioskCode }}</span>
+              <span class="text-xs text-muted-foreground">kiosk code</span>
             </div>
           </div>
         </div>
@@ -116,84 +116,84 @@ const maxTopQty = computed(() => (overview.value?.topItems ?? []).reduce((m, t) 
 
     <!-- Stats -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
-      <div class="bg-white rounded-2xl ring-1 ring-slate-200/60 shadow-sm p-5">
+      <div class="bg-card rounded-2xl ring-1 ring-border shadow-soft p-5">
         <div class="flex items-start justify-between mb-2">
-          <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Total orders</span>
-          <div class="w-9 h-9 rounded-xl flex items-center justify-center text-white bg-gradient-to-br from-emerald-500 to-teal-500 shadow-sm">
+          <span class="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">Total orders</span>
+          <div class="w-9 h-9 rounded-xl flex items-center justify-center text-success-foreground bg-success shadow-soft">
             <ShoppingBag class="w-5 h-5" />
           </div>
         </div>
-        <div class="text-2xl sm:text-3xl font-bold text-slate-900 tabular-nums">{{ (overview?.totalOrders ?? 0).toLocaleString() }}</div>
+        <div class="text-2xl sm:text-3xl font-bold text-foreground tabular-nums">{{ (overview?.totalOrders ?? 0).toLocaleString() }}</div>
       </div>
-      <div class="bg-white rounded-2xl ring-1 ring-slate-200/60 shadow-sm p-5">
+      <div class="bg-card rounded-2xl ring-1 ring-border shadow-soft p-5">
         <div class="flex items-start justify-between mb-2">
-          <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Total revenue</span>
-          <div class="w-9 h-9 rounded-xl flex items-center justify-center text-white bg-gradient-to-br from-rose-500 to-pink-500 shadow-sm">
+          <span class="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">Total revenue</span>
+          <div class="w-9 h-9 rounded-xl flex items-center justify-center text-destructive-foreground bg-destructive shadow-soft">
             <TrendingUp class="w-5 h-5" />
           </div>
         </div>
-        <div class="text-2xl sm:text-3xl font-bold text-slate-900 tabular-nums">{{ fmtMoney(overview?.totalRevenue) }}</div>
+        <div class="text-2xl sm:text-3xl font-bold text-foreground tabular-nums">{{ fmtMoney(overview?.totalRevenue) }}</div>
       </div>
-      <div class="bg-white rounded-2xl ring-1 ring-slate-200/60 shadow-sm p-5">
+      <div class="bg-card rounded-2xl ring-1 ring-border shadow-soft p-5">
         <div class="flex items-start justify-between mb-2">
-          <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Active staff</span>
-          <div class="w-9 h-9 rounded-xl flex items-center justify-center text-white bg-gradient-to-br from-sky-500 to-indigo-500 shadow-sm">
+          <span class="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">Active staff</span>
+          <div class="w-9 h-9 rounded-xl flex items-center justify-center text-info-foreground bg-info shadow-soft">
             <Users class="w-5 h-5" />
           </div>
         </div>
-        <div class="text-2xl sm:text-3xl font-bold text-slate-900 tabular-nums">{{ (overview?.activeStaffCount ?? 0).toLocaleString() }}</div>
+        <div class="text-2xl sm:text-3xl font-bold text-foreground tabular-nums">{{ (overview?.activeStaffCount ?? 0).toLocaleString() }}</div>
       </div>
-      <div class="bg-white rounded-2xl ring-1 ring-slate-200/60 shadow-sm p-5">
+      <div class="bg-card rounded-2xl ring-1 ring-border shadow-soft p-5">
         <div class="flex items-start justify-between mb-2">
-          <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Last order</span>
-          <div class="w-9 h-9 rounded-xl flex items-center justify-center text-white bg-gradient-to-br from-amber-500 to-orange-500 shadow-sm">
+          <span class="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">Last order</span>
+          <div class="w-9 h-9 rounded-xl flex items-center justify-center text-warning-foreground bg-warning shadow-soft">
             <Clock4 class="w-5 h-5" />
           </div>
         </div>
-        <div class="text-sm sm:text-base font-semibold text-slate-900 leading-tight">{{ fmtDateTime(overview?.lastOrderAt) }}</div>
+        <div class="text-sm sm:text-base font-semibold text-foreground leading-tight">{{ fmtDateTime(overview?.lastOrderAt) }}</div>
       </div>
     </div>
 
     <!-- Top sellers -->
-    <div class="bg-white rounded-2xl ring-1 ring-slate-200/60 shadow-sm p-5 mb-4">
+    <div class="bg-card rounded-2xl ring-1 ring-border shadow-soft p-5 mb-4">
       <div class="flex items-center gap-2 mb-3">
-        <Trophy class="w-4 h-4 text-amber-500" />
-        <h3 class="text-sm font-semibold text-slate-900">Top sellers</h3>
-        <span class="text-xs text-slate-400">all time</span>
+        <Trophy class="w-4 h-4 text-warning" />
+        <h3 class="text-sm font-semibold text-foreground">Top sellers</h3>
+        <span class="text-xs text-muted-foreground">all time</span>
       </div>
-      <div v-if="!overview?.topItems?.length" class="text-sm text-slate-500 text-center py-6">
+      <div v-if="!overview?.topItems?.length" class="text-sm text-muted-foreground text-center py-6">
         No items sold yet.
       </div>
       <ol v-else class="space-y-2.5">
         <li v-for="(item, idx) in overview.topItems" :key="item.menuItemCode" class="flex items-center gap-2.5">
-          <span class="inline-flex w-6 h-6 rounded-lg bg-slate-100 ring-1 ring-slate-200 items-center justify-center text-xs font-bold text-slate-600 tabular-nums">
+          <span class="inline-flex w-6 h-6 rounded-lg bg-muted ring-1 ring-border items-center justify-center text-xs font-bold text-muted-foreground tabular-nums">
             {{ idx + 1 }}
           </span>
           <div class="flex-1 min-w-0">
-            <p class="text-sm font-medium text-slate-900 truncate">{{ item.menuItemName ?? '—' }}</p>
-            <div class="mt-1 h-1.5 bg-slate-200 rounded-full overflow-hidden">
-              <div class="h-full bg-gradient-to-r from-amber-400 to-orange-500 rounded-full"
+            <p class="text-sm font-medium text-foreground truncate">{{ item.menuItemName ?? '—' }}</p>
+            <div class="mt-1 h-1.5 bg-muted rounded-full overflow-hidden">
+              <div class="h-full bg-warning rounded-full"
                 :style="{ width: maxTopQty > 0 ? `${(item.quantity / maxTopQty) * 100}%` : '0%' }" />
             </div>
           </div>
           <div class="text-right flex-shrink-0">
-            <p class="text-sm font-bold text-slate-900 tabular-nums">{{ item.quantity }}</p>
-            <p class="text-[10px] text-slate-400 tabular-nums">NPR {{ item.revenue.toFixed(0) }}</p>
+            <p class="text-sm font-bold text-foreground tabular-nums">{{ item.quantity }}</p>
+            <p class="text-[10px] text-muted-foreground tabular-nums">NPR {{ item.revenue.toFixed(0) }}</p>
           </div>
         </li>
       </ol>
     </div>
 
     <!-- Owner -->
-    <div class="bg-white rounded-2xl ring-1 ring-slate-200/60 shadow-sm p-5 mb-4">
-      <h3 class="text-sm font-semibold text-slate-900 mb-3">Manager / owner</h3>
+    <div class="bg-card rounded-2xl ring-1 ring-border shadow-soft p-5 mb-4">
+      <h3 class="text-sm font-semibold text-foreground mb-3">Manager / owner</h3>
       <div v-if="owner" class="flex items-center gap-3">
-        <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-violet-400 to-fuchsia-500 flex items-center justify-center text-white shadow-sm">
+        <div class="w-11 h-11 rounded-xl bg-primary flex items-center justify-center text-primary-foreground shadow-soft">
           <UserCircle class="w-5 h-5" />
         </div>
         <div class="min-w-0 flex-1">
-          <div class="font-medium text-slate-900 truncate">{{ owner.fullName }}</div>
-          <div class="text-xs text-slate-500 truncate">{{ owner.email }} · {{ owner.phone || '—' }}</div>
+          <div class="font-medium text-foreground truncate">{{ owner.fullName }}</div>
+          <div class="text-xs text-muted-foreground truncate">{{ owner.email }} · {{ owner.phone || '—' }}</div>
         </div>
         <button
           @click="toggleOwnerActive"
@@ -201,28 +201,28 @@ const maxTopQty = computed(() => (overview.value?.topItems ?? []).reduce((m, t) 
           :class="[
             'px-3 py-1.5 text-xs font-medium rounded-lg ring-1 transition-colors disabled:opacity-50',
             owner.isActive
-              ? 'bg-rose-50 text-rose-600 ring-rose-200/60 hover:bg-rose-100'
-              : 'bg-emerald-50 text-emerald-600 ring-emerald-200/60 hover:bg-emerald-100'
+              ? 'bg-destructive/10 text-destructive ring-destructive/20 hover:bg-destructive/20'
+              : 'bg-success/10 text-success ring-success/20 hover:bg-success/20'
           ]"
         >
           {{ owner.isActive ? 'Suspend' : 'Reactivate' }}
         </button>
       </div>
-      <p v-else class="text-sm text-slate-500">No owner linked.</p>
+      <p v-else class="text-sm text-muted-foreground">No owner linked.</p>
     </div>
 
     <!-- Recent orders -->
-    <div class="bg-white rounded-2xl ring-1 ring-slate-200/60 shadow-sm p-5">
-      <h3 class="text-sm font-semibold text-slate-900 mb-3">Recent orders</h3>
-      <div v-if="!recentOrders.length" class="text-sm text-slate-500 text-center py-6">
+    <div class="bg-card rounded-2xl ring-1 ring-border shadow-soft p-5">
+      <h3 class="text-sm font-semibold text-foreground mb-3">Recent orders</h3>
+      <div v-if="!recentOrders.length" class="text-sm text-muted-foreground text-center py-6">
         No orders yet.
       </div>
-      <ul v-else class="divide-y divide-slate-100">
+      <ul v-else class="divide-y divide-border">
         <li v-for="o in recentOrders" :key="o.code"
           class="py-2.5 flex items-center justify-between gap-3">
           <div class="min-w-0">
-            <div class="text-sm font-medium text-slate-900">#{{ o.orderNumber }}</div>
-            <div class="text-xs text-slate-500">{{ orderTypeLabel(o.orderType) }} · {{ new Date(o.createdAt).toLocaleString() }}</div>
+            <div class="text-sm font-medium text-foreground">#{{ o.orderNumber }}</div>
+            <div class="text-xs text-muted-foreground">{{ orderTypeLabel(o.orderType) }} · {{ new Date(o.createdAt).toLocaleString() }}</div>
           </div>
           <div class="flex items-center gap-3 flex-shrink-0">
             <span class="text-sm font-semibold tabular-nums">{{ fmtMoney(o.totalAmount) }}</span>

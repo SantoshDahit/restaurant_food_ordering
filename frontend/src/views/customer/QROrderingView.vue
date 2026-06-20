@@ -8,9 +8,13 @@ import { toast } from 'vue-sonner'
 import api from '@/api/axios'
 import { fileApi } from '@/api/file'
 import {
-  UtensilsCrossed, ShoppingBag, Sparkles, Trash2, Minus, Plus,
-  X, ArrowRight, Loader2, AlertTriangle, ShoppingCart,
+  UtensilsCrossed, ShoppingBag, Trash2, X, ArrowRight,
+  AlertTriangle, ShoppingCart, Info,
 } from 'lucide-vue-next'
+import {
+  Button, ChipTabs, MenuItemCard, QuantityStepper, EmptyState, Spinner,
+} from '@/components/ui'
+import { formatNpr } from '@/utils/cn'
 import type { RestaurantTableResponse, MenuItemResponse, MenuCategoryResponse, PageResponse, OrderDetailResponse } from '@/types'
 
 const route = useRoute()
@@ -40,6 +44,11 @@ const activeCategory = ref('All')
 const loading = ref(true)
 const ordering = ref(false)
 const fileUrlCache = ref<Record<string, string>>({})
+
+const categoryOptions = computed(() => [
+  { value: 'All', label: 'All items' },
+  ...categories.value.map(c => ({ value: c.code, label: c.name })),
+])
 
 const filteredItems = computed(() => {
   if (activeCategory.value === 'All') return items.value
@@ -166,6 +175,14 @@ function deleteFromCart(code: string) {
   cart.value = updated
 }
 
+// Bridge the QuantityStepper's numeric model back onto the cart map.
+function setQty(code: string, value: number) {
+  const current = cart.value[code] || 0
+  if (value <= 0) deleteFromCart(code)
+  else if (value > current) addToCart(code)
+  else removeFromCart(code)
+}
+
 function clearCart() {
   cart.value = {}
 }
@@ -237,52 +254,53 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="min-h-screen md:h-screen bg-gradient-to-br from-slate-50 via-white to-violet-50/40 flex flex-col md:overflow-hidden">
+  <div class="min-h-screen md:h-screen bg-background flex flex-col md:overflow-hidden">
 
     <!-- Invalid QR / table -->
     <div v-if="!loading && !table && !appendOrder" class="flex-1 flex items-center justify-center px-4">
       <div class="text-center max-w-sm">
-        <div class="w-16 h-16 rounded-2xl bg-rose-50 ring-1 ring-rose-200 flex items-center justify-center mx-auto mb-3">
-          <AlertTriangle class="w-7 h-7 text-rose-500" />
+        <div class="w-16 h-16 rounded-2xl bg-destructive/10 ring-1 ring-destructive/20 flex items-center justify-center mx-auto mb-4">
+          <AlertTriangle class="w-7 h-7 text-destructive" />
         </div>
-        <p class="text-slate-900 font-semibold">Invalid QR code or table</p>
-        <p class="text-sm text-slate-500 mt-1">Please scan the QR code on your table again.</p>
+        <h2 class="text-foreground text-xl">Table not found</h2>
+        <p class="text-sm text-muted-foreground mt-1.5">This QR code is invalid or expired. Please scan the code on your table again.</p>
       </div>
     </div>
 
     <template v-else>
       <!-- Header -->
-      <header class="relative overflow-hidden bg-gradient-to-r from-violet-500 via-violet-500 to-fuchsia-500 text-white px-4 sm:px-8 py-4 sm:py-5 flex-shrink-0 sticky top-0 z-30">
-        <!-- decorative -->
-        <div aria-hidden="true" class="absolute -top-12 -right-12 w-48 h-48 rounded-full bg-white/10 blur-2xl" />
-        <div aria-hidden="true" class="absolute -bottom-16 left-1/3 w-56 h-56 rounded-full bg-fuchsia-300/20 blur-3xl" />
-
-        <div class="relative flex items-center justify-between gap-3">
+      <header class="bg-card/90 backdrop-blur border-b border-border/70 px-4 sm:px-8 py-3.5 flex-shrink-0 sticky top-0 z-30">
+        <div class="flex items-center justify-between gap-3">
           <div class="flex items-center gap-3 min-w-0">
-            <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-white/15 backdrop-blur ring-1 ring-white/30 flex items-center justify-center flex-shrink-0">
-              <UtensilsCrossed class="w-6 h-6 text-white" />
+            <div class="w-11 h-11 rounded-xl bg-primary/10 ring-1 ring-primary/15 flex items-center justify-center flex-shrink-0">
+              <UtensilsCrossed class="w-5 h-5 text-primary" />
             </div>
             <div class="min-w-0">
-              <h1 class="text-xl sm:text-2xl font-bold tracking-tight truncate">
-                {{ isAppendMode ? 'Add to your order' : `Table ${tableLabel}` }}
+              <h1 class="text-lg sm:text-xl font-semibold tracking-tight truncate text-foreground">
+                {{ isAppendMode ? 'Add to your order' : tableLabel ? `Table ${tableLabel}` : 'Menu' }}
               </h1>
-              <p class="text-violet-50/90 text-xs sm:text-sm flex items-center gap-1.5">
-                <Sparkles class="w-3.5 h-3.5" />
-                {{ isAppendMode ? `Adding to Table ${tableLabel}'s running tab` : 'Tap any item to add it to your order' }}
+              <p class="text-xs sm:text-sm text-muted-foreground truncate">
+                {{ isAppendMode ? `Adding to Table ${tableLabel}'s running tab` : 'Browse the menu and tap to add' }}
               </p>
             </div>
           </div>
-          <!-- Tappable on mobile to open the cart sheet; static info on desktop (sidebar always visible) -->
-          <button @click="cartOpen = true"
-            class="relative text-right flex-shrink-0 bg-white/10 backdrop-blur ring-1 ring-white/20 rounded-2xl px-3 sm:px-4 py-1.5 sm:py-2 flex items-center gap-2 transition-colors hover:bg-white/20 md:pointer-events-none md:hover:bg-white/10">
-            <ShoppingCart class="w-5 h-5 md:hidden" />
-            <div class="leading-tight">
-              <p class="text-xl sm:text-2xl font-bold tabular-nums leading-none">NPR {{ cartTotal.toFixed(0) }}</p>
-              <p class="text-violet-50/90 text-[11px] sm:text-xs">{{ cartCount }} item{{ cartCount === 1 ? '' : 's' }}</p>
-            </div>
-            <span v-if="cartCount > 0"
-              class="md:hidden absolute -top-1.5 -right-1.5 bg-white text-violet-600 text-[11px] font-bold rounded-full min-w-5 h-5 px-1 flex items-center justify-center ring-2 ring-violet-500">
-              {{ cartCount }}
+
+          <!-- Mobile: opens the cart sheet. Desktop: passive summary (sidebar is visible). -->
+          <button
+            type="button"
+            class="relative flex items-center gap-2.5 rounded-full border border-border bg-card pl-3 pr-4 py-1.5 transition-colors hover:bg-accent md:pointer-events-none md:hover:bg-card"
+            @click="cartOpen = true"
+          >
+            <span class="relative md:hidden">
+              <ShoppingCart class="w-5 h-5 text-foreground" />
+              <span
+                v-if="cartCount > 0"
+                class="absolute -top-2 -right-2 bg-primary text-primary-foreground text-[10px] font-semibold rounded-full min-w-4 h-4 px-1 flex items-center justify-center"
+              >{{ cartCount }}</span>
+            </span>
+            <span class="text-right leading-tight">
+              <span class="block font-serif text-base font-semibold text-foreground tabular-nums">{{ formatNpr(cartTotal) }}</span>
+              <span class="block text-[11px] text-muted-foreground">{{ cartCount }} item{{ cartCount === 1 ? '' : 's' }}</span>
             </span>
           </button>
         </div>
@@ -291,171 +309,164 @@ onBeforeUnmount(() => {
       <!-- Loading -->
       <div v-if="loading" class="flex-1 flex items-center justify-center">
         <div class="text-center">
-          <Loader2 class="w-12 h-12 text-violet-500 mx-auto mb-3 animate-spin" />
-          <p class="text-slate-500">Loading menu…</p>
+          <Spinner size="lg" class="mx-auto mb-3" />
+          <p class="text-muted-foreground text-sm">Loading menu…</p>
         </div>
       </div>
 
       <div v-else class="flex-1 flex flex-col md:flex-row md:overflow-hidden">
         <!-- Left: Menu -->
         <div class="flex-1 flex flex-col md:overflow-hidden min-w-0">
-          <!-- Category Tabs (right fade hints there's more to scroll) -->
-          <div class="relative bg-white/70 backdrop-blur border-b border-slate-200/60 flex-shrink-0">
-            <div class="flex gap-2 px-3 sm:px-6 py-3 overflow-x-auto category-scroller">
-            <button @click="activeCategory = 'All'"
-              :class="activeCategory === 'All'
-                ? 'bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white shadow-md shadow-violet-500/30'
-                : 'bg-white text-slate-700 ring-1 ring-slate-200 hover:ring-slate-300'"
-              class="px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl font-semibold whitespace-nowrap text-sm transition-all">
-              All Items
-            </button>
-            <button v-for="cat in categories" :key="cat.code" @click="activeCategory = cat.code"
-              :class="activeCategory === cat.code
-                ? 'bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white shadow-md shadow-violet-500/30'
-                : 'bg-white text-slate-700 ring-1 ring-slate-200 hover:ring-slate-300'"
-              class="px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl font-semibold whitespace-nowrap text-sm transition-all">
-              {{ cat.name }}
-            </button>
-            </div>
-            <!-- Right-edge fade hint that more categories are scrollable -->
-            <div aria-hidden="true" class="pointer-events-none absolute top-0 right-0 bottom-0 w-8 bg-gradient-to-l from-white via-white/70 to-transparent" />
+          <!-- Category chips -->
+          <div class="bg-background/80 backdrop-blur border-b border-border/60 flex-shrink-0 px-3 sm:px-6 py-3">
+            <ChipTabs v-model="activeCategory" :options="categoryOptions" />
           </div>
 
-          <!-- Items Grid -->
-          <div class="flex-1 md:overflow-y-auto p-3 sm:p-5">
-            <div v-if="filteredItems.length === 0" class="flex flex-col items-center justify-center h-full text-slate-400 py-12">
-              <UtensilsCrossed class="w-16 h-16 mb-3 opacity-40" />
-              <p class="text-lg">No items in this category yet</p>
-            </div>
+          <!-- Items grid -->
+          <div class="flex-1 md:overflow-y-auto scrollbar-fine p-3 sm:p-6">
+            <EmptyState
+              v-if="filteredItems.length === 0"
+              :icon="UtensilsCrossed"
+              title="Nothing here yet"
+              description="There are no items in this category right now."
+            />
             <div v-else class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-              <button v-for="item in filteredItems" :key="item.code" @click="addToCart(item.code)"
-                :class="cart[item.code]
-                  ? 'bg-white ring-2 ring-violet-500 shadow-md shadow-violet-500/10'
-                  : 'bg-white ring-1 ring-slate-200/60 hover:ring-violet-300 hover:shadow-md'"
-                class="rounded-2xl p-3 sm:p-4 text-left relative transition-all active:scale-[0.97]">
-                <!-- quantity badge -->
-                <div v-if="cart[item.code]"
-                  class="absolute -top-2 -right-2 bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold text-sm shadow-lg shadow-violet-500/40 ring-2 ring-white">
-                  {{ cart[item.code] }}
-                </div>
-                <!-- image -->
-                <div class="relative rounded-xl h-28 sm:h-32 mb-3 overflow-hidden bg-gradient-to-br from-violet-50 to-fuchsia-50">
-                  <img v-if="item.fileCode && fileUrlCache[item.fileCode]"
-                    :src="fileUrlCache[item.fileCode]" :alt="item.name"
-                    class="w-full h-full object-cover" loading="lazy" />
-                  <div v-else class="w-full h-full flex items-center justify-center">
-                    <UtensilsCrossed class="w-10 h-10 text-violet-300" />
-                  </div>
-                  <div v-if="item.isVeg" class="absolute top-1.5 left-1.5 bg-emerald-500/90 backdrop-blur text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">VEG</div>
-                </div>
-                <h3 class="font-semibold text-slate-900 text-sm leading-tight line-clamp-1">{{ item.name }}</h3>
-                <p v-if="item.description" class="text-[11px] text-slate-400 mt-0.5 line-clamp-2">{{ item.description }}</p>
-                <div class="mt-2 flex items-center justify-between">
-                  <p class="text-base sm:text-lg font-bold text-violet-600 tabular-nums">NPR {{ item.price.toFixed(0) }}</p>
-                  <div :class="cart[item.code] ? 'bg-violet-500 text-white' : 'bg-violet-100 text-violet-600'"
-                    class="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 transition-colors">
-                    <Plus class="w-4 h-4" />
-                  </div>
-                </div>
-              </button>
+              <MenuItemCard
+                v-for="item in filteredItems"
+                :key="item.code"
+                :item="item"
+                :image-url="item.fileCode ? fileUrlCache[item.fileCode] : undefined"
+                :quantity="cart[item.code] || 0"
+                @add="addToCart(item.code)"
+              />
             </div>
           </div>
         </div>
 
         <!-- Mobile backdrop for the cart sheet -->
-        <div v-if="cartOpen" @click="cartOpen = false" aria-hidden="true"
-          class="md:hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40"></div>
+        <Transition
+          enter-active-class="transition-opacity duration-200"
+          leave-active-class="transition-opacity duration-200"
+          enter-from-class="opacity-0"
+          leave-to-class="opacity-0"
+        >
+          <div
+            v-if="cartOpen"
+            class="md:hidden fixed inset-0 bg-foreground/30 backdrop-blur-sm z-40"
+            aria-hidden="true"
+            @click="cartOpen = false"
+          />
+        </Transition>
 
         <!-- Cart: desktop sidebar / mobile bottom-sheet -->
-        <div :class="cartOpen ? 'flex' : 'hidden'"
-          class="md:flex flex-col bg-white md:flex-shrink-0
-                 fixed inset-x-0 bottom-0 z-50 max-h-[85vh] rounded-t-3xl shadow-2xl
-                 md:static md:inset-auto md:z-auto md:max-h-none md:h-auto md:w-[22rem] md:rounded-none md:shadow-none
-                 border-t md:border-t-0 md:border-l border-slate-200/60">
-          <div class="px-5 py-4 border-b border-slate-100 flex items-center gap-2.5">
-            <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center shadow-md shadow-violet-500/30">
-              <ShoppingBag class="w-5 h-5 text-white" />
-            </div>
-            <div class="flex-1 min-w-0">
-              <h2 class="text-base font-bold text-slate-900">Your Order</h2>
-              <p class="text-xs text-slate-500">{{ cartCount }} item{{ cartCount === 1 ? '' : 's' }}</p>
-            </div>
-            <button @click="cartOpen = false" aria-label="Close"
-              class="md:hidden w-9 h-9 rounded-full text-slate-400 hover:bg-slate-100 flex items-center justify-center flex-shrink-0">
-              <X class="w-5 h-5" />
-            </button>
+        <aside
+          :class="cartOpen ? 'flex' : 'hidden'"
+          class="md:flex flex-col bg-card md:flex-shrink-0
+                 fixed inset-x-0 bottom-0 z-50 max-h-[86vh] rounded-t-2xl shadow-sheet animate-slide-up
+                 md:static md:inset-auto md:z-auto md:max-h-none md:h-auto md:w-[23rem] md:rounded-none md:shadow-none md:animate-none
+                 border-t md:border-t-0 md:border-l border-border/70"
+        >
+          <!-- Grab handle (mobile) -->
+          <div class="md:hidden flex justify-center pt-2.5 pb-1">
+            <div class="h-1.5 w-10 rounded-full bg-border" />
           </div>
 
-          <!-- Cart items (scrolls within the sheet/sidebar) -->
-          <div class="flex-1 overflow-y-auto min-h-0">
-            <div v-if="cartItems.length === 0" class="flex flex-col items-center justify-center h-full text-slate-400 py-16 px-6 text-center">
-              <div class="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mb-3">
-                <ShoppingBag class="w-7 h-7 text-slate-300" />
-              </div>
-              <p class="font-medium text-slate-500">Your cart is empty</p>
-              <p class="text-xs mt-1">Tap items on the left to add them.</p>
+          <header class="px-5 py-4 border-b border-border/70 flex items-center gap-3">
+            <div class="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
+              <ShoppingBag class="w-4 h-4 text-primary" />
             </div>
-            <div v-else class="p-3 space-y-2">
-              <div v-for="item in cartItems" :key="item.code"
-                class="bg-slate-50 ring-1 ring-slate-200/60 rounded-2xl p-3">
-                <div class="flex justify-between items-start mb-2.5 gap-2">
+            <div class="flex-1 min-w-0">
+              <h2 class="text-base font-semibold text-foreground">Your order</h2>
+              <p class="text-xs text-muted-foreground">{{ cartCount }} item{{ cartCount === 1 ? '' : 's' }}</p>
+            </div>
+            <button
+              type="button"
+              class="md:hidden w-9 h-9 -mr-1.5 rounded-full text-muted-foreground hover:bg-accent flex items-center justify-center flex-shrink-0 transition-colors"
+              aria-label="Close"
+              @click="cartOpen = false"
+            >
+              <X class="w-5 h-5" />
+            </button>
+          </header>
+
+          <!-- Items (scrolls within the panel) -->
+          <div class="flex-1 overflow-y-auto scrollbar-fine min-h-0">
+            <EmptyState
+              v-if="cartItems.length === 0"
+              :icon="ShoppingBag"
+              title="Your cart is empty"
+              description="Tap a dish to start your order."
+              compact
+            />
+            <ul v-else class="p-3 space-y-2">
+              <li
+                v-for="item in cartItems"
+                :key="item.code"
+                class="rounded-xl border border-border/70 bg-background/60 p-3"
+              >
+                <div class="flex justify-between items-start gap-2 mb-3">
                   <div class="min-w-0 flex-1">
-                    <p class="font-semibold text-slate-900 text-sm truncate">{{ item.name }}</p>
-                    <p class="text-[11px] text-slate-500 tabular-nums">NPR {{ item.price.toFixed(0) }} each</p>
+                    <p class="font-medium text-foreground text-sm leading-snug line-clamp-1">{{ item.name }}</p>
+                    <p class="text-[11px] text-muted-foreground tabular-nums mt-0.5">{{ formatNpr(item.price) }} each</p>
                   </div>
-                  <button @click="deleteFromCart(item.code)"
-                    class="w-7 h-7 -mr-1 -mt-1 rounded-full text-slate-400 hover:text-rose-600 hover:bg-rose-50 flex items-center justify-center transition-colors flex-shrink-0">
+                  <button
+                    type="button"
+                    class="w-7 h-7 -mr-1 -mt-1 rounded-full text-muted-foreground hover:text-destructive hover:bg-destructive/10 flex items-center justify-center transition-colors flex-shrink-0"
+                    aria-label="Remove item"
+                    @click="deleteFromCart(item.code)"
+                  >
                     <X class="w-3.5 h-3.5" />
                   </button>
                 </div>
                 <div class="flex items-center justify-between">
-                  <div class="flex items-center gap-1 bg-white ring-1 ring-slate-200 rounded-full p-0.5">
-                    <button @click="removeFromCart(item.code)"
-                      class="w-7 h-7 rounded-full flex items-center justify-center text-slate-600 hover:bg-slate-100 transition-colors">
-                      <Minus class="w-3.5 h-3.5" />
-                    </button>
-                    <span class="w-7 text-center font-bold text-slate-900 text-sm tabular-nums">{{ item.quantity }}</span>
-                    <button @click="addToCart(item.code)"
-                      class="w-7 h-7 rounded-full flex items-center justify-center bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white shadow-sm hover:shadow-md transition-shadow">
-                      <Plus class="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                  <span class="font-bold text-slate-900 text-sm tabular-nums">NPR {{ (item.price * item.quantity).toFixed(0) }}</span>
+                  <QuantityStepper
+                    :model-value="item.quantity"
+                    :min="0"
+                    size="sm"
+                    @update:model-value="(v) => setQty(item.code, v)"
+                  />
+                  <span class="font-semibold text-foreground text-sm tabular-nums">
+                    {{ formatNpr(item.price * item.quantity) }}
+                  </span>
                 </div>
-              </div>
-            </div>
+              </li>
+            </ul>
           </div>
 
-          <!-- Footer (pinned to the bottom of the sheet / sidebar) -->
-          <div v-if="cartItems.length > 0" class="flex-shrink-0 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] border-t border-slate-100 space-y-3 bg-white">
-            <div class="bg-gradient-to-br from-violet-50 to-fuchsia-50 rounded-2xl p-3.5 ring-1 ring-violet-100/60">
-              <div class="flex justify-between text-sm mb-1">
-                <span class="text-slate-600">Subtotal</span>
-                <span class="font-medium tabular-nums">NPR {{ cartTotal.toFixed(0) }}</span>
+          <!-- Footer -->
+          <div
+            v-if="cartItems.length > 0"
+            class="flex-shrink-0 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] border-t border-border/70 space-y-3 bg-card"
+          >
+            <div class="rounded-xl bg-accent/60 p-3.5">
+              <div class="flex justify-between text-sm text-muted-foreground">
+                <span>Subtotal</span>
+                <span class="tabular-nums">{{ formatNpr(cartTotal) }}</span>
               </div>
-              <div class="flex justify-between items-end pt-1.5 border-t border-violet-100/60 mt-1.5">
-                <span class="font-bold text-slate-900">Total</span>
-                <span class="font-bold text-violet-600 text-xl tabular-nums">NPR {{ cartTotal.toFixed(0) }}</span>
+              <div class="flex justify-between items-end pt-2.5 mt-2.5 border-t border-border/70">
+                <span class="font-medium text-foreground">Total</span>
+                <span class="font-serif font-semibold text-foreground text-xl tabular-nums">{{ formatNpr(cartTotal) }}</span>
               </div>
             </div>
-            <div v-if="isAppendMode"
-              class="flex items-start gap-2 rounded-2xl bg-violet-50 ring-1 ring-violet-200 px-3.5 py-3 text-violet-800">
-              <ShoppingBag class="w-4 h-4 mt-0.5 flex-shrink-0" />
-              <p class="text-xs leading-snug">Adding to your existing order — these items join your running tab, paid together at the end.</p>
+
+            <div
+              v-if="isAppendMode"
+              class="flex items-start gap-2 rounded-xl bg-info/10 ring-1 ring-info/20 px-3.5 py-3 text-info"
+            >
+              <Info class="w-4 h-4 mt-0.5 flex-shrink-0" />
+              <p class="text-xs leading-snug">These items join your running tab and are paid together at the end.</p>
             </div>
-            <button @click="checkout" :disabled="ordering"
-              class="w-full py-3.5 bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 text-white font-bold rounded-2xl shadow-lg shadow-violet-500/30 disabled:opacity-60 disabled:cursor-not-allowed transition-all text-base flex items-center justify-center gap-2">
+
+            <Button block size="lg" :loading="ordering" @click="checkout">
               <span>{{ ordering ? 'Sending…' : isAppendMode ? 'Add to order' : 'Place order' }}</span>
               <ArrowRight v-if="!ordering" class="w-4 h-4" />
-              <Loader2 v-else class="w-4 h-4 animate-spin" />
-            </button>
-            <button @click="clearCart"
-              class="w-full py-2.5 bg-slate-50 hover:bg-slate-100 text-slate-600 font-medium rounded-xl ring-1 ring-slate-200/60 transition-colors text-sm inline-flex items-center justify-center gap-1.5">
-              <Trash2 class="w-3.5 h-3.5" />
+            </Button>
+            <Button block variant="ghost" size="sm" @click="clearCart">
+              <template #icon><Trash2 class="w-3.5 h-3.5" /></template>
               Clear order
-            </button>
+            </Button>
           </div>
-        </div>
+        </aside>
       </div>
     </template>
   </div>

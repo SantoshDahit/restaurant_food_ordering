@@ -74,9 +74,9 @@ function initials(name: string): string {
 }
 
 const roleChip: Record<UserRole, string> = {
-  ADMIN:   'bg-amber-50 text-amber-700 ring-amber-200/60',
-  MANAGER: 'bg-violet-50 text-violet-700 ring-violet-200/60',
-  STAFF:   'bg-blue-50 text-blue-700 ring-blue-200/60',
+  ADMIN:   'bg-warning/10 text-warning ring-warning/20',
+  MANAGER: 'bg-primary/10 text-primary ring-primary/30',
+  STAFF:   'bg-info/10 text-info ring-info/20',
 }
 </script>
 
@@ -84,31 +84,31 @@ const roleChip: Record<UserRole, string> = {
   <PageHeader title="Users" :description="`${users.length} accounts on the platform`" />
 
   <!-- Filters -->
-  <div class="bg-white rounded-2xl ring-1 ring-slate-200/60 shadow-sm p-3 sm:p-4 mb-4 flex flex-col sm:flex-row gap-2">
+  <div class="bg-card rounded-2xl ring-1 ring-border shadow-soft p-3 sm:p-4 mb-4 flex flex-col sm:flex-row gap-2">
     <div class="relative flex-1">
-      <Search class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+      <Search class="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
       <input
         v-model="query"
         placeholder="Search by name, email, phone…"
-        class="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-400 focus:bg-white transition-all"
+        class="w-full pl-9 pr-3 py-2 bg-muted border border-border rounded-xl text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/20 focus:border-primary/30 focus:bg-card transition-all"
       />
     </div>
     <select v-model="roleFilter" @change="load"
-      class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-400">
+      class="px-3 py-2 bg-muted border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-ring/20 focus:border-primary/30">
       <option value="">All roles</option>
       <option v-for="r in roles" :key="r" :value="r">{{ r }}</option>
     </select>
   </div>
 
-  <div v-if="loading" class="text-center py-16 text-slate-400">Loading users…</div>
+  <div v-if="loading" class="text-center py-16 text-muted-foreground">Loading users…</div>
 
-  <div v-else-if="!filtered.length" class="bg-white rounded-2xl ring-1 ring-slate-200/60 shadow-sm">
+  <div v-else-if="!filtered.length" class="bg-card rounded-2xl ring-1 ring-border shadow-soft">
     <EmptyState :icon="Users" title="No users found" description="Try a different search or filter." />
   </div>
 
-  <div v-else class="bg-white rounded-2xl ring-1 ring-slate-200/60 shadow-sm overflow-x-auto">
+  <div v-else class="bg-card rounded-2xl ring-1 ring-border shadow-soft overflow-x-auto">
     <table class="w-full text-sm min-w-[720px]">
-      <thead class="bg-slate-50/60 text-slate-500 uppercase text-[11px] tracking-wide">
+      <thead class="bg-muted text-muted-foreground uppercase text-[11px] tracking-wide">
         <tr>
           <th class="px-5 py-3 text-left">User</th>
           <th class="px-5 py-3 text-left">Email</th>
@@ -117,20 +117,20 @@ const roleChip: Record<UserRole, string> = {
           <th class="px-5 py-3 text-right">Actions</th>
         </tr>
       </thead>
-      <tbody class="divide-y divide-slate-100">
-        <tr v-for="u in filtered" :key="u.code" class="hover:bg-slate-50/60">
+      <tbody class="divide-y divide-border">
+        <tr v-for="u in filtered" :key="u.code" class="hover:bg-accent">
           <td class="px-5 py-3">
             <div class="flex items-center gap-2.5">
-              <div class="w-8 h-8 rounded-full bg-gradient-to-br from-violet-400 to-fuchsia-500 text-white text-xs font-semibold flex items-center justify-center flex-shrink-0">
+              <div class="w-8 h-8 rounded-full bg-primary text-primary-foreground text-xs font-semibold flex items-center justify-center flex-shrink-0">
                 {{ initials(u.fullName) }}
               </div>
               <div class="min-w-0">
-                <div class="font-medium text-slate-900 truncate">{{ u.fullName }}</div>
-                <div class="text-xs text-slate-500 truncate">{{ u.phone || '—' }}</div>
+                <div class="font-medium text-foreground truncate">{{ u.fullName }}</div>
+                <div class="text-xs text-muted-foreground truncate">{{ u.phone || '—' }}</div>
               </div>
             </div>
           </td>
-          <td class="px-5 py-3 text-slate-600 truncate max-w-xs">{{ u.email }}</td>
+          <td class="px-5 py-3 text-muted-foreground truncate max-w-xs">{{ u.email }}</td>
           <td class="px-5 py-3">
             <select
               :value="u.role"
@@ -148,10 +148,10 @@ const roleChip: Record<UserRole, string> = {
             <span :class="[
               'inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-md ring-1',
               u.isActive
-                ? 'bg-emerald-50 text-emerald-700 ring-emerald-200/60'
-                : 'bg-slate-100 text-slate-500 ring-slate-200/60'
+                ? 'bg-success/10 text-success ring-success/20'
+                : 'bg-muted text-muted-foreground ring-border'
             ]">
-              <Circle :class="['w-2 h-2', u.isActive ? 'fill-emerald-500 text-emerald-500' : 'fill-slate-400 text-slate-400']" />
+              <Circle :class="['w-2 h-2', u.isActive ? 'fill-success text-success' : 'fill-muted-foreground text-muted-foreground']" />
               {{ u.isActive ? 'Active' : 'Inactive' }}
             </span>
           </td>
@@ -162,8 +162,8 @@ const roleChip: Record<UserRole, string> = {
               :class="[
                 'text-xs font-medium px-3 py-1.5 rounded-lg ring-1 transition-colors disabled:opacity-50 disabled:cursor-not-allowed',
                 u.isActive
-                  ? 'bg-rose-50 text-rose-600 ring-rose-200/60 hover:bg-rose-100'
-                  : 'bg-emerald-50 text-emerald-600 ring-emerald-200/60 hover:bg-emerald-100'
+                  ? 'bg-destructive/10 text-destructive ring-destructive/20 hover:bg-destructive/20'
+                  : 'bg-success/10 text-success ring-success/20 hover:bg-success/20'
               ]"
             >
               {{ u.isActive ? 'Suspend' : 'Reactivate' }}

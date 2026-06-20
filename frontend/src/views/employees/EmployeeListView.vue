@@ -116,17 +116,17 @@ async function confirmDelete() {
     <PageHeader title="Employees" description="Manage restaurant employees">
       <template #actions>
         <button @click="openAdd"
-          class="px-4 py-2 bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 text-white text-sm rounded-xl shadow-md shadow-violet-500/30 transition-all">
+          class="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground text-sm rounded-xl shadow-soft transition-all">
           + Add Employee
         </button>
       </template>
     </PageHeader>
 
-    <div v-if="loading" class="text-center py-12 text-slate-400">Loading...</div>
+    <div v-if="loading" class="text-center py-12 text-muted-foreground">Loading...</div>
 
-    <div v-else class="bg-white rounded-2xl shadow-sm ring-1 ring-slate-200/60 overflow-x-auto">
+    <div v-else class="bg-card rounded-2xl shadow-card ring-1 ring-border overflow-x-auto">
       <table class="w-full text-sm min-w-[640px]">
-        <thead class="bg-slate-50/60 text-slate-500 uppercase text-[11px] tracking-wide">
+        <thead class="bg-muted text-muted-foreground uppercase text-[11px] tracking-wide">
           <tr>
             <th class="px-5 py-3 text-left">Name</th>
             <th class="px-5 py-3 text-left">Phone</th>
@@ -137,24 +137,24 @@ async function confirmDelete() {
             <th class="px-5 py-3 text-right">Actions</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-slate-100">
-          <tr v-for="emp in employees" :key="emp.code" class="hover:bg-slate-50/60 transition-colors">
-            <td class="px-5 py-3 font-medium text-gray-900">{{ emp.fullName }}</td>
-            <td class="px-5 py-3 text-slate-500">{{ emp.phone || '—' }}</td>
-            <td class="px-5 py-3 text-slate-500">{{ emp.joinDate }}</td>
+        <tbody class="divide-y divide-border">
+          <tr v-for="emp in employees" :key="emp.code" class="hover:bg-accent transition-colors">
+            <td class="px-5 py-3 font-medium text-foreground">{{ emp.fullName }}</td>
+            <td class="px-5 py-3 text-muted-foreground">{{ emp.phone || '—' }}</td>
+            <td class="px-5 py-3 text-muted-foreground">{{ emp.joinDate }}</td>
             <td class="px-5 py-3 text-right font-medium">{{ emp.baseSalary.toFixed(0) }}</td>
-            <td class="px-5 py-3 text-gray-400 text-xs">{{ emp.bankName || '—' }}</td>
+            <td class="px-5 py-3 text-muted-foreground text-xs">{{ emp.bankName || '—' }}</td>
             <td class="px-5 py-3 text-center">
-              <span :class="emp.isActive ? 'text-green-600' : 'text-red-500'">
+              <span :class="emp.isActive ? 'text-success' : 'text-destructive'">
                 {{ emp.isActive ? 'Yes' : 'No' }}
               </span>
             </td>
             <td class="px-5 py-3 text-right">
               <div class="flex justify-end gap-2">
                 <button @click="openEdit(emp)"
-                  class="text-xs px-2.5 py-1 bg-slate-50 ring-1 ring-slate-200 text-slate-700 rounded-lg hover:bg-slate-100 transition-colors">Edit</button>
+                  class="text-xs px-2.5 py-1 bg-muted ring-1 ring-border text-foreground rounded-lg hover:bg-accent transition-colors">Edit</button>
                 <button @click="deleteTarget = emp.code"
-                  class="text-xs px-2.5 py-1 bg-rose-50 ring-1 ring-rose-200 text-rose-600 rounded-lg hover:bg-rose-100 transition-colors">Delete</button>
+                  class="text-xs px-2.5 py-1 bg-destructive/10 ring-1 ring-destructive/20 text-destructive rounded-lg hover:bg-destructive/20 transition-colors">Delete</button>
               </div>
             </td>
           </tr>
@@ -175,44 +175,44 @@ async function confirmDelete() {
     <Teleport to="body">
       <div v-if="showFormDialog" class="fixed inset-0 z-50 flex items-center justify-center">
         <div class="absolute inset-0 bg-black/50" @click="showFormDialog = false" />
-        <div class="relative bg-white rounded-2xl shadow-xl ring-1 ring-slate-200/60 p-6 w-full max-w-sm mx-4">
+        <div class="relative bg-card rounded-2xl shadow-lifted ring-1 ring-border p-6 w-full max-w-sm mx-4">
           <h3 class="text-lg font-semibold mb-4">{{ editTarget ? 'Edit Employee' : 'Add Employee' }}</h3>
           <form @submit.prevent="save" class="space-y-3">
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
+              <label class="block text-sm font-medium text-foreground mb-1">Full Name *</label>
               <input v-model="form.fullName" required
-                class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40 focus:border-violet-300 transition-all" />
+                class="w-full px-3 py-2 bg-card border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring/20 focus:border-primary/30 transition-all" />
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+              <label class="block text-sm font-medium text-foreground mb-1">Phone</label>
               <input v-model="form.phone"
-                class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40 focus:border-violet-300 transition-all" />
+                class="w-full px-3 py-2 bg-card border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring/20 focus:border-primary/30 transition-all" />
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Join Date *</label>
+              <label class="block text-sm font-medium text-foreground mb-1">Join Date *</label>
               <input v-model="form.joinDate" type="date" :disabled="!!editTarget"
-                class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40 focus:border-violet-300 transition-all disabled:bg-gray-50" />
+                class="w-full px-3 py-2 bg-card border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring/20 focus:border-primary/30 transition-all disabled:bg-muted" />
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Base Salary *</label>
+              <label class="block text-sm font-medium text-foreground mb-1">Base Salary *</label>
               <input v-model.number="form.baseSalary" type="number" min="0"
-                class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40 focus:border-violet-300 transition-all" />
+                class="w-full px-3 py-2 bg-card border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring/20 focus:border-primary/30 transition-all" />
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Bank Name</label>
+              <label class="block text-sm font-medium text-foreground mb-1">Bank Name</label>
               <input v-model="form.bankName"
-                class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40 focus:border-violet-300 transition-all" />
+                class="w-full px-3 py-2 bg-card border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring/20 focus:border-primary/30 transition-all" />
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Bank Account</label>
+              <label class="block text-sm font-medium text-foreground mb-1">Bank Account</label>
               <input v-model="form.bankAccount"
-                class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40 focus:border-violet-300 transition-all" />
+                class="w-full px-3 py-2 bg-card border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring/20 focus:border-primary/30 transition-all" />
             </div>
             <div class="flex justify-end gap-3 pt-2">
               <button type="button" @click="showFormDialog = false"
-                class="px-4 py-2 text-sm bg-white ring-1 ring-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 transition-colors">Cancel</button>
+                class="px-4 py-2 text-sm bg-card ring-1 ring-border text-foreground rounded-xl hover:bg-muted transition-colors">Cancel</button>
               <button type="submit"
-                class="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700">Save</button>
+                class="px-4 py-2 text-sm bg-primary text-primary-foreground rounded-lg hover:bg-primary/90">Save</button>
             </div>
           </form>
         </div>
