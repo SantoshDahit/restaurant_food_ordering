@@ -18,4 +18,12 @@ public interface ReceiptJpaRepository extends JpaRepository<Receipt, String> {
     /** Highest-numbered receipt for the given restaurant on the given business day. */
     Optional<Receipt> findTopByRestaurantCodeAndBusinessDateOrderByReceiptNumberDesc(
             String restaurantCode, LocalDate businessDate);
+
+    /**
+     * Whether a receipt number is already taken for a restaurant's business day.
+     * Counts soft-deleted rows too — the uk_receipt_daily unique key spans
+     * (restaurant_code, business_date, receipt_number) regardless of deletion.
+     */
+    boolean existsByRestaurantCodeAndBusinessDateAndReceiptNumber(
+            String restaurantCode, LocalDate businessDate, Integer receiptNumber);
 }

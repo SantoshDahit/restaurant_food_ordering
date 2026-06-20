@@ -39,6 +39,12 @@ public class ReceiptRepositoryImpl implements ReceiptRepository {
     }
 
     @Override
+    public boolean existsDaily(String restaurantCode, LocalDate businessDate, int receiptNumber) {
+        return receiptJpaRepository
+                .existsByRestaurantCodeAndBusinessDateAndReceiptNumber(restaurantCode, businessDate, receiptNumber);
+    }
+
+    @Override
     public Receipt save(Receipt receipt) {
         return receiptJpaRepository.save(receipt);
     }

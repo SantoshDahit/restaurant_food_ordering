@@ -12,5 +12,7 @@ public interface ReceiptRepository {
     Optional<Receipt> findByOrderCode(String orderCode);
     List<Receipt> findAllByOrderCodes(Collection<String> orderCodes);
     Optional<Integer> findMaxReceiptNumber(String restaurantCode, LocalDate businessDate);
+    /** True if this daily receipt number is already taken (matches the uk_receipt_daily unique key). */
+    boolean existsDaily(String restaurantCode, LocalDate businessDate, int receiptNumber);
     Receipt save(Receipt receipt);
 }

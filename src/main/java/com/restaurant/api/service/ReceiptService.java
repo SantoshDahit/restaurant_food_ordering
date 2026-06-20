@@ -18,7 +18,6 @@ import com.restaurant.api.repository.receipt.ReceiptRepository;
 import com.restaurant.api.repository.restaurant.RestaurantRepository;
 import com.restaurant.api.repository.table.RestaurantTableRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,7 +32,6 @@ import java.util.Optional;
 public class ReceiptService {
     private static final int RECEIPT_NUMBER_MIN = 100;
     private static final int RECEIPT_NUMBER_MAX = 999;
-    private static final int ISSUE_RETRY_LIMIT = 5;
 
     private final ReceiptRepository receiptRepository;
     private final RestaurantRepository restaurantRepository;
@@ -83,43 +81,38 @@ public class ReceiptService {
                 ? order.getBusinessDate()
                 : (payment.getCreatedAt() != null ? payment.getCreatedAt().toLocalDate() : LocalDate.now());
 
-        DataIntegrityViolationException lastError = null;
-        for (int attempt = 0; attempt < ISSUE_RETRY_LIMIT; attempt++) {
-            int nextNumber = ticket != null ? ticket : nextReceiptNumber(restaurant.getCode(), businessDate);
-            try {
-                Receipt receipt = new Receipt(
-                        UuidUtil.generate(),
-                        nextNumber,
-                        businessDate,
-                        restaurant.getCode(),
-                        order.getCode(),
-                        payment.getCode(),
-                        order.getSubtotal(),
-                        order.getDiscountAmount(),
-                        order.getTaxAmount(),
-                        order.getTotalAmount(),
-                        payment.getPaymentMethod(),
-                        payment.getStatus(),
-                        null,                             // gatewayProvider (populated by gateway integration)
-                        payment.getTransactionRef(),
-                        null,                             // gatewayResponseRaw
-                        restaurant.getName(),
-                        order.getOrderNumber(),
-                        tableNumber,
-                        itemsJson,
-                        null, null, null,                 // customer name/email/phone — wired in later
-                        null
-                );
-                return receiptRepository.save(receipt);
-            } catch (DataIntegrityViolationException e) {
-                // Another transaction grabbed the same number — only meaningful when
-                // we're computing fresh; if we're reusing the order's ticket and it
-                // collides, give up cleanly (the unique constraint protects us).
-                lastError = e;
-                if (ticket != null) break;
-            }
-        }
-        throw lastError != null ? lastError : new ApiException(ErrorCode.INTERNAL_SERVER_ERROR);
+        // Use the order's ticket as the receipt number when it's still free for
+        // the day; otherwise (ticket reuse, or two orders sharing a number) take
+        // the next free number. Pre-checking avoids the daily unique-key clash
+        // deterministically — no catch-and-retry inside the transaction.
+        int receiptNumber = (ticket != null && !receiptRepository.existsDaily(restaurant.getCode(), businessDate, ticket))
+                ? ticket
+                : nextReceiptNumber(restaurant.getCode(), businessDate);
+
+        Receipt receipt = new Receipt(
+                UuidUtil.generate(),
+                receiptNumber,
+                businessDate,
+                restaurant.getCode(),
+                order.getCode(),
+                payment.getCode(),
+                order.getSubtotal(),
+                order.getDiscountAmount(),
+                order.getTaxAmount(),
+                order.getTotalAmount(),
+                payment.getPaymentMethod(),
+                payment.getStatus(),
+                null,                             // gatewayProvider (populated by gateway integration)
+                payment.getTransactionRef(),
+                null,                             // gatewayResponseRaw
+                restaurant.getName(),
+                order.getOrderNumber(),
+                tableNumber,
+                itemsJson,
+                null, null, null,                 // customer name/email/phone — wired in later
+                null
+        );
+        return receiptRepository.save(receipt);
     }
 
     /**
