@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { isAdminHost } from '@/utils/host'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -70,6 +71,15 @@ const router = createRouter({
 
 router.beforeEach((to) => {
   const auth = useAuthStore()
+
+  // On the admin hostname the landing page is the admin portal, not the
+  // marketing site. Only the root is remapped: /dashboard and the customer
+  // routes stay reachable so a non-ADMIN who lands here isn't bounced between
+  // /admin (needs ADMIN) and homePath (/dashboard) forever.
+  if (to.path === '/' && isAdminHost()) {
+    return '/admin'
+  }
+
   if (to.meta.requiresAuth && !auth.isLoggedIn) {
     return { name: 'login' }
   }
