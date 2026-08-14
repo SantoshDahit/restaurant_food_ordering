@@ -1,1 +1,0 @@
-import{p as e}from"./index-BQWnLqYh.js";const u={search:a=>e.get("/users/search",{params:a}).then(t=>t.data),get:a=>e.get(`/users/${a}`).then(t=>t.data),updateRestaurantCode:(a,t)=>e.patch(`/users/${a}/restaurant`,null,{params:{restaurantCode:t}}).then(s=>s.data)};export{u};

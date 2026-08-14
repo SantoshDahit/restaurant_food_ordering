@@ -1,1 +1,0 @@
-import{k as s}from"./index-CiCW4_65.js";const c={upload:async(e,t="menu-items")=>{const a=[{fileName:e.name,folderName:t,type:"IMAGE"}],n=await s.post("/files/pre-signed-url",a).then(i=>i.data),{id:o,url:r,preSignedUrl:p}=n[0];return await fetch(p,{method:"PUT",body:e,headers:{"Content-Type":e.type}}),{code:o,url:r}},get:e=>s.get(`/files/${e}`).then(t=>t.data)};export{c as f};

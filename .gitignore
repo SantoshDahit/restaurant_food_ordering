@@ -7,6 +7,8 @@ local.env
 # Build artifacts
 /build/
 .gradle/
+frontend/node_modules/
+frontend/dist/
 
 # IDE
 .vscode/
